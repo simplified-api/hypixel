@@ -1,10 +1,8 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.pet;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.pet;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.client.hypixel.response.Rarity;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.Experience;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.weight.Weight;
 import dev.sbs.api.util.StringUtil;
+import dev.sbs.minecraftapi.client.hypixel.response.Rarity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,15 +29,6 @@ public class Pet {
     protected int candyUsed;
     protected Optional<String> heldItem = Optional.empty();
     protected Optional<String> skin = Optional.empty();
-
-    /**
-     * Wraps this class in a {@link Experience} and {@link Weight} class.
-     * <br><br>
-     * Requires an active database session.
-     */
-    public @NotNull EnhancedPet asEnhanced() {
-        return new EnhancedPet(this);
-    }
 
     public String getPrettyName() {
         return StringUtil.capitalizeFully(this.getType().replace("_", " "));
