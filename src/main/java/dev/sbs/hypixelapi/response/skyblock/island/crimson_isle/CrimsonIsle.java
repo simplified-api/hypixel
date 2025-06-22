@@ -1,7 +1,6 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.crimson_isle;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.crimson_isle;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.util.SkyBlockDate;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
@@ -9,6 +8,7 @@ import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.api.stream.pair.Pair;
 import dev.sbs.api.util.Range;
 import dev.sbs.api.util.StringUtil;
+import dev.sbs.minecraftapi.util.SkyBlockDate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.weight;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.util.weight;
 
 import org.jetbrains.annotations.NotNull;
 

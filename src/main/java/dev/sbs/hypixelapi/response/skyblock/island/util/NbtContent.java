@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.util;
 
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.util.StringUtil;

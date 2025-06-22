@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.util;
 
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import org.jetbrains.annotations.NotNull;

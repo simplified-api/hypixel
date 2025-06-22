@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.dungeon;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.dungeon;
 
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;

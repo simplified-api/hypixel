@@ -1,13 +1,13 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.mining;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.mining;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.util.SkyBlockDate;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.api.stream.pair.Pair;
 import dev.sbs.api.util.NumberUtil;
+import dev.sbs.minecraftapi.util.SkyBlockDate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -1,7 +1,6 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.SkyBlockIsland;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import lombok.Getter;

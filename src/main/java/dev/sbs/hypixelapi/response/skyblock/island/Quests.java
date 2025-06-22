@@ -1,12 +1,12 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.util.SkyBlockDate;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.collection.concurrent.linked.ConcurrentLinkedMap;
 import dev.sbs.api.stream.pair.Pair;
 import dev.sbs.api.util.NumberUtil;
+import dev.sbs.minecraftapi.util.SkyBlockDate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
