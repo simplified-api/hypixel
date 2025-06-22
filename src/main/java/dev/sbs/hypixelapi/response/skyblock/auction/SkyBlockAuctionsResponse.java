@@ -1,9 +1,8 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.auction;
 
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.SkyBlockAuction;
-import dev.sbs.minecraftapi.util.SkyBlockDate;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
+import dev.sbs.minecraftapi.util.SkyBlockDate;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

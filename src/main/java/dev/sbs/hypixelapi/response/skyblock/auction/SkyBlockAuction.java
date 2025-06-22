@@ -1,11 +1,11 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.auction;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.client.hypixel.response.Rarity;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.NbtContent;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.util.StringUtil;
+import dev.sbs.minecraftapi.client.hypixel.response.Rarity;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.util.NbtContent;
 import dev.sbs.minecraftapi.util.SkyBlockDate;
 import lombok.AccessLevel;
 import lombok.Getter;

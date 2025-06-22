@@ -1,6 +1,5 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.auction;
 
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.SkyBlockAuction;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import lombok.AccessLevel;
