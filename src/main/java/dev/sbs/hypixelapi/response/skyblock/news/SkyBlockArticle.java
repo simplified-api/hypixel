@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.news;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.AccessLevel;

@@ -1,10 +1,10 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.museum;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.NbtContent;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.util.NbtContent;
 import dev.sbs.minecraftapi.util.SkyBlockDate;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;

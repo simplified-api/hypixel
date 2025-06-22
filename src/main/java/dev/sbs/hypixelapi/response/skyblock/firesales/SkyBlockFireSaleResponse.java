@@ -1,6 +1,5 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.firesales;
 
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.SkyBlockFireSale;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import lombok.Getter;
