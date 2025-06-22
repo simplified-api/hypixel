@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.hypixel.implementation;
+package dev.sbs.minecraftapi.client.hypixel.response.hypixel.guild;
 
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;

@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.hypixel.implementation;
+package dev.sbs.minecraftapi.client.hypixel.response.hypixel.player;
 
 import dev.sbs.api.util.StringUtil;
 import dev.sbs.minecraftapi.text.ChatFormat;

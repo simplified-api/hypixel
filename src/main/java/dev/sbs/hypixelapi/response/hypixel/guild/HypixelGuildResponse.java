@@ -1,6 +1,5 @@
-package dev.sbs.minecraftapi.client.hypixel.response.hypixel;
+package dev.sbs.minecraftapi.client.hypixel.response.hypixel.guild;
 
-import dev.sbs.minecraftapi.client.hypixel.response.hypixel.implementation.HypixelGuild;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

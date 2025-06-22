@@ -1,6 +1,5 @@
-package dev.sbs.minecraftapi.client.hypixel.response.hypixel;
+package dev.sbs.minecraftapi.client.hypixel.response.hypixel.player;
 
-import dev.sbs.minecraftapi.client.hypixel.response.hypixel.implementation.HypixelPlayer;
 import lombok.Getter;
 
 import java.util.Optional;
