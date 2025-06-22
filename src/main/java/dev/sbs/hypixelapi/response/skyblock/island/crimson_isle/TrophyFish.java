@@ -1,9 +1,7 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.crimson_isle;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.crimson_isle;
 
-import dev.sbs.api.SimplifiedApi;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.minecraftapi.data.model.trophy_fishes.TrophyFishModel;
 import dev.sbs.api.stream.pair.Pair;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -73,14 +71,9 @@ public class TrophyFish {
         SOUL_FISH,
         GOLDEN_FISH;
 
-        /**
-         * Gets the {@link TrophyFishModel} for the given {@link Type}.
-         * <br><br>
-         * Requires an active database session.
-         */
-        public @NotNull TrophyFishModel getModel() {
+        /*public @NotNull TrophyFishModel getModel() {
             return SimplifiedApi.getRepositoryOf(TrophyFishModel.class).findFirstOrNull(TrophyFishModel::getKey, this.name());
-        }
+        }*/
 
         public @NotNull Type of(@NotNull String name) {
             return Arrays.stream(values())

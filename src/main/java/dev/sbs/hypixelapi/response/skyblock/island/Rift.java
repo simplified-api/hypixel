@@ -6,6 +6,7 @@ import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.pet.Pet;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.slayer.Slayer;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.util.NbtContent;
 import lombok.AccessLevel;
 import lombok.Getter;

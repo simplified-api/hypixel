@@ -1,11 +1,10 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.accessories;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.member.Member;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.NbtContent;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.util.NbtContent;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,15 +31,6 @@ public class AccessoryBag {
     @Accessors(fluent = true)
     private transient boolean hasConsumedPrism;
     private transient int abiphoneContacts;
-
-    /**
-     * Wraps this class with database information.
-     * <br><br>
-     * Requires an active database session.
-     */
-    public @NotNull EnhancedAccessoryBag asEnhanced() {
-        return new EnhancedAccessoryBag(this);
-    }
 
     protected void initialize(@NotNull Member member) {
         this.contents = member.getInventory().getBags().getAccessories();

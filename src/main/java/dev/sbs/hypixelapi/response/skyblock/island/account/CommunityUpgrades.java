@@ -1,9 +1,9 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.account;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.account;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.util.SkyBlockDate;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
+import dev.sbs.minecraftapi.util.SkyBlockDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,15 +20,6 @@ public class CommunityUpgrades {
     private @NotNull Optional<Upgrading> currentlyUpgrading = Optional.empty();
     @SerializedName("upgrade_states")
     private @NotNull ConcurrentList<Upgraded> upgraded = Concurrent.newList();
-
-    /**
-     * Wraps this class with database access.
-     * <br><br>
-     * Requires an active database session.
-     */
-    public @NotNull EnhancedCommunityUpgrades asEnhanced() {
-        return new EnhancedCommunityUpgrades(this);
-    }
 
     @Getter
     public static class Upgraded {

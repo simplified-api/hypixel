@@ -1,20 +1,18 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.member;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island;
 
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
+import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.io.gson.SerializedPath;
-import dev.sbs.api.reflection.Reflection;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.*;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.accessories.AccessoryBag;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.bestiary.Bestiary;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.crimson_isle.CrimsonIsle;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.crimson_isle.TrophyFish;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.dungeon.DungeonData;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.mining.ForgeItem;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.mining.Mining;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.pet.PetData;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.crimson_isle.CrimsonIsle;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.crimson_isle.TrophyFish;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.dungeon.DungeonData;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.mining.ForgeItem;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.mining.Mining;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.pet.PetData;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.slayer.Slayer;
 import dev.sbs.minecraftapi.util.SkyBlockDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -28,7 +26,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Member {
+public class Member implements PostInit {
 
     @SerializedName("player_id")
     protected @NotNull UUID uniqueId;
@@ -81,35 +79,13 @@ public class Member {
     @SerializedPath("forge.forge_processes.forge_1")
     protected @NotNull ConcurrentMap<Integer, ForgeItem> forge = Concurrent.newMap();
 
-    // Custom Initialization
+    // PostInit
     protected transient TrophyFish trophyFish;
-    @Getter(AccessLevel.NONE)
-    protected transient boolean accessoryBagLoaded;
 
-    /**
-     * Wraps this class with database access.
-     * <br><br>
-     * Requires an active database session.
-     */
-    public @NotNull EnhancedMember asEnhanced() {
-        return new EnhancedMember(this);
-    }
-
-    @SuppressWarnings("all")
-    public @NotNull AccessoryBag getAccessoryBag() {
-        if (!this.accessoryBagLoaded) {
-            Reflection.of(AccessoryBag.class).invokeMethod("initialize", this.accessoryBag, this);
-            this.accessoryBagLoaded = true;
-        }
-
-        return this.accessoryBag;
-    }
-
-    public @NotNull TrophyFish getTrophyFish() {
-        if (this.trophyFish == null)
-            this.trophyFish = new TrophyFish(this.trophyFishMap);
-
-        return this.trophyFish;
+    @Override
+    public void postInit() {
+        this.accessoryBag.initialize(this);
+        this.trophyFish = new TrophyFish(this.trophyFishMap);
     }
 
 }

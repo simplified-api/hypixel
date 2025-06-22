@@ -1,18 +1,10 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.dungeon;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.dungeon;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.SimplifiedApi;
-import dev.sbs.minecraftapi.util.SkyBlockDate;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.Experience;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.weight.Weight;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.weight.Weighted;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.minecraftapi.data.model.dungeon_data.dungeon_classes.DungeonClassModel;
-import dev.sbs.minecraftapi.data.model.dungeon_data.dungeon_levels.DungeonLevelModel;
-import dev.sbs.minecraftapi.data.model.dungeon_data.dungeons.DungeonModel;
-import dev.sbs.api.util.NumberUtil;
+import dev.sbs.minecraftapi.util.SkyBlockDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -79,16 +71,7 @@ public class Dungeon {
     @SerializedName("fastest_time_s_plus")
     protected @NotNull ConcurrentMap<Integer, Integer> fastestSPlusTierTime = Concurrent.newMap();
 
-    /**
-     * Wraps this class in a {@link Experience} and {@link Weight} class.
-     * <br><br>
-     * Requires an active database session.
-     */
-    public @NotNull EnhancedDungeon asEnhanced() {
-        return new EnhancedDungeon(this);
-    }
-
-    public @NotNull ConcurrentMap<Integer, Double> getMostDamage(@NotNull Class.Type classType) {
+    public @NotNull ConcurrentMap<Integer, Double> getMostDamage(@NotNull DungeonClass.Type classType) {
         return switch (classType) {
             case HEALER -> this.mostDamageHealer.toUnmodifiableMap();
             case MAGE -> this.mostDamageMage.toUnmodifiableMap();
@@ -110,17 +93,12 @@ public class Dungeon {
         @Accessors(fluent = true)
         private final boolean containsExperience;
 
-        /**
-         * Gets the {@link DungeonModel} for the given {@link Type}.
-         * <br><br>
-         * Requires an active database session.
-         */
-        public @NotNull DungeonModel getModel() {
+        /*public @NotNull DungeonModel getModel() {
             if (this == UNKNOWN)
                 throw new UnsupportedOperationException("Unknown does not exist in the database!");
 
             return SimplifiedApi.getRepositoryOf(DungeonModel.class).findFirstOrNull(DungeonModel::getKey, this.name());
-        }
+        }*/
 
         public boolean isMasterMode() {
             return this == MASTER_CATACOMBS;
@@ -171,100 +149,9 @@ public class Dungeon {
         @SerializedName("secrets_found")
         @Getter private int secretsFound;
 
-        public DungeonClassModel getDungeonClass() {
+        /*public DungeonClassModel getDungeonClass() {
             return SimplifiedApi.getRepositoryOf(DungeonClassModel.class).findFirstOrNull(DungeonClassModel::getKey, this.dungeonClass.toUpperCase());
-        }
-
-    }
-
-    @Getter
-    @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
-    public static class Class {
-
-        private final @NotNull Type type;
-        private final double experience;
-
-        /**
-         * Wraps this class in a {@link Experience} and {@link Weight} class.
-         * <br><br>
-         * Requires an active database session.
-         */
-        public @NotNull Dungeon.EnhancedClass asEnhanced() {
-            return new EnhancedClass(this);
-        }
-
-        public enum Type {
-
-            UNKNOWN,
-            HEALER,
-            MAGE,
-            BERSERK,
-            ARCHER,
-            TANK;
-
-            /**
-             * Gets the {@link DungeonClassModel} for the given {@link Type}.
-             * <br><br>
-             * Requires an active database session.
-             */
-            public @NotNull DungeonClassModel getModel() {
-                if (this == UNKNOWN)
-                    throw new UnsupportedOperationException("Unknown does not exist in the database!");
-
-                return SimplifiedApi.getRepositoryOf(DungeonClassModel.class).findFirstOrNull(DungeonClassModel::getKey, this.name());
-            }
-
-            public static @NotNull Type of(@NotNull String name) {
-                return Arrays.stream(values())
-                    .filter(type -> type.name().equalsIgnoreCase(name))
-                    .findFirst()
-                    .orElse(UNKNOWN);
-            }
-
-        }
-
-    }
-
-    @Getter
-    public static class EnhancedClass extends Class implements Experience, Weighted {
-
-        private final @NotNull DungeonClassModel typeModel;
-        private final @NotNull ConcurrentList<Double> experienceTiers;
-
-        private EnhancedClass(@NotNull Class dungeonClass) {
-            super(dungeonClass.getType(), dungeonClass.getExperience());
-            this.typeModel = this.getType().getModel();
-            this.experienceTiers = SimplifiedApi.getRepositoryOf(DungeonLevelModel.class)
-                .stream()
-                .map(DungeonLevelModel::getTotalExpRequired)
-                .collect(Concurrent.toList());
-        }
-
-        @Override
-        public int getMaxLevel() {
-            return this.getExperienceTiers().size();
-        }
-
-        @Override
-        public @NotNull Weight getWeight() {
-            double rawLevel = this.getRawLevel();
-            ConcurrentList<Double> experienceTiers = this.getExperienceTiers();
-            double maxDungeonClassExperienceRequired = experienceTiers.get(experienceTiers.size() - 1);
-
-            if (rawLevel < this.getMaxLevel())
-                rawLevel += (this.getProgressPercentage() / 100); // Add Percentage Progress to Next Level
-
-            double base = Math.pow(rawLevel, 4.5) * this.getTypeModel().getWeightMultiplier();
-            double weightValue = NumberUtil.round(base, 2);
-            double weightOverflow = 0;
-
-            if (this.getExperience() > maxDungeonClassExperienceRequired) {
-                double overflow = Math.pow((this.getExperience() - maxDungeonClassExperienceRequired) / (4 * maxDungeonClassExperienceRequired / base), 0.968);
-                weightOverflow = NumberUtil.round(overflow, 2);
-            }
-
-            return Weight.of(weightValue, weightOverflow);
-        }
+        }*/
 
     }
 

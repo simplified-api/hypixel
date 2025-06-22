@@ -1,12 +1,10 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.account.Banking;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.account.CommunityUpgrades;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.member.Member;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.profile_stats.ProfileStats;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.linked.ConcurrentLinkedMap;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.account.Banking;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.account.CommunityUpgrades;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,23 +32,6 @@ public class SkyBlockIsland {
     private @NotNull Optional<String> profileName = Optional.empty();
     private boolean selected;
     private @NotNull ConcurrentLinkedMap<UUID, Member> members = Concurrent.newLinkedMap();
-
-    /**
-     * Wraps this class with database access.
-     * <br><br>
-     * Requires an active database session.
-     */
-    public @NotNull EnhancedSkyBlockIsland asEnhanced() {
-        return new EnhancedSkyBlockIsland(this);
-    }
-
-    public @NotNull ProfileStats getProfileStats(@NotNull Member member) {
-        return this.getProfileStats(member, true);
-    }
-
-    public @NotNull ProfileStats getProfileStats(@NotNull Member member, boolean calculateBonus) {
-        return new ProfileStats(this, member.asEnhanced(), calculateBonus);
-    }
 
     public boolean hasMember(@NotNull UUID uniqueId) {
         return this.getMembers().containsKey(uniqueId);

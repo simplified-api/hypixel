@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
+import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.api.stream.pair.Pair;
 import dev.sbs.api.util.Range;
@@ -20,9 +21,12 @@ import java.util.Arrays;
 import java.util.Optional;
 
 @Getter
-public class CrimsonIsle {
+public class CrimsonIsle implements PostInit {
 
-    private @NotNull ConcurrentMap<String, Integer> dojo = Concurrent.newMap();
+    private Dojo dojo;
+    @Getter(AccessLevel.NONE)
+    @SerializedName("dojo")
+    private @NotNull ConcurrentMap<String, Integer> dojoMap = Concurrent.newMap();
     private Abiphone abiphone = new Abiphone();
     private Matriarch matriarch = new Matriarch();
     @SerializedName("last_minibosses_killed")
@@ -37,6 +41,7 @@ public class CrimsonIsle {
     private int barbarianReputation;
 
     // Kuudra
+    private Kuudra kuudra;
     @Getter(AccessLevel.NONE)
     private @NotNull ConcurrentMap<String, Integer> kuudra_completed_tiers = Concurrent.newMap();
     @Getter(AccessLevel.NONE)
@@ -46,12 +51,10 @@ public class CrimsonIsle {
     @SerializedPath("kuudra_party_finder.group_builder")
     private Kuudra.GroupBuilder kuudra_group_builder = new Kuudra.GroupBuilder();
 
-    public @NotNull Dojo getDojo() {
-        return new Dojo(this.dojo);
-    }
-
-    public @NotNull Kuudra getKuudra() {
-        return new Kuudra(
+    @Override
+    public void postInit() {
+        this.dojo = new Dojo(this.dojoMap);
+        this.kuudra = new Kuudra(
             this.kuudra_completed_tiers,
             this.kuudra_search_settings,
             this.kuudra_group_builder

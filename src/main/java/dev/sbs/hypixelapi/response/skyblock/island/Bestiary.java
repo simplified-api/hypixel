@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.bestiary;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island;
 
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
@@ -17,14 +17,5 @@ public class Bestiary {
     private @NotNull ConcurrentMap<String, Integer> deaths = Concurrent.newMap();
     @SerializedPath("milestone.last_claimed_milestone")
     private int lastClaimedMilestone;
-
-    /**
-     * Wraps this class with database information.
-     * <br><br>
-     * Requires an active database session.
-     */
-    public @NotNull EnhancedBestiary asEnhanced() {
-        return new EnhancedBestiary(this);
-    }
 
 }

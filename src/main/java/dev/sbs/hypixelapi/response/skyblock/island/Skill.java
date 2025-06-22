@@ -1,11 +1,6 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.skill;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.SimplifiedApi;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.JacobsContest;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.Experience;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.implementation.island.util.weight.Weight;
-import dev.sbs.minecraftapi.data.model.skills.SkillModel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -18,15 +13,6 @@ public class Skill {
 
     protected final @NotNull Type type;
     protected final double experience;
-
-    /**
-     * Wraps this class in a {@link Experience} and {@link Weight} class.
-     * <br><br>
-     * Requires an active database session.
-     */
-    public @NotNull EnhancedSkill asEnhanced(@NotNull JacobsContest jacobsContest) {
-        return new EnhancedSkill(this, jacobsContest);
-    }
 
     @Getter
     @RequiredArgsConstructor
@@ -57,18 +43,6 @@ public class Skill {
         TAMING(false);
 
         private final boolean cosmetic;
-
-        /**
-         * Gets the {@link SkillModel} for the given {@link Skill}.
-         * <br><br>
-         * Requires an active database session.
-         */
-        public @NotNull SkillModel getModel() {
-            if (this == UNKNOWN)
-                throw new UnsupportedOperationException("Unknown does not exist in the database!");
-
-            return SimplifiedApi.getRepositoryOf(SkillModel.class).findFirstOrNull(SkillModel::getKey, this.name());
-        }
 
         public boolean notCosmetic() {
             return !this.isCosmetic();
