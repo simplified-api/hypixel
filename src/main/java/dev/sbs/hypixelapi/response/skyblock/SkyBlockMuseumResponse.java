@@ -3,7 +3,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.minecraftapi.skyblock.SkyBlockMuseum;
+import dev.sbs.minecraftapi.skyblock.Museum;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +14,6 @@ public class SkyBlockMuseumResponse {
 
     private boolean success;
     @SerializedName("members")
-    private @NotNull ConcurrentMap<UUID, SkyBlockMuseum> members = Concurrent.newMap();
+    private @NotNull ConcurrentMap<UUID, Museum> members = Concurrent.newMap();
 
 }

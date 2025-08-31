@@ -2,7 +2,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
 
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.minecraftapi.skyblock.SkyBlockBazaarProduct;
+import dev.sbs.minecraftapi.skyblock.BazaarProduct;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.Getter;
 
@@ -11,6 +11,6 @@ public class SkyBlockBazaarResponse {
 
     private boolean success;
     private SkyBlockDate.RealTime lastUpdated;
-    private final ConcurrentMap<String, SkyBlockBazaarProduct> products = Concurrent.newMap();
+    private final ConcurrentMap<String, BazaarProduct> products = Concurrent.newMap();
 
 }

@@ -3,7 +3,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.minecraftapi.skyblock.SkyBlockArticle;
+import dev.sbs.minecraftapi.skyblock.Article;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +12,6 @@ public class SkyBlockNewsResponse {
 
     private boolean success;
     @SerializedName("items")
-    private @NotNull ConcurrentList<SkyBlockArticle> articles = Concurrent.newList();
+    private @NotNull ConcurrentList<Article> articles = Concurrent.newList();
 
 }

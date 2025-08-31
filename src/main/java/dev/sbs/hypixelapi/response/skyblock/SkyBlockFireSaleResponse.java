@@ -2,7 +2,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
 
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.minecraftapi.skyblock.SkyBlockFireSale;
+import dev.sbs.minecraftapi.skyblock.FireSale;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,6 +10,6 @@ import org.jetbrains.annotations.NotNull;
 public class SkyBlockFireSaleResponse {
 
     private boolean success;
-    private @NotNull ConcurrentList<SkyBlockFireSale> sales = Concurrent.newList();
+    private @NotNull ConcurrentList<FireSale> sales = Concurrent.newList();
 
 }
