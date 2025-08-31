@@ -1,8 +1,9 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.bazaar;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
 
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.minecraftapi.util.SkyBlockDate;
+import dev.sbs.minecraftapi.skyblock.SkyBlockBazaarProduct;
+import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.Getter;
 
 @Getter
