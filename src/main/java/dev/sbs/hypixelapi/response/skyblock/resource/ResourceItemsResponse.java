@@ -2,7 +2,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock.resource;
 
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.minecraftapi.skyblock.data.json.JsonItem;
+import dev.sbs.minecraftapi.skyblock.model.json.JsonItem;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
