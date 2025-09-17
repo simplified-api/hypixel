@@ -26,7 +26,7 @@ public class ResourceSkillsResponse implements PostInit {
     @Override
     public void postInit() {
         this.skills = this.skillsMap.stream()
-            .map((id, skill) -> {
+            .mapToObj((id, skill) -> {
                 REFLECTION.setValue("id", skill, id.toUpperCase());
                 return skill;
             })

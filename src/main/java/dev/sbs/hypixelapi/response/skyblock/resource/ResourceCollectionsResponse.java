@@ -28,7 +28,7 @@ public class ResourceCollectionsResponse implements PostInit {
     @Override
     public void postInit() {
         this.collections = this.collectionMap.stream()
-            .map((id, collection) -> {
+            .mapToObj((id, collection) -> {
                 REFLECTION.setValue("id", collection, id.toUpperCase());
                 return collection;
             })
