@@ -25,8 +25,8 @@ public class SkyBlockProfilesResponse {
         return this.getIslands()
             .stream()
             .filter(skyBlockIsland -> skyBlockIsland.getProfile()
-                .map(islandProfile -> islandProfile.name().equalsIgnoreCase(profileName))
-                .orElse(false)
+                .name()
+                .equalsIgnoreCase(profileName)
             )
             .findFirst();
     }
