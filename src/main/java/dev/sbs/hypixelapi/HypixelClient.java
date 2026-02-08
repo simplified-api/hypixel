@@ -9,14 +9,14 @@ import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.collection.concurrent.ConcurrentSet;
 import dev.sbs.api.stream.pair.Pair;
 import dev.sbs.minecraftapi.client.hypixel.exception.HypixelApiException;
-import dev.sbs.minecraftapi.client.hypixel.request.HypixelRequest;
+import dev.sbs.minecraftapi.client.hypixel.request.HypixelEndpoints;
 import feign.FeignException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public final class HypixelClient extends Client<HypixelRequest> {
+public final class HypixelClient extends Client<HypixelEndpoints> {
 
     public HypixelClient() {
         super("api.hypixel.net");
