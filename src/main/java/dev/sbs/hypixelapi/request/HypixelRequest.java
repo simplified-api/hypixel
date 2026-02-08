@@ -1,5 +1,6 @@
 package dev.sbs.minecraftapi.client.hypixel.request;
 
+import dev.sbs.api.client.request.FeignRequest;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelCountsResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelGuildResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelPlayerResponse;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public interface HypixelRequest {
+public interface HypixelRequest extends FeignRequest {
 
     // Hypixel
 
