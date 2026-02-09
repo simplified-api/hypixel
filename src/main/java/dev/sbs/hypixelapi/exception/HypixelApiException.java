@@ -1,15 +1,15 @@
 package dev.sbs.minecraftapi.client.hypixel.exception;
 
-import dev.sbs.api.client.exception.ClientException;
+import dev.sbs.api.client.exception.ApiException;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
-public final class HypixelClientException extends ClientException {
+public final class HypixelApiException extends ApiException {
 
     private final @NotNull HypixelErrorResponse response;
 
-    public HypixelClientException(@NotNull String methodKey, @NotNull feign.Response response) {
+    public HypixelApiException(@NotNull String methodKey, @NotNull feign.Response response) {
         super(methodKey, response, "Hypixel");
         this.response = this.getBody()
             .map(json -> super.fromJson(json, HypixelErrorResponse.class))

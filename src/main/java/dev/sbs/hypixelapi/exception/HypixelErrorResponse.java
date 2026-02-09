@@ -1,14 +1,14 @@
 package dev.sbs.minecraftapi.client.hypixel.exception;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.client.exception.ClientErrorResponse;
+import dev.sbs.api.client.exception.ApiErrorResponse;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class HypixelErrorResponse implements ClientErrorResponse {
+public class HypixelErrorResponse implements ApiErrorResponse {
 
     @SerializedName("cause")
     protected String reason;
