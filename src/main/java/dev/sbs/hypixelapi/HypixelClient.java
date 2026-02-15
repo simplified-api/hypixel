@@ -2,7 +2,7 @@ package dev.sbs.minecraftapi.client.hypixel;
 
 import dev.sbs.api.SimplifiedApi;
 import dev.sbs.api.client.Client;
-import dev.sbs.api.client.exception.ClientErrorDecoder;
+import dev.sbs.api.client.decoder.ClientErrorDecoder;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.stream.pair.Pair;
