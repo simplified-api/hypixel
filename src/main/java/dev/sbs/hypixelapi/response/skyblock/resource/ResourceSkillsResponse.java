@@ -11,6 +11,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Information regarding Skills.
+ */
 @Getter
 public class ResourceSkillsResponse implements PostInit {
 

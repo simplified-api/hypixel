@@ -7,6 +7,9 @@ import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Auctions which ended in the last 60 seconds.
+ */
 @Getter
 public class SkyBlockAuctionsEndedResponse {
 

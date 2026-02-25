@@ -8,6 +8,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Information regarding Items.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ResourceItemsResponse {

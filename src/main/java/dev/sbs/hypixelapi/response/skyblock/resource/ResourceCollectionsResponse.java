@@ -12,6 +12,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Information regarding Collections.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.NONE)
 public class ResourceCollectionsResponse implements PostInit {

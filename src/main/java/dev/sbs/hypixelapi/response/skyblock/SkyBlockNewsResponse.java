@@ -7,6 +7,11 @@ import dev.sbs.minecraftapi.skyblock.SkyBlockArticle;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Recent News and Announcements focused on SkyBlock.
+ * <p>
+ * This does not include Patch Notes or other announcements.
+ */
 @Getter
 public class SkyBlockNewsResponse {
 

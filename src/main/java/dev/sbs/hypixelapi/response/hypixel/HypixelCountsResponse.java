@@ -5,6 +5,9 @@ import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Current player counts for Hypixel games.
+ */
 @Getter
 public class HypixelCountsResponse {
 

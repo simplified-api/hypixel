@@ -6,6 +6,9 @@ import dev.sbs.minecraftapi.skyblock.SkyBlockBazaarProduct;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.Getter;
 
+/**
+ * List of products along with their sell summary, buy summary, and quick status
+ */
 @Getter
 public class SkyBlockBazaarResponse {
 

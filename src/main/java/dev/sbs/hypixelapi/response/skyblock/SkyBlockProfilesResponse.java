@@ -10,6 +10,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
+/**
+ * All profiles a specific player belongs to.
+ */
 @Getter
 public class SkyBlockProfilesResponse {
 

@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
+/**
+ * Museum data for an entire island.
+ */
 @Getter
 public class SkyBlockMuseumResponse {
 

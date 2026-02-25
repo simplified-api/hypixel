@@ -6,6 +6,9 @@ import lombok.Getter;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Current online status of a player.
+ */
 @Getter
 public class HypixelStatusResponse {
 
@@ -17,13 +20,11 @@ public class HypixelStatusResponse {
     @Getter
     public static class Session {
 
+        private static Session UNKNOWN = new Session();
         private boolean online;
         private Optional<String> gameType = Optional.empty();
         private Optional<String> mode = Optional.empty();
 
-        private static Session UNKNOWN = new Session();
-
     }
-
 
 }

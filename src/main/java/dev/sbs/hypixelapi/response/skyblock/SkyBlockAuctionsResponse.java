@@ -7,6 +7,9 @@ import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Currently active auctions sorted by most recent.
+ */
 @Getter
 public class SkyBlockAuctionsResponse {
 

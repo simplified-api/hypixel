@@ -6,6 +6,9 @@ import dev.sbs.minecraftapi.skyblock.SkyBlockFireSale;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Currently active or upcoming Fire Sales.
+ */
 @Getter
 public class SkyBlockFireSaleResponse {
 

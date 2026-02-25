@@ -8,6 +8,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Auction(s) specific to an ID, Player, or Island.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SkyBlockAuctionResponse {

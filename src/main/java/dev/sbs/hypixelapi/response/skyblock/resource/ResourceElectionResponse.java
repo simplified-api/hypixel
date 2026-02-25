@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Instant;
 import java.util.Optional;
 
+/**
+ * Information regarding the current Mayor and ongoing Election.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ResourceElectionResponse {
