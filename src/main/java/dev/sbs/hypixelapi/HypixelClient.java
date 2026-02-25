@@ -15,10 +15,6 @@ import java.util.function.Supplier;
 
 public final class HypixelClient extends Client<HypixelEndpoints> {
 
-    public HypixelClient() {
-        super("api.hypixel.net");
-    }
-
     @Override
     protected @NotNull ClientErrorDecoder configureErrorDecoder() {
         return (methodKey, response) -> {
