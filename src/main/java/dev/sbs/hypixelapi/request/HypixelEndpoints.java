@@ -1,6 +1,8 @@
 package dev.sbs.minecraftapi.client.hypixel.request;
 
 import dev.sbs.api.client.request.Endpoints;
+import dev.sbs.api.client.route.Route;
+import dev.sbs.minecraftapi.client.hypixel.exception.HypixelApiException;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelCountsResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelGuildResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelPlayerResponse;
@@ -24,79 +26,202 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
+@Route("api.hypixel.net/v2")
 public interface HypixelEndpoints extends Endpoints {
 
     // Hypixel
 
+    /**
+     * Request the current player counts for Hypixel games.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     */
     @RequestLine("GET /counts")
-    @NotNull HypixelCountsResponse getCounts();
+    @NotNull HypixelCountsResponse getCounts() throws HypixelApiException;
 
     @RequestLine("GET /guild?id={id}")
-    @NotNull HypixelGuildResponse getGuild(@Param("id") String guildId);
+    @NotNull HypixelGuildResponse getGuildById(@Param("id") String guildId) throws HypixelApiException;
 
     @RequestLine("GET /guild?name={name}")
-    @NotNull HypixelGuildResponse getGuildByName(@Param("name") String guildName);
+    @NotNull HypixelGuildResponse getGuildByName(@Param("name") String guildName) throws HypixelApiException;
 
     @RequestLine("GET /guild?player={player}")
-    @NotNull HypixelGuildResponse getGuildByPlayer(@Param("player") UUID playerId);
+    @NotNull HypixelGuildResponse getGuildByPlayer(@Param("player") UUID playerId) throws HypixelApiException;
 
     @RequestLine("GET /player?uuid={uuid}")
-    @NotNull HypixelPlayerResponse getPlayer(@Param("uuid") UUID playerId);
+    @NotNull HypixelPlayerResponse getPlayer(@Param("uuid") UUID playerId) throws HypixelApiException;
 
     @RequestLine("GET /punishmentstats")
-    @NotNull HypixelPunishmentStatsResponse getPunishmentStats();
+    @NotNull HypixelPunishmentStatsResponse getPunishmentStats() throws HypixelApiException;
 
+    /**
+     * Request the current online status of a specific player.
+     *
+     * @param playerId The UUID of the player to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     */
     @RequestLine("GET /status?uuid={uuid}")
-    @NotNull HypixelStatusResponse getStatus(@Param("uuid") UUID playerId);
+    @NotNull HypixelStatusResponse getStatus(@Param("uuid") UUID playerId) throws HypixelApiException;
 
     // SkyBlock
 
+    /**
+     * Request the Museum data for all members of the provided profile.
+     * <p>
+     * The data returned can differ depending on the players' in-game API settings.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     */
     @RequestLine("GET /skyblock/museum?profile={profile}")
-    @NotNull SkyBlockMuseumResponse getMuseum();
+    @NotNull SkyBlockMuseumResponse getMuseum() throws HypixelApiException;
 
+    /**
+     * Request recent News and Announcements focused on SkyBlock.
+     * <p>
+     * This does not include Patch Notes or other announcements.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     */
     @RequestLine("GET /skyblock/news")
-    @NotNull SkyBlockNewsResponse getNews();
+    @NotNull SkyBlockNewsResponse getNews() throws HypixelApiException;
 
-    @RequestLine("GET /v2/skyblock/profiles?uuid={uuid}")
-    @NotNull SkyBlockProfilesResponse getProfiles(@Param("uuid") UUID uniqueId);
+    /**
+     * Request all profiles of a player. This includes skills, collections, stats, objectives, etc.
+     * <p>
+     * The data returned can differ depending on the players' in-game API settings.
+     *
+     * @param playerId The UUID of the player to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     */
+    @RequestLine("GET /skyblock/profiles?uuid={uuid}")
+    @NotNull SkyBlockProfilesResponse getProfiles(@Param("uuid") UUID playerId) throws HypixelApiException;
 
+    /**
+     * Request the list of products along with their sell summary, buy summary, and quick status.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Not Required
+     */
     @RequestLine("GET /skyblock/bazaar")
-    @NotNull SkyBlockBazaarResponse getBazaar();
+    @NotNull SkyBlockBazaarResponse getBazaar() throws HypixelApiException;
 
+    /**
+     * Request a specific Auction.
+     *
+     * @param auctionId The UUID of the auction to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     */
     @RequestLine("GET /skyblock/auction?uuid={uuid}")
-    @NotNull SkyBlockAuctionResponse getAuction(@Param("uuid") UUID auctionId);
+    @NotNull SkyBlockAuctionResponse getAuctionById(@Param("uuid") UUID auctionId) throws HypixelApiException;
 
+    /**
+     * Request all Auctions of a specific island.
+     *
+     * @param islandId The UUID of the island to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     */
     @RequestLine("GET /skyblock/auction?profile={profile}")
-    @NotNull SkyBlockAuctionResponse getAuctionByIsland(@Param("profile") UUID islandId);
+    @NotNull SkyBlockAuctionResponse getAuctionByIsland(@Param("profile") UUID islandId) throws HypixelApiException;
 
+    /**
+     * Request all Auctions of a specific player.
+     *
+     * @param playerId The UUID of the player to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     */
     @RequestLine("GET /skyblock/auction?player={player}")
-    @NotNull SkyBlockAuctionResponse getAuctionByPlayer(@Param("player") UUID playerId);
+    @NotNull SkyBlockAuctionResponse getAuctionByPlayer(@Param("player") UUID playerId) throws HypixelApiException;
 
+    /**
+     * Request the currently active auctions sorted by most recent and paginated.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Not Required
+     */
     @RequestLine("GET /skyblock/auctions")
-    @NotNull SkyBlockAuctionsResponse getAuctions();
+    @NotNull SkyBlockAuctionsResponse getAuctions() throws HypixelApiException;
 
+    /**
+     * Request the currently active auctions sorted by most recent and paginated.
+     *
+     * @param page The page number to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Not Required
+     */
     @RequestLine("GET /skyblock/auctions?page={page}")
-    @NotNull SkyBlockAuctionsResponse getAuctions(@Param("page") Integer page);
+    @NotNull SkyBlockAuctionsResponse getAuctions(@Param("page") Integer page) throws HypixelApiException;
 
+    /**
+     * Request SkyBlock auctions which ended in the last 60 seconds.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Not Required
+     */
     @RequestLine("GET /skyblock/auctions_ended")
-    @NotNull SkyBlockAuctionsEndedResponse getEndedAuctions();
+    @NotNull SkyBlockAuctionsEndedResponse getEndedAuctions() throws HypixelApiException;
 
+    /**
+     * Request the currently active or upcoming Fire Sales.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Not Required
+     */
     @RequestLine("GET /skyblock/firesales")
-    @NotNull SkyBlockFireSaleResponse getFireSales();
+    @NotNull SkyBlockFireSaleResponse getFireSales() throws HypixelApiException;
 
     // SkyBlock Resources
 
+    /**
+     * Request information regarding Skills.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Not Required
+     */
     @RequestLine("GET /resources/skyblock/skills")
-    @NotNull ResourceSkillsResponse getSkills();
+    @NotNull ResourceSkillsResponse getSkills() throws HypixelApiException;
 
+    /**
+     * Request information regarding Collections.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Not Required
+     */
     @RequestLine("GET /resources/skyblock/collections")
-    @NotNull ResourceCollectionsResponse getCollections();
+    @NotNull ResourceCollectionsResponse getCollections() throws HypixelApiException;
 
+    /**
+     * Request information regarding Items.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Not Required
+     */
     @RequestLine("GET /resources/skyblock/items")
-    @NotNull ResourceItemsResponse getItems();
+    @NotNull ResourceItemsResponse getItems() throws HypixelApiException;
 
+    /**
+     * Request information regarding the current mayor and ongoing election.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Not Required
+     */
     @RequestLine("GET /resources/skyblock/election")
-    @NotNull ResourceElectionResponse getElection();
-
+    @NotNull ResourceElectionResponse getElection() throws HypixelApiException;
 
 }
