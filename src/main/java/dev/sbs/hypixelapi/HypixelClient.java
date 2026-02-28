@@ -5,7 +5,7 @@ import dev.sbs.api.client.Client;
 import dev.sbs.api.client.decoder.ClientErrorDecoder;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.stream.pair.Pair;
+import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.minecraftapi.client.hypixel.exception.HypixelApiException;
 import dev.sbs.minecraftapi.client.hypixel.request.HypixelEndpoints;
 import org.jetbrains.annotations.NotNull;
