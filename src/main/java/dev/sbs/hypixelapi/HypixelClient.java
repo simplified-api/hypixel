@@ -7,13 +7,13 @@ import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.minecraftapi.client.hypixel.exception.HypixelApiException;
-import dev.sbs.minecraftapi.client.hypixel.request.HypixelEndpoints;
+import dev.sbs.minecraftapi.client.hypixel.request.HypixelEndpoint;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public final class HypixelClient extends Client<HypixelEndpoints> {
+public final class HypixelClient extends Client<HypixelEndpoint> {
 
     @Override
     protected @NotNull ClientErrorDecoder configureErrorDecoder() {

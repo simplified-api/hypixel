@@ -1,6 +1,6 @@
 package dev.sbs.minecraftapi.client.hypixel.request;
 
-import dev.sbs.api.client.request.Endpoints;
+import dev.sbs.api.client.request.Endpoint;
 import dev.sbs.api.client.route.Route;
 import dev.sbs.minecraftapi.client.hypixel.exception.HypixelApiException;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelCountsResponse;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 @Route("api.hypixel.net/v2")
-public interface HypixelEndpoints extends Endpoints {
+public interface HypixelEndpoint extends Endpoint {
 
     // Hypixel
 
