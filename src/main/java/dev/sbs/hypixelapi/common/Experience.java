@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.common;
+package dev.sbs.minecraftapi.skyblock.common;
 
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import org.jetbrains.annotations.NotNull;
