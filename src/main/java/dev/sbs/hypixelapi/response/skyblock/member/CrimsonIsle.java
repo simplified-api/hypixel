@@ -9,7 +9,7 @@ import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.api.math.Range;
 import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.api.util.StringUtil;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.date.SkyBlockDate;
+import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

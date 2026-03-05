@@ -6,7 +6,7 @@ import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.reflection.Reflection;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.model.json.JsonCollection;
+import dev.sbs.minecraftapi.skyblock.model.json.JsonCollection;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
