@@ -8,6 +8,10 @@ import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelGuildResponse
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelPlayerResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelPunishmentStatsResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelStatusResponse;
+import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceCollectionsResponse;
+import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceElectionResponse;
+import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceItemsResponse;
+import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceSkillsResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctionResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctionsEndedResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctionsResponse;
@@ -16,10 +20,6 @@ import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockFireSaleRes
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMuseumResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockNewsResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockProfilesResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.resource.ResourceCollectionsResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.resource.ResourceElectionResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.resource.ResourceItemsResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.resource.ResourceSkillsResponse;
 import feign.Param;
 import feign.RequestLine;
 import org.jetbrains.annotations.NotNull;
