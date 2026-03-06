@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.Optional;
 
 @Getter
-@NoArgsConstructor
 public class CrimsonIsle implements PostInit {
 
     private @NotNull Abiphone abiphone = new Abiphone();

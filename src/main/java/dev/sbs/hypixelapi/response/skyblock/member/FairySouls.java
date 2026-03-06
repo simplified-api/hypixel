@@ -1,13 +1,10 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class FairySoulData {
+public class FairySouls {
 
     @SerializedName("total_collected")
     private int totalCollected;

@@ -4,11 +4,9 @@ import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.SerializedPath;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
-@NoArgsConstructor
 public class BestiaryData {
 
     private @NotNull ConcurrentMap<String, Integer> kills = Concurrent.newMap();
