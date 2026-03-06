@@ -36,7 +36,7 @@ public class SlayerData implements PostInit {
     @Override
     public void postInit() {
         this.bosses = this.slayerBosses.stream()
-            .with((id, boss) -> boss.setId(id))
+            .peek((id, boss) -> boss.setId(id))
             .mapToValue()
             .collect(Concurrent.toUnmodifiableList());
     }
