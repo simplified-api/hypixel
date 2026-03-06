@@ -17,6 +17,7 @@ import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctionsEnd
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctionsResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockBazaarResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockFireSaleResponse;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockGardenResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMuseumResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockNewsResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockProfilesResponse;
@@ -163,7 +164,7 @@ public interface HypixelEndpoint extends Endpoint {
     @NotNull SkyBlockAuctionsResponse getAuctions(@Param("page") Integer page) throws HypixelApiException;
 
     /**
-     * Request SkyBlock auctions which ended in the last 60 seconds.
+     * Request auctions which ended in the last 60 seconds.
      *
      * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
      * status range of 400+.
@@ -181,6 +182,16 @@ public interface HypixelEndpoint extends Endpoint {
      */
     @RequestLine("GET /skyblock/firesales")
     @NotNull SkyBlockFireSaleResponse getFireSales() throws HypixelApiException;
+
+    /**
+     * Request the garden data for the provided profile.
+     *
+     * @param islandId The UUID of the island to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     */
+    @RequestLine("GET /skyblock/garden?profile={profile}")
+    @NotNull SkyBlockGardenResponse getGarden(@Param("profile") UUID islandId) throws HypixelApiException;
 
     // SkyBlock Resources
 
