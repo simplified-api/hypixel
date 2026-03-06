@@ -13,7 +13,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
@@ -22,8 +21,6 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 public class SkyBlockIsland {
-
-    private static final DecimalFormat smallDecimalFormat = new DecimalFormat("#0.#");
 
     @SerializedName("profile_id")
     private @NotNull UUID islandId;
