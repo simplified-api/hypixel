@@ -5,8 +5,8 @@ import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.SerializedPath;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.PetProgress;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer.SlayerProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.PetEntry;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer.SlayerQuest;
 import dev.sbs.minecraftapi.skyblock.common.NbtContent;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.AccessLevel;
@@ -23,7 +23,7 @@ public class Rift {
 
     private Access access = new Access();
     @SerializedName("slayer_quest")
-    private SlayerQuest slayerQuest = new SlayerQuest();
+    private RiftSlayerQuest slayerQuest = new RiftSlayerQuest();
 
     // Locations
     @SerializedName("wizard_tower")
@@ -48,7 +48,7 @@ public class Rift {
     @SerializedName("dead_cats")
     private DeadCats deadCats = new DeadCats();
     @SerializedName("gallery")
-    private TimecharmGallery timecharmGallery = new TimecharmGallery();
+    private NbtContent timecharmGallery = new NbtContent();
     @SerializedName("lifetime_purchased_boundaries")
     private @NotNull ConcurrentList<String> purchasedBoundaries = Concurrent.newList();
 
@@ -90,12 +90,12 @@ public class Rift {
     }
 
     @Getter
-    public static class SlayerQuest extends SlayerProgress.Quest {
+    public static class RiftSlayerQuest extends SlayerQuest {
 
         @SerializedName("combat_xp")
         private int combatXP;
         @SerializedName("recent_mob_kills")
-        private @NotNull ConcurrentList<SlayerQuest.MobKill> recentMobKills = Concurrent.newList();
+        private @NotNull ConcurrentList<RiftSlayerQuest.MobKill> recentMobKills = Concurrent.newList();
         @SerializedName("last_killed_mob_island")
         private String lastKilledMobIsland;
 
@@ -355,7 +355,7 @@ public class Rift {
         @Accessors(fluent = true)
         @SerializedName("unlocked_pet")
         private boolean hasUnlockedPet;
-        private Optional<PetProgress.Entry> montezuma = Optional.empty();
+        private Optional<PetEntry> montezuma = Optional.empty();
 
     }
 
