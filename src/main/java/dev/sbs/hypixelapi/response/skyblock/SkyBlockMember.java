@@ -9,6 +9,7 @@ import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.api.util.mutable.MutableDouble;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.*;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson.CrimsonIsle;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon.DungeonProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.ForgeItem;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.GlaciteTunnels;
