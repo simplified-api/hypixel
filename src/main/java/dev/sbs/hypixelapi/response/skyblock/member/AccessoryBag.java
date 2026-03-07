@@ -41,22 +41,6 @@ public class AccessoryBag {
     private @NotNull ConcurrentList<String> unlockedPowerIds = Concurrent.newUnmodifiableList();
     private transient @NotNull ConcurrentMap<String, Double> selectedPowerStats = Concurrent.newUnmodifiableMap();
 
-    public @NotNull Optional<Power> getSelectedPower() {
-        return this.getSelectedPowerId().flatMap(powerId -> MinecraftApi.getRepository(Power.class)
-            .findFirst(Power::getId, powerId)
-        );
-    }
-
-    public @NotNull ConcurrentList<Power> getUnlockedPowers() {
-        return this.getUnlockedPowerIds()
-            .stream()
-            .map(powerId -> MinecraftApi.getRepository(Power.class)
-                .findFirst(Power::getId, powerId)
-            )
-            .flatMap(Optional::stream)
-            .collect(Concurrent.toUnmodifiableList());
-    }
-
     // Magical Power
     @SerializedName("highest_magical_power")
     private int highestMagicalPower;
@@ -177,6 +161,22 @@ public class AccessoryBag {
         );
 
         this.selectedPowerStats = stats;
+    }
+
+    public @NotNull Optional<Power> getSelectedPower() {
+        return this.getSelectedPowerId().flatMap(powerId -> MinecraftApi.getRepository(Power.class)
+            .findFirst(Power::getId, powerId)
+        );
+    }
+
+    public @NotNull ConcurrentList<Power> getUnlockedPowers() {
+        return this.getUnlockedPowerIds()
+            .stream()
+            .map(powerId -> MinecraftApi.getRepository(Power.class)
+                .findFirst(Power::getId, powerId)
+            )
+            .flatMap(Optional::stream)
+            .collect(Concurrent.toUnmodifiableList());
     }
 
     private int handleMagicalPower(@NotNull AccessoryData accessoryData, @NotNull SkyBlockMember member) {
