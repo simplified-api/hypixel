@@ -5,6 +5,8 @@ import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.SerializedPath;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.PetProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer.SlayerProgress;
 import dev.sbs.minecraftapi.skyblock.common.NbtContent;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.AccessLevel;
@@ -88,7 +90,7 @@ public class Rift {
     }
 
     @Getter
-    public static class SlayerQuest extends SlayerData.Quest {
+    public static class SlayerQuest extends SlayerProgress.Quest {
 
         @SerializedName("combat_xp")
         private int combatXP;
@@ -353,7 +355,7 @@ public class Rift {
         @Accessors(fluent = true)
         @SerializedName("unlocked_pet")
         private boolean hasUnlockedPet;
-        private Optional<PetData.Entry> montezuma = Optional.empty();
+        private Optional<PetProgress.Entry> montezuma = Optional.empty();
 
     }
 

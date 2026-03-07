@@ -82,7 +82,7 @@ public class SkyBlockIsland {
         return this.getMembers()
             .stream()
             .values()
-            .mapToInt(member -> member.getPlayerData().getCraftedMinions().size())
+            .mapToInt(member -> member.getProgress().getCraftedMinions().size())
             .sum() + this.getCommunityUpgrades()
             .map(communityUpgrades -> communityUpgrades.getUpgraded()
                 .stream()

@@ -9,10 +9,13 @@ import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.api.util.mutable.MutableDouble;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.*;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon.DungeonProfile;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon.DungeonProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.ForgeItem;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.GlaciteTunnels;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.Mining;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.PetProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.skill.SkillProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer.SlayerProgress;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.AccessLevel;
@@ -44,19 +47,16 @@ public class SkyBlockMember implements PostInit {
 
     // Data
     @SerializedName("player_data")
-    private @NotNull PlayerData playerData = new PlayerData();
+    private @NotNull PlayerProgress progress = new PlayerProgress();
     @SerializedName("slayer")
-    private @NotNull SlayerData slayerData = new SlayerData();
+    private @NotNull SlayerProgress slayers = new SlayerProgress();
     @SerializedName("pets_data")
-    private @NotNull PetData petData = new PetData();
+    private @NotNull PetProgress pets = new PetProgress();
     @SerializedName("dungeons")
-    private @NotNull DungeonProfile dungeonData = new DungeonProfile();
+    private @NotNull DungeonProgress dungeons = new DungeonProgress();
     @SerializedName("player_stats")
-    private @NotNull StatData statData = new StatData();
-    private transient SkillData skillData;
-
-    // Locations
-    private @NotNull Rift rift = new Rift();
+    private @NotNull Statistics statistics = new Statistics();
+    private transient SkillProgress skills;
 
     // Mining
     private @NotNull Mining mining = new Mining();
@@ -65,6 +65,7 @@ public class SkyBlockMember implements PostInit {
     @SerializedName("glacite_player_data")
     private @NotNull GlaciteTunnels glaciteTunnels = new GlaciteTunnels();
 
+    private @NotNull Rift rift = new Rift();
     private @NotNull BestiaryData bestiary = new BestiaryData();
     @SerializedName("accessory_bag_storage")
     private @NotNull AccessoryBag accessoryBag = new AccessoryBag();
@@ -96,11 +97,11 @@ public class SkyBlockMember implements PostInit {
     public void postInit() {
         this.accessoryBag.initialize(this);
         this.trophyFish = new TrophyFishing(this.trophyFishMap);
-        this.skillData = new SkillData(this.getPlayerData().getSkillExperience(), this);
+        this.skills = new SkillProgress(this.getProgress().getSkillExperience(), this);
 
         this.collectionUnlocked = this.getCollection()
             .stream()
-            .map((itemId, value) -> Pair.of(itemId, this.getPlayerData()
+            .map((itemId, value) -> Pair.of(itemId, this.getProgress()
                 .getUnlockedCollectionTiers()
                 .stream()
                 .filter(tier -> tier.matches(String.format("^%s_[\\d]+$", itemId)))
@@ -112,17 +113,17 @@ public class SkyBlockMember implements PostInit {
     }
 
     public @NotNull ConcurrentList<Integer> getCraftedMinions(@NotNull String itemId) {
-        return this.getPlayerData().getCraftedMinions(itemId);
+        return this.getProgress().getCraftedMinions(itemId);
     }
 
     // Weight
 
     public @NotNull Weight getTotalWeight() {
         // Load Weights
-        Weight skillWeight = this.getTotalWeight(member -> member.getSkillData().getWeight());
-        Weight slayerWeight = this.getTotalWeight(member -> member.getSlayerData().getWeight());
-        Weight dungeonWeight = this.getTotalWeight(member -> member.getDungeonData().getWeight());
-        Weight dungeonClassWeight = this.getTotalWeight(member -> member.getDungeonData().getClassWeight());
+        Weight skillWeight = this.getTotalWeight(member -> member.getSkills().getWeight());
+        Weight slayerWeight = this.getTotalWeight(member -> member.getSlayers().getWeight());
+        Weight dungeonWeight = this.getTotalWeight(member -> member.getDungeons().getWeight());
+        Weight dungeonClassWeight = this.getTotalWeight(member -> member.getDungeons().getClassWeight());
 
         return Weight.of(
             skillWeight.getValue() + slayerWeight.getValue() + dungeonWeight.getValue() + dungeonClassWeight.getValue(),
