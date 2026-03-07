@@ -10,6 +10,7 @@ import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelPunishmentSta
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelStatusResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceCollectionsResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceElectionResponse;
+import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceGamesResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceItemsResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceSkillsResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctionResponse;
@@ -65,6 +66,11 @@ public interface HypixelEndpoint extends Endpoint {
      */
     @RequestLine("GET /status?uuid={uuid}")
     @NotNull HypixelStatusResponse getStatus(@Param("uuid") UUID playerId) throws HypixelApiException;
+
+    // Hypixel Resources
+
+    @RequestLine("GET /resources/games")
+    @NotNull ResourceGamesResponse getGames() throws HypixelApiException;
 
     // SkyBlock
 
