@@ -3,6 +3,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.rift;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +18,18 @@ public class VillagePlaza {
     @SerializedName("barry_center")
     private @NotNull BarryCenter barryCenter = new BarryCenter();
     private @NotNull Cowboy cowboy = new Cowboy();
+    @Getter(AccessLevel.NONE)
     private @NotNull Lonely lonely = new Lonely();
+    @Getter(AccessLevel.NONE)
     private @NotNull Seraphine seraphine = new Seraphine();
+
+    public int getSecondsSitting() {
+        return this.lonely.getSecondsSitting();
+    }
+
+    public int getSeraphineStepIndex() {
+        return this.seraphine.getStepIndex();
+    }
 
     @Getter
     public static class Murder {
@@ -55,7 +66,7 @@ public class VillagePlaza {
     }
 
     @Getter
-    public static class Lonely {
+    private static class Lonely {
 
         @SerializedName("seconds_sitting")
         private int secondsSitting;
@@ -63,7 +74,7 @@ public class VillagePlaza {
     }
 
     @Getter
-    public static class Seraphine {
+    private static class Seraphine {
 
         @SerializedName("step_index")
         private int stepIndex;
