@@ -5,15 +5,13 @@ import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
 @Getter
-public class PlayerData {
+public class PlayerProgress {
 
     @SerializedName("death_count")
     private int deathCount;
@@ -59,18 +57,6 @@ public class PlayerData {
             .map(item -> Integer.parseInt(item.replace(String.format("%s_", itemId), "")))
             .collect(Concurrent.toList())
             .sorted(Comparator.naturalOrder());
-    }
-
-    @Getter
-    @NoArgsConstructor(access = AccessLevel.PRIVATE)
-    public static class CenturyCake {
-
-        private int stat; // This is in ordinal order in stat menu
-        private String key;
-        private int amount;
-        @SerializedName("expire_at")
-        private SkyBlockDate.RealTime expiresAt;
-
     }
 
 }
