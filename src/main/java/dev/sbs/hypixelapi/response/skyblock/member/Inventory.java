@@ -6,7 +6,6 @@ import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.collection.concurrent.linked.ConcurrentLinkedMap;
 import dev.sbs.minecraftapi.skyblock.common.NbtContent;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
 public class Inventory {
@@ -36,7 +35,6 @@ public class Inventory {
 
 
     @Getter
-    @NoArgsConstructor
     public static class Bags {
 
         @SerializedName("fishing_bag")

@@ -9,7 +9,7 @@ public class ItemSettings {
     @SerializedName("teleporter_pill_consumed")
     private boolean teleporterPillConsumed;
     @SerializedName("favorite_arrow")
-    private String favoriteArrow;
+    private String favoriteArrow = "ARROW";
     private int soulflow;
 
 }
