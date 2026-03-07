@@ -14,6 +14,7 @@ import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.Forge
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.GlaciteTunnels;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.Mining;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.PetProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.rift.RiftProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.skill.SkillProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer.SlayerProgress;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
@@ -54,6 +55,8 @@ public class SkyBlockMember implements PostInit {
     private @NotNull PetProgress pets = new PetProgress();
     @SerializedName("dungeons")
     private @NotNull DungeonProgress dungeons = new DungeonProgress();
+    @SerializedName("rift")
+    private @NotNull RiftProgress rift = new RiftProgress();
     @SerializedName("player_stats")
     private @NotNull Statistics statistics = new Statistics();
     private transient SkillProgress skills;
@@ -65,7 +68,6 @@ public class SkyBlockMember implements PostInit {
     @SerializedName("glacite_player_data")
     private @NotNull GlaciteTunnels glaciteTunnels = new GlaciteTunnels();
 
-    private @NotNull Rift rift = new Rift();
     private @NotNull BestiaryData bestiary = new BestiaryData();
     @SerializedName("accessory_bag_storage")
     private @NotNull AccessoryBag accessoryBag = new AccessoryBag();
