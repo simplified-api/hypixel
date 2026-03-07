@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 @Getter
-public class StatData {
+public class Statistics {
 
     private @NotNull Races races = new Races();
     private @NotNull Mythos mythos = new Mythos();
