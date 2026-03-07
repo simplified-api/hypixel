@@ -31,8 +31,9 @@ public class DungeonProgress implements PostInit {
     @SerializedName("selected_dungeon_class")
     private @NotNull DungeonClass.Type selectedClass = DungeonClass.Type.UNKNOWN;
     @SerializedName("daily_runs")
-    private @NotNull DailyRuns dailyRuns = new DailyRuns();
-    private @NotNull Treasures treasures = new Treasures();
+    private @NotNull DungeonDailies dailies = new DungeonDailies();
+    @Getter(AccessLevel.NONE)
+    private @NotNull DungeonTreasures treasures = new DungeonTreasures();
 
     // PostInit
 
@@ -124,6 +125,22 @@ public class DungeonProgress implements PostInit {
                 dungeonClass.getWeight()
             ))
             .collect(Concurrent.toMap());
+    }
+
+    public @NotNull ConcurrentList<DungeonChest> getChests() {
+        return this.treasures.getChests();
+    }
+
+    public @NotNull ConcurrentList<DungeonRun> getRuns() {
+        return this.treasures.getRuns();
+    }
+
+    @Getter
+    private static class DungeonTreasures {
+
+        private @NotNull ConcurrentList<DungeonRun> runs = Concurrent.newList();
+        private @NotNull ConcurrentList<DungeonChest> chests = Concurrent.newList();
+
     }
 
 }

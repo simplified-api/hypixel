@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 
 @Getter
-public class DailyRuns {
+public class DungeonDailies {
 
     @SerializedName("current_day_stamp")
     private int currentDayStamp;
