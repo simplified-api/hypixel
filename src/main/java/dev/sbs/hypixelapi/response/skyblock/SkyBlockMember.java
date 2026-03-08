@@ -12,6 +12,7 @@ import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.*;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.attribute.AttributeProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson.CrimsonIsle;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon.DungeonProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.hoppity.ChocolateFactory;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.ForgeItem;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.GlaciteTunnels;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.MiningCore;
@@ -68,6 +69,9 @@ public class SkyBlockMember implements PostInit {
     // Core
     @SerializedName("foraging_core")
     private @NotNull ForagingCore foraging = new ForagingCore();
+
+    @Getter(AccessLevel.NONE)
+    private @NotNull Events events = new Events();
 
     // Mining
     @SerializedName("mining_core")
@@ -131,6 +135,10 @@ public class SkyBlockMember implements PostInit {
         return this.getProgress().getCraftedMinions(itemId);
     }
 
+    public @NotNull ChocolateFactory getChocolateFactory() {
+        return this.events.getChocolateFactory();
+    }
+
     public @NotNull ConcurrentList<String> getUnlockedTemples() {
         return this.temples.getUnlockedTemples();
     }
@@ -163,6 +171,14 @@ public class SkyBlockMember implements PostInit {
             });
 
         return Weight.of(totalWeight.get(), totalOverflow.get());
+    }
+
+    @Getter
+    private static class Events {
+
+        @SerializedName("easter")
+        private @NotNull ChocolateFactory chocolateFactory = new ChocolateFactory();
+
     }
 
     @Getter
