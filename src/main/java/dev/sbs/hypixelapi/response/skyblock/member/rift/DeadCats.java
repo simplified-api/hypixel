@@ -16,14 +16,12 @@ public class DeadCats {
     @Accessors(fluent = true)
     @SerializedName("talked_to_jacquelle")
     private boolean hasTalkedToJacquelle;
-    @Accessors(fluent = true)
     @SerializedName("picked_up_detector")
-    private boolean hasPickedUpDetector;
+    private boolean detectorPickedUp;
     @SerializedName("found_cats")
     private @NotNull ConcurrentList<String> foundCats = Concurrent.newList();
-    @Accessors(fluent = true)
     @SerializedName("unlocked_pet")
-    private boolean hasUnlockedPet;
+    private boolean petUnlocked;
     private @NotNull Optional<PetEntry> montezuma = Optional.empty();
 
 }
