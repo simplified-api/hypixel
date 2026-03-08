@@ -9,11 +9,12 @@ import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.api.util.mutable.MutableDouble;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.*;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.attribute.AttributeProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson.CrimsonIsle;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon.DungeonProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.ForgeItem;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.GlaciteTunnels;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.Mining;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.MiningCore;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.PetProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.rift.RiftProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.skill.SkillProgress;
@@ -58,18 +59,25 @@ public class SkyBlockMember implements PostInit {
     private @NotNull DungeonProgress dungeons = new DungeonProgress();
     @SerializedName("rift")
     private @NotNull RiftProgress rift = new RiftProgress();
+    @SerializedName("shards")
+    private @NotNull AttributeProgress attributes = new AttributeProgress();
     @SerializedName("player_stats")
     private @NotNull Statistics statistics = new Statistics();
     private transient SkillProgress skills;
 
+    // Core
+    @SerializedName("foraging_core")
+    private @NotNull ForagingCore foraging = new ForagingCore();
+
     // Mining
-    private @NotNull Mining mining = new Mining();
+    @SerializedName("mining_core")
+    private @NotNull MiningCore mining = new MiningCore();
     @SerializedPath("forge.forge_processes.forge_1")
     private @NotNull ConcurrentMap<Integer, ForgeItem> forge = Concurrent.newMap();
     @SerializedName("glacite_player_data")
     private @NotNull GlaciteTunnels glaciteTunnels = new GlaciteTunnels();
 
-    private @NotNull BestiaryData bestiary = new BestiaryData();
+    private @NotNull Bestiary bestiary = new Bestiary();
     @SerializedName("accessory_bag_storage")
     private @NotNull AccessoryBag accessoryBag = new AccessoryBag();
     private @NotNull Leveling leveling = new Leveling();
@@ -84,7 +92,11 @@ public class SkyBlockMember implements PostInit {
     @SerializedName("jacobs_contest")
     private @NotNull JacobsContest jacobsContest = new JacobsContest();
     private @NotNull Inventory inventory = new Inventory();
+    @SerializedName("shared_inventory")
+    private @NotNull SharedInventory sharedInventory = new SharedInventory();
     private @NotNull Optional<Quests> quests = Optional.empty();
+    @Getter(AccessLevel.NONE)
+    private @NotNull Temples temples = new Temples();
 
     // Maps
     @SerializedName("trophy_fish")
@@ -119,6 +131,10 @@ public class SkyBlockMember implements PostInit {
         return this.getProgress().getCraftedMinions(itemId);
     }
 
+    public @NotNull ConcurrentList<String> getUnlockedTemples() {
+        return this.temples.getUnlockedTemples();
+    }
+
     // Weight
 
     public @NotNull Weight getTotalWeight() {
@@ -147,6 +163,14 @@ public class SkyBlockMember implements PostInit {
             });
 
         return Weight.of(totalWeight.get(), totalOverflow.get());
+    }
+
+    @Getter
+    private static class Temples {
+
+        @SerializedName("unlocked_temples")
+        private @NotNull ConcurrentList<String> unlockedTemples = Concurrent.newList();
+
     }
 
 }
