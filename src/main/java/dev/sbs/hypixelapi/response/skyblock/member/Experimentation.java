@@ -17,27 +17,31 @@ public class Experimentation implements PostInit {
     @SerializedName("claims_resets")
     private int resetClaims;
     @SerializedName("claims_resets_timestamp")
-    private Optional<SkyBlockDate.RealTime> resetClaimsTimestamp = Optional.empty();
+    private Optional<SkyBlockDate.RealTime> resetClaimsAt = Optional.empty();
     @SerializedName("serums_drank")
     private int serumsDrank;
+    @SerializedName("charge_track_timestamp")
+    private Optional<SkyBlockDate.RealTime> chargeTrackAt = Optional.empty();
+    @SerializedName("claimed_retroactive_rng")
+    private boolean claimedRetroactiveRngMeter;
 
     @Getter(AccessLevel.NONE)
-    private @NotNull ConcurrentMap<String, Long> pairings = Concurrent.newMap();
-    private transient @NotNull Optional<Table> superpairs = Optional.empty();
+    private @NotNull ConcurrentMap<String, Object> pairings = Concurrent.newMap();
+    private transient Table superpairs;
 
     @Getter(AccessLevel.NONE)
-    private @NotNull ConcurrentMap<String, Long> simon = Concurrent.newMap();
-    private transient @NotNull Optional<Table> chronomatron = Optional.empty();
+    private @NotNull ConcurrentMap<String, Object> simon = Concurrent.newMap();
+    private transient Table chronomatron;
 
     @Getter(AccessLevel.NONE)
-    private @NotNull ConcurrentMap<String, Long> numbers = Concurrent.newMap();
-    private transient @NotNull Optional<Table> ultrasequencer = Optional.empty();
+    private @NotNull ConcurrentMap<String, Object> numbers = Concurrent.newMap();
+    private transient Table ultrasequencer;
 
     @Override
     public void postInit() {
-        this.superpairs = Optional.of(new Table(this.pairings));
-        this.chronomatron = Optional.of(new Table(this.simon));
-        this.ultrasequencer = Optional.of(new Table(this.numbers));
+        this.superpairs = new Table(this.pairings);
+        this.chronomatron = new Table(this.simon);
+        this.ultrasequencer = new Table(this.numbers);
     }
 
     @Getter
@@ -46,15 +50,17 @@ public class Experimentation implements PostInit {
         private final @NotNull SkyBlockDate.RealTime lastAttempt;
         private final @NotNull SkyBlockDate.RealTime lastClaimed;
         private final int bonusClicks;
+        private final boolean claimed;
         private final @NotNull ConcurrentMap<Integer, Integer> attempts;
         private final @NotNull ConcurrentMap<Integer, Integer> claims;
         private final @NotNull ConcurrentMap<Integer, Integer> bestScore;
 
-        private Table(@NotNull ConcurrentMap<String, Long> tableData) {
-            ConcurrentMap<String, Long> tableDataMap = Concurrent.newMap(tableData);
-            this.lastAttempt = new SkyBlockDate.RealTime(tableDataMap.removeOrGet("last_attempt", 0L));
-            this.lastClaimed = new SkyBlockDate.RealTime(tableDataMap.removeOrGet("last_claimed", 0L));
-            this.bonusClicks = tableDataMap.removeOrGet("bonus_clicks", 0L).intValue();
+        private Table(@NotNull ConcurrentMap<String, Object> tableData) {
+            ConcurrentMap<String, Object> tableDataMap = Concurrent.newMap(tableData);
+            this.lastAttempt = new SkyBlockDate.RealTime((long) tableDataMap.removeOrGet("last_attempt", 0L));
+            this.lastClaimed = new SkyBlockDate.RealTime((long) tableDataMap.removeOrGet("last_claimed", 0L));
+            this.bonusClicks = (int) tableDataMap.removeOrGet("bonus_clicks", 0);
+            this.claimed = (boolean) tableDataMap.removeOrGet("claimed", false);
 
             ConcurrentMap<String, ConcurrentMap<Integer, Integer>> filteredData = Concurrent.newMap();
 
@@ -63,7 +69,7 @@ public class Experimentation implements PostInit {
                     filteredData.put(key, Concurrent.newMap());
 
                 String actual = key.substring(0, key.lastIndexOf("_"));
-                filteredData.get(key).put(Integer.parseInt(key.replace(String.format("%s_", actual), "")), value.intValue());
+                filteredData.get(key).put(Integer.parseInt(key.replace(String.format("%s_", actual), "")), (int) value);
             });
 
             this.attempts = filteredData.removeOrGet("attempts", Concurrent.newMap());
