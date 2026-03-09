@@ -9,19 +9,19 @@ import org.jetbrains.annotations.NotNull;
 @AllArgsConstructor
 public enum RabbitEmployee {
 
-    @SerializedName("RABBIT_BRO")
+    @SerializedName("rabbit_bro")
     BRO("Bro"),
-    @SerializedName("RABBIT_COUSIN")
+    @SerializedName("rabbit_cousin")
     COUSIN("Cousin"),
-    @SerializedName("RABBIT_SIS")
+    @SerializedName("rabbit_sis")
     SISTER("Sis"),
-    @SerializedName("RABBIT_FATHER")
+    @SerializedName("rabbit_father")
     FATHER("Daddy"),
-    @SerializedName("RABBIT_GRANDMA")
+    @SerializedName("rabbit_grandma")
     GRANDMA("Granny"),
-    @SerializedName("RABBIT_UNCLE")
+    @SerializedName("rabbit_uncle")
     UNCLE("Uncle"),
-    @SerializedName("RABBIT_DOG")
+    @SerializedName("rabbit_dog")
     DOG("Dog");
 
     private final @NotNull String name;

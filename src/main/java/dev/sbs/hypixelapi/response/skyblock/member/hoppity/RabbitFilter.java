@@ -5,11 +5,13 @@ import com.google.gson.annotations.SerializedName;
 public enum RabbitFilter {
 
     NONE,
+    @SerializedName("found")
     FOUND,
+    @SerializedName("not_found")
     NOT_FOUND,
-    @SerializedName("ACHIEVEMENTS")
+    @SerializedName("achievements")
     HAS_REQUIREMENT,
-    @SerializedName("NON_ACHIEVEMENTS")
+    @SerializedName("non_achievements")
     NO_REQUIREMENT
 
 }
