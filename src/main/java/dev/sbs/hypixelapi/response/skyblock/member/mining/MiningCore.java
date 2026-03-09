@@ -4,21 +4,17 @@ import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.PostInit;
-import dev.sbs.api.tuple.pair.Pair;
-import dev.sbs.api.util.NumberUtil;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.Optional;
 
 @Getter
 public class MiningCore implements PostInit {
 
-    private @NotNull ConcurrentMap<String, Object> nodes = Concurrent.newMap();
     @Accessors(fluent = true)
     @SerializedName("received_free_tier")
     private boolean hasReceivedFreeTier;
@@ -85,19 +81,6 @@ public class MiningCore implements PostInit {
     private int dailyOresMinedGlacite;
     @SerializedName("daily_ores_mined_day_glacite")
     private int dailyOresMinedDayGlacite;
-
-    public @NotNull ConcurrentMap<String, Double> getNodes() {
-        return this.nodes.stream()
-            .filter(entry -> !(entry.getValue() instanceof Boolean))
-            .collect(Concurrent.toMap(Map.Entry::getKey, entry -> NumberUtil.createDouble(entry.getValue().toString())));
-    }
-
-    public @NotNull ConcurrentMap<String, Boolean> getToggles() {
-        return this.nodes.stream()
-            .filter(entry -> (entry.getValue() instanceof Boolean))
-            .map(entry -> Pair.of(entry.getKey().replace("toggle_", ""), (boolean) entry.getValue()))
-            .collect(Concurrent.toMap());
-    }
 
     @Override
     public void postInit() {
