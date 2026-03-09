@@ -17,10 +17,11 @@ public class TrophyFishing {
     private final @NotNull PairOptional<String, TrophyFish.Tier> lastCaught;
 
     public TrophyFishing(@NotNull ConcurrentMap<String, Object> trophy_fish) {
-        this.totalCaught = (int) trophy_fish.removeOrGet("total_caught", 0);
+        ConcurrentMap<String, Object> trophy_fishMap = Concurrent.newMap(trophy_fish);
+        this.totalCaught = (int) trophy_fishMap.removeOrGet("total_caught", 0);
 
         this.lastCaught = PairOptional.of(
-            trophy_fish.getOptional("last_caught")
+            trophy_fishMap.getOptional("last_caught")
                 .map(String::valueOf)
                 .map(value -> value.split("/"))
                 .map(parts -> Pair.of(parts[0], TrophyFish.Tier.valueOf(parts[1])))
@@ -30,7 +31,7 @@ public class TrophyFishing {
             .stream()
             .map(type -> Pair.of(
                 type.getId(),
-                trophy_fish.stream()
+                trophy_fishMap.stream()
                     .filter(entry -> entry.getKey().startsWith(type.getId().toLowerCase()))
                     .map(entry -> Pair.of(
                         TrophyFish.Tier.valueOf(entry.getKey().replace(type.getId(), "")),

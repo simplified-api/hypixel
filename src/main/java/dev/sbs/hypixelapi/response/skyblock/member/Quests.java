@@ -39,14 +39,15 @@ public class Quests implements PostInit {
         private final @NotNull SkyBlockDate.RealTime selectedSongTimestamp;
         private final @NotNull ConcurrentMap<String, MelodyHarp.Song> songs;
 
-        MelodyHarp(@NotNull ConcurrentMap<String, Object> harpQuest) {
-            this.talismanClaimed = (boolean) harpQuest.removeOrGet("claimed_talisman", false);
-            this.selectedSong = harpQuest.getOptional("selected_song").map(String::valueOf);
-            long epoch = NumberUtil.createNumber(String.valueOf(harpQuest.removeOrGet("selected_song_epoch", 0))).longValue();
+        public MelodyHarp(@NotNull ConcurrentMap<String, Object> harpQuest) {
+            ConcurrentMap<String, Object> harpQuestMap = Concurrent.newMap(harpQuest);
+            this.talismanClaimed = (boolean) harpQuestMap.removeOrGet("claimed_talisman", false);
+            this.selectedSong = harpQuestMap.getOptional("selected_song").map(String::valueOf);
+            long epoch = NumberUtil.createNumber(String.valueOf(harpQuestMap.removeOrGet("selected_song_epoch", 0))).longValue();
             this.selectedSongTimestamp = new SkyBlockDate.RealTime(epoch * 1000);
 
             ConcurrentLinkedMap<String, ConcurrentMap<String, Integer>> songMap = Concurrent.newLinkedMap();
-            harpQuest.stream()
+            harpQuestMap.stream()
                 .filterValue(Number.class::isInstance)
                 .forEach((key, value) -> {
                     String songKey = key.replace("song_", "");

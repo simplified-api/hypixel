@@ -51,13 +51,14 @@ public class Experimentation implements PostInit {
         private final @NotNull ConcurrentMap<Integer, Integer> bestScore;
 
         private Table(@NotNull ConcurrentMap<String, Long> tableData) {
-            this.lastAttempt = new SkyBlockDate.RealTime(tableData.removeOrGet("last_attempt", 0L));
-            this.lastClaimed = new SkyBlockDate.RealTime(tableData.removeOrGet("last_claimed", 0L));
-            this.bonusClicks = tableData.removeOrGet("bonus_clicks", 0L).intValue();
+            ConcurrentMap<String, Long> tableDataMap = Concurrent.newMap(tableData);
+            this.lastAttempt = new SkyBlockDate.RealTime(tableDataMap.removeOrGet("last_attempt", 0L));
+            this.lastClaimed = new SkyBlockDate.RealTime(tableDataMap.removeOrGet("last_claimed", 0L));
+            this.bonusClicks = tableDataMap.removeOrGet("bonus_clicks", 0L).intValue();
 
             ConcurrentMap<String, ConcurrentMap<Integer, Integer>> filteredData = Concurrent.newMap();
 
-            tableData.forEach((key, value) -> {
+            tableDataMap.forEach((key, value) -> {
                 if (!filteredData.containsKey(key))
                     filteredData.put(key, Concurrent.newMap());
 
