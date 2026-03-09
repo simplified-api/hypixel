@@ -33,7 +33,7 @@ public class JacobsContest implements PostInit {
     @Getter(AccessLevel.NONE)
     @SerializedName("contests")
     private @NotNull ConcurrentMap<String, Contest> contestMap = Concurrent.newMap();
-    private @NotNull ConcurrentList<Contest> contests = Concurrent.newList();
+    private transient @NotNull ConcurrentList<Contest> contests = Concurrent.newList();
     @SerializedName("unique_brackets")
     private @NotNull ConcurrentMap<Medal, ConcurrentList<String>> uniqueBrackets = Concurrent.newMap();
     private boolean migration;
