@@ -42,12 +42,8 @@ public class SkyBlockMember implements PostInit {
     private @NotNull UUID uniqueId;
     @SerializedName("first_join_hub")
     private SkyBlockDate.SkyBlockTime firstJoinHub;
-    @SerializedPath("profile.first_join")
-    private SkyBlockDate.RealTime firstJoin;
-    @SerializedPath("profile.personal_bank_upgrade")
-    private int personalBankUpgrade;
-    @SerializedPath("profile.cookie_buff_active")
-    private boolean boosterCookieActive;
+    @Getter(AccessLevel.NONE)
+    private @NotNull Profile profile = new Profile();
 
     // Data
     @SerializedName("player_data")
@@ -144,8 +140,20 @@ public class SkyBlockMember implements PostInit {
         return this.events.getChocolateFactory();
     }
 
+    public @NotNull SkyBlockDate getFirstJoin() {
+        return this.profile.firstJoin;
+    }
+
+    public int getPersonalBankUpgrade() {
+        return this.profile.personalBankUpgrade;
+    }
+
     public @NotNull ConcurrentList<String> getUnlockedTemples() {
         return this.temples.getUnlockedTemples();
+    }
+
+    public boolean isBoosterCookieActive() {
+        return this.profile.boosterCookieActive;
     }
 
     // Weight
@@ -183,6 +191,18 @@ public class SkyBlockMember implements PostInit {
 
         @SerializedName("easter")
         private @NotNull ChocolateFactory chocolateFactory = new ChocolateFactory();
+
+    }
+
+    @Getter
+    private static class Profile {
+
+        @SerializedName("first_join")
+        private SkyBlockDate.RealTime firstJoin;
+        @SerializedName("personal_bank_upgrade")
+        private int personalBankUpgrade;
+        @SerializedName("cookie_buff_active")
+        private boolean boosterCookieActive;
 
     }
 
