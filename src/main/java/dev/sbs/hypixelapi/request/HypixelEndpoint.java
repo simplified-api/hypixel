@@ -28,6 +28,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
+/**
+ * Represents an interface for interacting with the Hypixel API endpoint.
+ * <p>
+ * This interface defines a set of methods that correspond to various Hypixel API endpoints
+ * for fetching information about players, guilds, SkyBlock data, and more.
+ * <p>
+ * Many endpoints require an API key for authentication, as noted in the corresponding
+ * {@code @apiNote} for the individual methods.
+ *
+ * @see <a href="https://api.hypixel.net/">Hypixel API</a>
+ * @version v2
+ */
 @Route("api.hypixel.net/v2")
 public interface HypixelEndpoint extends Endpoint {
 
@@ -38,22 +50,62 @@ public interface HypixelEndpoint extends Endpoint {
      *
      * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
      * status range of 400+.
+     * @apiNote API-Key Required
      */
     @RequestLine("GET /counts")
     @NotNull HypixelCountsResponse getCounts() throws HypixelApiException;
 
+    /**
+     * Request a guild by id.
+     *
+     * @param guildId The id of the guild to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Required
+     */
     @RequestLine("GET /guild?id={id}")
     @NotNull HypixelGuildResponse getGuildById(@Param("id") String guildId) throws HypixelApiException;
 
+    /**
+     * Request a guild by name.
+     *
+     * @param guildName The name of the guild to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Required
+     */
     @RequestLine("GET /guild?name={name}")
     @NotNull HypixelGuildResponse getGuildByName(@Param("name") String guildName) throws HypixelApiException;
 
+    /**
+     * Request the guild of a specific player.
+     *
+     * @param playerId The UUID of the player to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Required
+     */
     @RequestLine("GET /guild?player={player}")
     @NotNull HypixelGuildResponse getGuildByPlayer(@Param("player") UUID playerId) throws HypixelApiException;
 
+    /**
+     * Request the data and game stats of a specific player.
+     *
+     * @param playerId The UUID of the player to request.
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Required
+     */
     @RequestLine("GET /player?uuid={uuid}")
     @NotNull HypixelPlayerResponse getPlayer(@Param("uuid") UUID playerId) throws HypixelApiException;
 
+    /**
+     * Request the network punishment statistics.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Required
+     */
     @RequestLine("GET /punishmentstats")
     @NotNull HypixelPunishmentStatsResponse getPunishmentStats() throws HypixelApiException;
 
@@ -63,12 +115,20 @@ public interface HypixelEndpoint extends Endpoint {
      * @param playerId The UUID of the player to request.
      * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
      * status range of 400+.
+     * @apiNote API-Key Required
      */
     @RequestLine("GET /status?uuid={uuid}")
     @NotNull HypixelStatusResponse getStatus(@Param("uuid") UUID playerId) throws HypixelApiException;
 
     // Hypixel Resources
 
+    /**
+     * Request information about all games.
+     *
+     * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
+     * status range of 400+.
+     * @apiNote API-Key Not Required
+     */
     @RequestLine("GET /resources/games")
     @NotNull ResourceGamesResponse getGames() throws HypixelApiException;
 
@@ -81,6 +141,7 @@ public interface HypixelEndpoint extends Endpoint {
      *
      * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
      * status range of 400+.
+     * @apiNote API-Key Required
      */
     @RequestLine("GET /skyblock/museum?profile={profile}")
     @NotNull SkyBlockMuseumResponse getMuseum() throws HypixelApiException;
@@ -92,6 +153,7 @@ public interface HypixelEndpoint extends Endpoint {
      *
      * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
      * status range of 400+.
+     * @apiNote API-Key Required
      */
     @RequestLine("GET /skyblock/news")
     @NotNull SkyBlockNewsResponse getNews() throws HypixelApiException;
@@ -104,6 +166,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @param playerId The UUID of the player to request.
      * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
      * status range of 400+.
+     * @apiNote API-Key Required
      */
     @RequestLine("GET /skyblock/profiles?uuid={uuid}")
     @NotNull SkyBlockProfilesResponse getProfiles(@Param("uuid") UUID playerId) throws HypixelApiException;
@@ -124,6 +187,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @param auctionId The UUID of the auction to request.
      * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
      * status range of 400+.
+     * @apiNote API-Key Required
      */
     @RequestLine("GET /skyblock/auction?uuid={uuid}")
     @NotNull SkyBlockAuctionResponse getAuctionById(@Param("uuid") UUID auctionId) throws HypixelApiException;
@@ -134,6 +198,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @param islandId The UUID of the island to request.
      * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
      * status range of 400+.
+     * @apiNote API-Key Required
      */
     @RequestLine("GET /skyblock/auction?profile={profile}")
     @NotNull SkyBlockAuctionResponse getAuctionByIsland(@Param("profile") UUID islandId) throws HypixelApiException;
@@ -144,6 +209,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @param playerId The UUID of the player to request.
      * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
      * status range of 400+.
+     * @apiNote API-Key Required
      */
     @RequestLine("GET /skyblock/auction?player={player}")
     @NotNull SkyBlockAuctionResponse getAuctionByPlayer(@Param("player") UUID playerId) throws HypixelApiException;
@@ -195,6 +261,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @param islandId The UUID of the island to request.
      * @throws HypixelApiException Thrown when the Hypixel Api encounters an error in the HTTP
      * status range of 400+.
+     * @apiNote API-Key Required
      */
     @RequestLine("GET /skyblock/garden?profile={profile}")
     @NotNull SkyBlockGardenResponse getGarden(@Param("profile") UUID islandId) throws HypixelApiException;
