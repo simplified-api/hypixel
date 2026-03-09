@@ -52,6 +52,8 @@ public class SkyBlockMember implements PostInit {
     // Data
     @SerializedName("player_data")
     private @NotNull PlayerProgress progress = new PlayerProgress();
+    @SerializedName("garden_player_data")
+    private @NotNull GardenCore garden = new GardenCore();
     @SerializedName("slayer")
     private @NotNull SlayerProgress slayers = new SlayerProgress();
     @SerializedName("pets_data")
@@ -72,6 +74,9 @@ public class SkyBlockMember implements PostInit {
 
     @Getter(AccessLevel.NONE)
     private @NotNull Events events = new Events();
+
+    @SerializedName("skill_tree")
+    private @NotNull SkillTree skillTree = new SkillTree();
 
     // Mining
     @SerializedName("mining_core")
