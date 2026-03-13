@@ -33,6 +33,6 @@ public class ActiveTrap {
 
     public @NotNull Region getRegion() {
         return MinecraftApi.getRepository(Region.class)
-            .findFirstOrNull(Region::getRemoteId, this.getRemoteId());
+            .findFirstOrNull(Region::getMode, this.getRemoteId());
     }
 }

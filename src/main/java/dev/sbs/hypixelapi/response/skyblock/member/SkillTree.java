@@ -11,6 +11,7 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
+import java.util.Map;
 
 @Getter
 public class SkillTree implements PostInit {
@@ -39,7 +40,7 @@ public class SkillTree implements PostInit {
         return originMap.stream()
             .filterValue(Integer.class::isInstance)
             .mapValue(Integer.class::cast)
-            .mapToObj((id, level) -> new SkillTree.Node(
+            .collapseToSingle((id, level) -> new SkillTree.Node(
                 id,
                 level,
                 originMap.stream()
@@ -47,7 +48,7 @@ public class SkillTree implements PostInit {
                     .filterKey(subId -> subId.endsWith(id))
                     .filterValue(Boolean.class::isInstance)
                     .mapValue(Boolean.class::cast)
-                    .mapToValue()
+                    .map(Map.Entry::getValue)
                     .findFirst()
                     .orElse(true)
             ))

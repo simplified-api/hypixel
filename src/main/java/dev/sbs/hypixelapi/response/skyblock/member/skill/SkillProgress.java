@@ -19,7 +19,7 @@ public class SkillProgress {
     public SkillProgress(@NotNull ConcurrentMap<String, Double> skillExperience, @NotNull SkyBlockMember member) {
         this.skills = skillExperience.stream()
             .mapKey(id -> id.replace("SKILL_", ""))
-            .mapToObj((id, experience) -> new SkillEntry(id, experience, member))
+            .collapseToSingle((id, experience) -> new SkillEntry(id, experience, member))
             .collect(Concurrent.toUnmodifiableList());
     }
 
