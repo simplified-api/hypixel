@@ -23,7 +23,7 @@ import java.util.Map;
 public class SlayerBoss implements PostInit, Experience, Weighted {
 
     @Getter(AccessLevel.NONE)
-    private final static Reflection<SlayerBoss> slayerRef = Reflection.of(SlayerBoss.class);
+    private final static Reflection<SlayerBoss> slayerRef = new Reflection<>(SlayerBoss.class);
     @Setter(AccessLevel.PACKAGE)
     private String id;
     @SerializedName("xp")

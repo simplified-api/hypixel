@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 @Getter
 public class ResourceSkillsResponse implements PostInit {
 
-    private static final @NotNull Reflection<JsonSkill> REFLECTION = Reflection.of(JsonSkill.class);
+    private static final @NotNull Reflection<JsonSkill> REFLECTION = new Reflection<>(JsonSkill.class);
     private boolean success;
     private long lastUpdated;
     private String version;

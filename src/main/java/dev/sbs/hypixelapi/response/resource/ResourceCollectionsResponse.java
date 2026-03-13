@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 @NoArgsConstructor(access = AccessLevel.NONE)
 public class ResourceCollectionsResponse implements PostInit {
 
-    private static final @NotNull Reflection<JsonCollection> REFLECTION = Reflection.of(JsonCollection.class);
+    private static final @NotNull Reflection<JsonCollection> REFLECTION = new Reflection<>(JsonCollection.class);
     private boolean success;
     private long lastUpdated;
     private String version;
