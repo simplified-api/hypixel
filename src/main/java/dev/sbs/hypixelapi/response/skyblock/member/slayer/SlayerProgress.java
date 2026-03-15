@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Getter
@@ -27,7 +28,7 @@ public class SlayerProgress implements PostInit {
     public void postInit() {
         this.bosses = this.slayerBosses.stream()
             .peek((id, slayerBoss) -> slayerBoss.setId(id))
-            .mapToValue()
+            .map(Map.Entry::getValue)
             .collect(Concurrent.toUnmodifiableList());
     }
 

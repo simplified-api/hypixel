@@ -6,7 +6,7 @@ import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.reflection.Reflection;
-import dev.sbs.minecraftapi.skyblock.model.json.JsonSkill;
+import dev.sbs.minecraftapi.model.Skill;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -17,14 +17,14 @@ import org.jetbrains.annotations.NotNull;
 @Getter
 public class ResourceSkillsResponse implements PostInit {
 
-    private static final @NotNull Reflection<JsonSkill> REFLECTION = new Reflection<>(JsonSkill.class);
+    private static final @NotNull Reflection<Skill> REFLECTION = new Reflection<>(Skill.class);
     private boolean success;
     private long lastUpdated;
     private String version;
     @SerializedName("skills")
     @Getter(AccessLevel.NONE)
-    private @NotNull ConcurrentMap<String, JsonSkill> skillsMap = Concurrent.newMap();
-    private transient @NotNull ConcurrentList<JsonSkill> skills = Concurrent.newList();
+    private @NotNull ConcurrentMap<String, Skill> skillsMap = Concurrent.newMap();
+    private transient @NotNull ConcurrentList<Skill> skills = Concurrent.newList();
 
     @Override
     public void postInit() {

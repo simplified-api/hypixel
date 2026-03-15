@@ -4,10 +4,10 @@ import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.util.NumberUtil;
 import dev.sbs.minecraftapi.MinecraftApi;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMember;
+import dev.sbs.minecraftapi.model.Skill;
 import dev.sbs.minecraftapi.skyblock.common.Experience;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
 import dev.sbs.minecraftapi.skyblock.common.Weighted;
-import dev.sbs.minecraftapi.skyblock.model.Skill;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

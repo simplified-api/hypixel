@@ -2,7 +2,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.resource;
 
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.minecraftapi.skyblock.model.json.JsonItem;
+import dev.sbs.minecraftapi.model.Item;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,6 +17,6 @@ public class ResourceItemsResponse {
 
     private boolean success;
     private long lastUpdated;
-    private @NotNull ConcurrentList<JsonItem> items = Concurrent.newList();
+    private @NotNull ConcurrentList<Item> items = Concurrent.newList();
 
 }

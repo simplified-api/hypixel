@@ -8,7 +8,7 @@ import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.tuple.pair.PairStream;
 import dev.sbs.api.util.NumberUtil;
 import dev.sbs.minecraftapi.MinecraftApi;
-import dev.sbs.minecraftapi.skyblock.model.BestiaryFamily;
+import dev.sbs.minecraftapi.model.BestiaryFamily;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
