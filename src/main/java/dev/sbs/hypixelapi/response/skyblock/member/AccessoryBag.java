@@ -1,22 +1,16 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.SimplifiedApi;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.collection.concurrent.ConcurrentSet;
 import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.minecraftapi.MinecraftApi;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMember;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.profile_stats.data.AccessoryData;
-import dev.sbs.minecraftapi.nbt.tags.collection.CompoundTag;
-import dev.sbs.minecraftapi.nbt.tags.primitive.StringTag;
+import dev.sbs.minecraftapi.model.Power;
+import dev.sbs.minecraftapi.model.Stat;
 import dev.sbs.minecraftapi.skyblock.common.NbtContent;
-import dev.sbs.minecraftapi.skyblock.model.Accessory;
-import dev.sbs.minecraftapi.skyblock.model.Power;
-import dev.sbs.minecraftapi.skyblock.model.Stat;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,8 +25,8 @@ public class AccessoryBag {
     @SerializedName("bag_upgrades_purchased")
     private int bagUpgradesPurchased;
     private transient NbtContent contents = new NbtContent();
-    private transient @NotNull ConcurrentList<AccessoryData> detectedAccessories = Concurrent.newUnmodifiableList();
-    private transient @NotNull ConcurrentList<AccessoryData> accessories = Concurrent.newUnmodifiableList();
+    //private transient @NotNull ConcurrentList<AccessoryData> detectedAccessories = Concurrent.newUnmodifiableList();
+    //private transient @NotNull ConcurrentList<AccessoryData> accessories = Concurrent.newUnmodifiableList();
 
     // Power
     @SerializedName("selected_power")
@@ -53,7 +47,7 @@ public class AccessoryBag {
 
     public void initialize(@NotNull SkyBlockMember member) {
         // Read Accessory Bag
-        this.detectedAccessories = this.getContents()
+        /*this.detectedAccessories = this.getContents()
             .getNbtData()
             .<CompoundTag>getListTag("i")
             .stream()
@@ -101,7 +95,7 @@ public class AccessoryBag {
                                 .map(Accessory.Family::getRank)
                                 .orElse(0)
                             )
-                            .inverse();
+                            .reversed();
 
                         // Ignore Lowest Accessories
                         Accessory topAccessory = familyData.remove(0);
@@ -132,10 +126,10 @@ public class AccessoryBag {
 
         // Rift Prism
         if (member.getRift().getAccess().hasConsumedPrism())
-            calculatedMagicalPower += 11;
+            calculatedMagicalPower += 11;*/
 
         this.contents = member.getInventory().getBags().getAccessories();
-        this.magicalPower = calculatedMagicalPower;
+        this.magicalPower = 0; // TODO
         this.tuningPoints = this.magicalPower / 10;
         this.logComponent = Math.pow(Math.log(1 + (0.0019 * this.magicalPower)), 1.2);
         //this.magicalPowerMultiplier = 29.97 * Math.pow(Math.log(1 + (0.0019 * this.magicalPower)), 1.2);
@@ -179,7 +173,7 @@ public class AccessoryBag {
             .collect(Concurrent.toUnmodifiableList());
     }
 
-    private int handleMagicalPower(@NotNull AccessoryData accessoryData, @NotNull SkyBlockMember member) {
+    /*private int handleMagicalPower(@NotNull AccessoryData accessoryData, @NotNull SkyBlockMember member) {
         int magicalPower = accessoryData.getRarity().getMagicPower();
 
         // TODO: Dynamic
@@ -190,7 +184,7 @@ public class AccessoryBag {
             magicalPower += member.getCrimsonIsle().getAbiphone().getContacts().size() / 2;
 
         return magicalPower;
-    }
+    }*/
 
     @Getter
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
