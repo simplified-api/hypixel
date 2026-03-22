@@ -6,7 +6,6 @@ import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.linked.ConcurrentLinkedMap;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.Banking;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.CommunityUpgrades;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.profile_stats.ProfileStats;
 import dev.sbs.minecraftapi.skyblock.common.GameMode;
 import dev.sbs.minecraftapi.skyblock.common.Profile;
 import lombok.Getter;
@@ -70,13 +69,13 @@ public class SkyBlockIsland {
             .sorted(Comparator.naturalOrder());
     }
 
-    public @NotNull ProfileStats getProfileStats(@NotNull SkyBlockMember member) {
+    /*public @NotNull ProfileStats getProfileStats(@NotNull SkyBlockMember member) {
         return this.getProfileStats(member, true);
     }
 
     public @NotNull ProfileStats getProfileStats(@NotNull SkyBlockMember member, boolean calculateBonus) {
         return new ProfileStats(this, member, calculateBonus);
-    }
+    }*/
 
     public int getUniqueMinions() {
         return this.getMembers()

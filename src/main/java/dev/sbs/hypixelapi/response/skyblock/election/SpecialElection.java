@@ -1,9 +1,9 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.election;
 
-import dev.sbs.api.builder.EqualsBuilder;
-import dev.sbs.api.builder.HashCodeBuilder;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 @Getter
 public class SpecialElection extends Election {
@@ -22,17 +22,12 @@ public class SpecialElection extends Election {
 
         SpecialElection that = (SpecialElection) o;
 
-        return new EqualsBuilder()
-            .append(this.getSpecialMayor(), that.getSpecialMayor())
-            .build();
+        return Objects.equals(this.getSpecialMayor(), that.getSpecialMayor());
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
-            .appendSuper(super.hashCode())
-            .append(this.getSpecialMayor())
-            .build();
+        return Objects.hash(super.hashCode(), this.getSpecialMayor());
     }
 
     @Override

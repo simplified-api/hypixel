@@ -55,7 +55,7 @@ public class HypixelGuild {
         long experience = this.getExperience();
 
         for (int i = 0; ; i++) {
-            int next = i >= HYPIXEL_GUILD_EXP.size() ? HYPIXEL_GUILD_EXP.getLast().orElse(0) : HYPIXEL_GUILD_EXP.get(i);
+            int next = i >= HYPIXEL_GUILD_EXP.size() ? HYPIXEL_GUILD_EXP.findLast().orElse(0) : HYPIXEL_GUILD_EXP.get(i);
             experience -= next;
 
             if (experience < 0)

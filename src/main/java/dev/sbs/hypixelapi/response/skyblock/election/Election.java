@@ -1,7 +1,5 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.election;
 
-import dev.sbs.api.builder.EqualsBuilder;
-import dev.sbs.api.builder.HashCodeBuilder;
 import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.minecraftapi.skyblock.date.Season;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
@@ -10,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 @Getter
 @NoArgsConstructor
@@ -30,20 +30,14 @@ public class Election implements PostInit {
 
         Election election = (Election) o;
 
-        return new EqualsBuilder()
-            .append(this.getYear(), election.getYear())
-            .append(this.getVoting(), election.getVoting())
-            .append(this.getTerm(), election.getTerm())
-            .build();
+        return this.getYear() == election.getYear()
+            && Objects.equals(this.getVoting(), election.getVoting())
+            && Objects.equals(this.getTerm(), election.getTerm());
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
-            .append(this.getYear())
-            .append(this.getVoting())
-            .append(this.getTerm())
-            .build();
+        return Objects.hash(this.getYear(), this.getVoting(), this.getTerm());
     }
 
     @Override
