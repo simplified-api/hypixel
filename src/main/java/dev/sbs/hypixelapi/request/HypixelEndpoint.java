@@ -3,25 +3,25 @@ package dev.sbs.minecraftapi.client.hypixel.request;
 import dev.sbs.api.client.request.Endpoint;
 import dev.sbs.api.client.route.Route;
 import dev.sbs.minecraftapi.client.hypixel.exception.HypixelApiException;
-import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelCountsResponse;
+import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelCounts;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelGuildResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelPlayerResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelPunishmentStatsResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelStatusResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceCollectionsResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceElectionResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceGamesResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceItemsResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceSkillsResponse;
+import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelPunishmentStats;
+import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelStatus;
+import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceCollections;
+import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceElection;
+import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceGames;
+import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceItems;
+import dev.sbs.minecraftapi.client.hypixel.response.resource.ResourceSkills;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctionResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctionsEndedResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctionsResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockBazaarResponse;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctions;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockAuctionsEnded;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockBazaar;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockFireSaleResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockGardenResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMuseumResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockNewsResponse;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockProfilesResponse;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockNews;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockProfiles;
 import feign.Param;
 import feign.RequestLine;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +53,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Required
      */
     @RequestLine("GET /counts")
-    @NotNull HypixelCountsResponse getCounts() throws HypixelApiException;
+    @NotNull HypixelCounts getCounts() throws HypixelApiException;
 
     /**
      * Request a guild by id.
@@ -107,7 +107,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Required
      */
     @RequestLine("GET /punishmentstats")
-    @NotNull HypixelPunishmentStatsResponse getPunishmentStats() throws HypixelApiException;
+    @NotNull HypixelPunishmentStats getPunishmentStats() throws HypixelApiException;
 
     /**
      * Request the current online status of a specific player.
@@ -118,7 +118,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Required
      */
     @RequestLine("GET /status?uuid={uuid}")
-    @NotNull HypixelStatusResponse getStatus(@Param("uuid") UUID playerId) throws HypixelApiException;
+    @NotNull HypixelStatus getStatus(@Param("uuid") UUID playerId) throws HypixelApiException;
 
     // Hypixel Resources
 
@@ -130,7 +130,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Not Required
      */
     @RequestLine("GET /resources/games")
-    @NotNull ResourceGamesResponse getGames() throws HypixelApiException;
+    @NotNull ResourceGames getGames() throws HypixelApiException;
 
     // SkyBlock
 
@@ -156,7 +156,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Required
      */
     @RequestLine("GET /skyblock/news")
-    @NotNull SkyBlockNewsResponse getNews() throws HypixelApiException;
+    @NotNull SkyBlockNews getNews() throws HypixelApiException;
 
     /**
      * Request all profiles of a player. This includes skills, collections, stats, objectives, etc.
@@ -169,7 +169,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Required
      */
     @RequestLine("GET /skyblock/profiles?uuid={uuid}")
-    @NotNull SkyBlockProfilesResponse getProfiles(@Param("uuid") UUID playerId) throws HypixelApiException;
+    @NotNull SkyBlockProfiles getProfiles(@Param("uuid") UUID playerId) throws HypixelApiException;
 
     /**
      * Request the list of products along with their sell summary, buy summary, and quick status.
@@ -179,7 +179,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Not Required
      */
     @RequestLine("GET /skyblock/bazaar")
-    @NotNull SkyBlockBazaarResponse getBazaar() throws HypixelApiException;
+    @NotNull SkyBlockBazaar getBazaar() throws HypixelApiException;
 
     /**
      * Request a specific Auction.
@@ -222,7 +222,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Not Required
      */
     @RequestLine("GET /skyblock/auctions")
-    @NotNull SkyBlockAuctionsResponse getAuctions() throws HypixelApiException;
+    @NotNull SkyBlockAuctions getAuctions() throws HypixelApiException;
 
     /**
      * Request the currently active auctions sorted by most recent and paginated.
@@ -233,7 +233,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Not Required
      */
     @RequestLine("GET /skyblock/auctions?page={page}")
-    @NotNull SkyBlockAuctionsResponse getAuctions(@Param("page") Integer page) throws HypixelApiException;
+    @NotNull SkyBlockAuctions getAuctions(@Param("page") Integer page) throws HypixelApiException;
 
     /**
      * Request auctions which ended in the last 60 seconds.
@@ -243,7 +243,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Not Required
      */
     @RequestLine("GET /skyblock/auctions_ended")
-    @NotNull SkyBlockAuctionsEndedResponse getEndedAuctions() throws HypixelApiException;
+    @NotNull SkyBlockAuctionsEnded getEndedAuctions() throws HypixelApiException;
 
     /**
      * Request the currently active or upcoming Fire Sales.
@@ -276,7 +276,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Not Required
      */
     @RequestLine("GET /resources/skyblock/skills")
-    @NotNull ResourceSkillsResponse getSkills() throws HypixelApiException;
+    @NotNull ResourceSkills getSkills() throws HypixelApiException;
 
     /**
      * Request information regarding Collections.
@@ -286,7 +286,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Not Required
      */
     @RequestLine("GET /resources/skyblock/collections")
-    @NotNull ResourceCollectionsResponse getCollections() throws HypixelApiException;
+    @NotNull ResourceCollections getCollections() throws HypixelApiException;
 
     /**
      * Request information regarding Items.
@@ -296,7 +296,7 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Not Required
      */
     @RequestLine("GET /resources/skyblock/items")
-    @NotNull ResourceItemsResponse getItems() throws HypixelApiException;
+    @NotNull ResourceItems getItems() throws HypixelApiException;
 
     /**
      * Request information regarding the current mayor and ongoing election.
@@ -306,6 +306,6 @@ public interface HypixelEndpoint extends Endpoint {
      * @apiNote API-Key Not Required
      */
     @RequestLine("GET /resources/skyblock/election")
-    @NotNull ResourceElectionResponse getElection() throws HypixelApiException;
+    @NotNull ResourceElection getElection() throws HypixelApiException;
 
 }
