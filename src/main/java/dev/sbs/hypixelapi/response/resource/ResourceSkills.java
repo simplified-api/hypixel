@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * Information regarding Skills.
  */
 @Getter
-public class ResourceSkillsResponse implements PostInit {
+public class ResourceSkills implements PostInit {
 
     private static final @NotNull Reflection<Skill> REFLECTION = new Reflection<>(Skill.class);
     private boolean success;

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * Current player counts for Hypixel games.
  */
 @Getter
-public class HypixelCountsResponse {
+public class HypixelCounts {
 
     private boolean success;
     private int playerCount;

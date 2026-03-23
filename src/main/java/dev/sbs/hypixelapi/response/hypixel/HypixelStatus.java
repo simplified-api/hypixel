@@ -10,7 +10,7 @@ import java.util.UUID;
  * Current online status of a player.
  */
 @Getter
-public class HypixelStatusResponse {
+public class HypixelStatus {
 
     private boolean success;
     @SerializedName("uuid")

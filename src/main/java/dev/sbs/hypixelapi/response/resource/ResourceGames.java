@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class ResourceGamesResponse {
+public class ResourceGames {
 
     private boolean success;
     private long lastUpdated;

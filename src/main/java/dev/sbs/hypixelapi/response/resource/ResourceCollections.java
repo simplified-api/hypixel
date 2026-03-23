@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.NONE)
-public class ResourceCollectionsResponse implements PostInit {
+public class ResourceCollections implements PostInit {
 
     private static final @NotNull Reflection<Collection> REFLECTION = new Reflection<>(Collection.class);
     private boolean success;

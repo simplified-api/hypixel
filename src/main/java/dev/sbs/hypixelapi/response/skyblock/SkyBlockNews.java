@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * This does not include Patch Notes or other announcements.
  */
 @Getter
-public class SkyBlockNewsResponse {
+public class SkyBlockNews {
 
     private boolean success;
     @SerializedName("items")

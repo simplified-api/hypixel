@@ -7,13 +7,16 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Auctions which ended in the last 60 seconds.
+ * Currently active auctions sorted by most recent.
  */
 @Getter
-public class SkyBlockAuctionsEndedResponse {
+public class SkyBlockAuctions {
 
     private boolean success;
+    private int page;
+    private int totalPages;
+    private int totalAuctions;
     private SkyBlockDate.RealTime lastUpdated;
-    private @NotNull ConcurrentList<SkyBlockAuction.Ended> auctions = Concurrent.newList();
+    private @NotNull ConcurrentList<SkyBlockAuction> auctions = Concurrent.newList();
 
 }

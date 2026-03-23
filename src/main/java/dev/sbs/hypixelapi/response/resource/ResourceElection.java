@@ -16,7 +16,7 @@ import java.util.Optional;
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class ResourceElectionResponse {
+public class ResourceElection {
 
     private boolean success;
     private @NotNull Instant lastUpdated = Instant.now();

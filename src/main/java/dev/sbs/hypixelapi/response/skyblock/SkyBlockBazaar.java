@@ -9,7 +9,7 @@ import lombok.Getter;
  * List of products along with their sell summary, buy summary, and quick status
  */
 @Getter
-public class SkyBlockBazaarResponse {
+public class SkyBlockBazaar {
 
     private boolean success;
     private SkyBlockDate.RealTime lastUpdated;

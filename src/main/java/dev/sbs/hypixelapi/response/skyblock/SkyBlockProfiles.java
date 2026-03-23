@@ -13,7 +13,7 @@ import java.util.Optional;
  * All profiles a specific player belongs to.
  */
 @Getter
-public class SkyBlockProfilesResponse {
+public class SkyBlockProfiles {
 
     private boolean success;
     @SerializedName("profiles")
