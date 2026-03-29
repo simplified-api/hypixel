@@ -7,7 +7,7 @@ import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.api.util.StringUtil;
 import dev.sbs.minecraftapi.MinecraftApi;
-import dev.sbs.minecraftapi.model.Pet;
+import dev.sbs.minecraftapi.persistence.model.Pet;
 import dev.sbs.minecraftapi.skyblock.common.Experience;
 import dev.sbs.minecraftapi.skyblock.common.Rarity;
 import lombok.Getter;

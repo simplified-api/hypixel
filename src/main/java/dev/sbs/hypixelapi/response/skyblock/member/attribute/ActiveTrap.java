@@ -2,7 +2,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.attribute;
 
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.minecraftapi.MinecraftApi;
-import dev.sbs.minecraftapi.model.Region;
+import dev.sbs.minecraftapi.persistence.model.Region;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

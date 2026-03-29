@@ -8,7 +8,7 @@ import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.reflection.Reflection;
 import dev.sbs.api.util.NumberUtil;
 import dev.sbs.minecraftapi.MinecraftApi;
-import dev.sbs.minecraftapi.model.Slayer;
+import dev.sbs.minecraftapi.persistence.model.Slayer;
 import dev.sbs.minecraftapi.skyblock.common.Experience;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
 import dev.sbs.minecraftapi.skyblock.common.Weighted;

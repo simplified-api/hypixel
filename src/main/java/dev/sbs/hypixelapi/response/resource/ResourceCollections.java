@@ -6,7 +6,7 @@ import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.reflection.Reflection;
-import dev.sbs.minecraftapi.model.Collection;
+import dev.sbs.minecraftapi.persistence.model.Collection;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
