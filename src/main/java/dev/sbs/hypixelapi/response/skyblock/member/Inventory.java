@@ -6,44 +6,48 @@ import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.collection.concurrent.linked.ConcurrentLinkedMap;
 import dev.sbs.minecraftapi.skyblock.common.NbtContent;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 @Getter
 public class Inventory {
 
     @SerializedName("inv_armor")
-    private NbtContent armor = new NbtContent();
+    private @NotNull NbtContent armor = new NbtContent();
     @SerializedName("equipment_contents")
-    private NbtContent equipment = new NbtContent();
+    private @NotNull NbtContent equipment = new NbtContent();
     @SerializedName("wardrobe_contents")
-    private NbtContent wardrobe = new NbtContent();
+    private @NotNull NbtContent wardrobe = new NbtContent();
     @SerializedName("bag_contents")
-    private Bags bags = new Bags();
+    private @NotNull Bags bags = new Bags();
     @SerializedName("inv_contents")
-    private NbtContent content = new NbtContent();
+    private @NotNull NbtContent content = new NbtContent();
     @SerializedName("wardrobe_equipped_slot")
     private int equippedWardrobeSlot;
     @SerializedName("backpack_icons")
-    private ConcurrentMap<Integer, NbtContent> backpackIcons = Concurrent.newMap();
+    private @NotNull ConcurrentMap<Integer, NbtContent> backpackIcons = Concurrent.newMap();
     @SerializedName("personal_vault_contents")
-    private NbtContent personalVault = new NbtContent();
+    private @NotNull NbtContent personalVault = new NbtContent();
     @SerializedName("sacks_counts")
-    private ConcurrentLinkedMap<String, Integer> sacks = Concurrent.newLinkedMap();
+    private @NotNull ConcurrentLinkedMap<String, Integer> sacks = Concurrent.newLinkedMap();
     @SerializedName("backpack_contents")
-    private ConcurrentMap<Integer, NbtContent> backpacks = Concurrent.newMap();
+    private @NotNull ConcurrentMap<Integer, NbtContent> backpacks = Concurrent.newMap();
     @SerializedName("ender_chest_contents")
-    private NbtContent enderChest = new NbtContent();
+    private @NotNull NbtContent enderChest = new NbtContent();
 
 
     @Getter
     public static class Bags {
 
+        @SerializedName("talisman_bag")
+        private @NotNull NbtContent accessories = new NbtContent();
         @SerializedName("fishing_bag")
-        private NbtContent fishing = new NbtContent();
-        private NbtContent quiver = new NbtContent();
-        @SerializedName("fishing_bag")
-        private NbtContent accessories = new NbtContent();
+        private @NotNull NbtContent fishing = new NbtContent();
         @SerializedName("potion_bag")
-        private NbtContent potions = new NbtContent();
+        private @NotNull NbtContent potions = new NbtContent();
+        @SerializedName("quiver")
+        private @NotNull NbtContent quiver = new NbtContent();
+        @SerializedName("sacks_bag")
+        private @NotNull NbtContent sacks = new NbtContent();
 
     }
 
