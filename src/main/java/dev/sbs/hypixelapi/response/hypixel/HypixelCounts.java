@@ -13,7 +13,7 @@ public class HypixelCounts {
 
     private boolean success;
     private int playerCount;
-    private @NotNull ConcurrentMap<String, String> games = Concurrent.newMap();
+    private @NotNull ConcurrentMap<String, Game> games = Concurrent.newMap();
 
     @Getter
     public static class Game {

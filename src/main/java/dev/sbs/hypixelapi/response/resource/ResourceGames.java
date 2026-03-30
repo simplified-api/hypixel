@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.resource;
 
 import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
+import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelGame;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -18,6 +18,6 @@ public class ResourceGames {
     private boolean success;
     private long lastUpdated;
     private boolean retired;
-    private @NotNull ConcurrentList<HypixelGame> games = Concurrent.newList();
+    private @NotNull ConcurrentMap<String, HypixelGame> games = Concurrent.newMap();
 
 }
