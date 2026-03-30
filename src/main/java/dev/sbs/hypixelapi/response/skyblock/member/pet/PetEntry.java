@@ -20,19 +20,19 @@ import java.util.UUID;
 public class PetEntry implements Experience {
 
     @SerializedName("uuid")
-    private UUID identifier;
+    private @NotNull Optional<UUID> identifier = Optional.empty();
     @SerializedName("uniqueId")
-    private UUID uniqueId;
+    private @NotNull UUID uniqueId;
     @SerializedName("type")
-    private String id;
+    private @NotNull String id;
     @SerializedName("exp")
     private double experience;
     private boolean active;
     @SerializedName("tier")
-    private Rarity baseRarity = Rarity.COMMON;
+    private @NotNull Rarity baseRarity = Rarity.COMMON;
     private int candyUsed;
-    private Optional<String> heldItem = Optional.empty();
-    private Optional<String> skin = Optional.empty();
+    private @NotNull Optional<String> heldItem = Optional.empty();
+    private @NotNull Optional<String> skin = Optional.empty();
 
     @Override
     public @NotNull ConcurrentList<Integer> getExperienceTiers() {
