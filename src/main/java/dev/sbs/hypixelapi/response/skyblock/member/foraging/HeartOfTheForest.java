@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
+package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.foraging;
 
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 @Getter
-public class ForagingCore {
+public class HeartOfTheForest {
 
     @SerializedName("current_daily_effect")
     private Optional<String> currentLotteryEffect = Optional.empty();

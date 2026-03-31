@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 @Getter
-public class MiningCore implements PostInit {
+public class HeartOfTheMountain implements PostInit {
 
     @Accessors(fluent = true)
     @SerializedName("received_free_tier")
