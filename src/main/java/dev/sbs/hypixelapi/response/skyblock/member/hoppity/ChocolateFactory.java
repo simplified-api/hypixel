@@ -6,10 +6,12 @@ import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.Extract;
 import dev.sbs.api.io.gson.Lenient;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 
+@Getter
 public class ChocolateFactory {
 
     // Chocolate
@@ -38,9 +40,9 @@ public class ChocolateFactory {
     private int elDoradoProgress;
     @Lenient
     private @NotNull ConcurrentMap<String, Integer> rabbits = Concurrent.newMap();
-    @Extract("rabbitMap.collected_eggs")
+    @Extract("rabbits.collected_eggs")
     private @NotNull ConcurrentMap<String, Long> eggs = Concurrent.newMap();
-    @Extract("rabbitMap.collected_locations")
+    @Extract("rabbits.collected_locations")
     private @NotNull ConcurrentMap<String, ConcurrentList<String>> locations = Concurrent.newMap();
 
     // Golden Rabbits
