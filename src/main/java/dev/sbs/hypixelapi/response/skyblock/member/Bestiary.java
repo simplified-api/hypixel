@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
+import dev.sbs.api.io.gson.Extract;
+import dev.sbs.api.io.gson.Lenient;
 import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.tuple.pair.PairStream;
 import dev.sbs.api.util.NumberUtil;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -22,8 +25,12 @@ import java.util.stream.Stream;
 public class Bestiary implements PostInit {
 
     private static final @NotNull Pattern MOB_PATTERN = Pattern.compile("^([a-z_]+)_([0-9]+)$");
+    @Lenient
     private @NotNull ConcurrentMap<String, Integer> kills = Concurrent.newMap();
+    @Lenient
     private @NotNull ConcurrentMap<String, Integer> deaths = Concurrent.newMap();
+    @Extract("kills.last_killed_mob")
+    @Getter private @NotNull Optional<String> lastKilledMob = Optional.empty();
     private @NotNull Milestone milestone = new Milestone();
     private @NotNull Miscellaneous miscellaneous = new Miscellaneous();
     @Getter private transient @NotNull ConcurrentList<Family> families = Concurrent.newList();
