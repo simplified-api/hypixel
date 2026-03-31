@@ -26,7 +26,7 @@ public class PlayerProgress {
     @SerializedName("reaper_peppers_eaten")
     private int reaperPeppersEaten;
     @SerializedName("perks")
-    private @NotNull ConcurrentMap<String, Integer> essencePerks = Concurrent.newMap();
+    private @NotNull ConcurrentMap<String, Integer> shopPerks = Concurrent.newMap();
     @SerializedName("garden_chips")
     private @NotNull ConcurrentMap<String, Integer> gardenChips = Concurrent.newMap();
     @SerializedName("unlocked_coll_tiers")
