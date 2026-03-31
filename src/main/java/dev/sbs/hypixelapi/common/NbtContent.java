@@ -26,7 +26,7 @@ public class NbtContent {
     private int type = 0; // Always 0
 
     @SerializedName("data")
-    private String rawData = "";
+    private @NotNull String rawData = "";
 
     public byte[] getData() {
         return StringUtil.decodeBase64(this.getRawData().toCharArray());
@@ -50,11 +50,20 @@ public class NbtContent {
 
         @Override
         public NbtContent read(@NotNull JsonReader in) throws IOException {
-            String data;
+            String data = "";
 
-            if (in.peek() == JsonToken.BEGIN_OBJECT) { // Auctions are bad
+            if (in.peek() == JsonToken.BEGIN_OBJECT) {
                 in.beginObject();
-                data = in.nextString();
+
+                while (in.hasNext()) {
+                    String name = in.nextName();
+
+                    if ("data".equals(name))
+                        data = in.nextString();
+                    else
+                        in.skipValue();
+                }
+
                 in.endObject();
             } else
                 data = in.nextString();
