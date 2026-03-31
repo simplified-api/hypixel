@@ -3,6 +3,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
+import dev.sbs.api.io.gson.Lenient;
 import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.minecraftapi.skyblock.common.Rarity;
 import lombok.AccessLevel;
@@ -33,6 +34,7 @@ public class Statistics {
     private @NotNull ConcurrentMap<String, Integer> deaths = Concurrent.newMap();
     @SerializedName("rift")
     private @NotNull ConcurrentMap<String, Object> riftStats = Concurrent.newMap();
+    @Lenient
     @SerializedPath("spooky.bats_spawned")
     private @NotNull ConcurrentMap<Integer, Integer> spawnedSpookyBats = Concurrent.newMap();
     @SerializedName("glowing_mushrooms_broken")
@@ -77,10 +79,11 @@ public class Statistics {
         public enum Type {
 
             @SerializedName("null")
-            UNKNOWN,
+            NONE,
             COMMON,
             EPIC,
             LEGENDARY,
+            MYTHIC,
             TOTAL
 
         }
