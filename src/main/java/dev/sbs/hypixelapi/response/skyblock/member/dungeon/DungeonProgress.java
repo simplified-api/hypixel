@@ -5,6 +5,7 @@ import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.collection.concurrent.ConcurrentSet;
+import dev.sbs.api.io.gson.Lenient;
 import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.api.tuple.pair.Pair;
@@ -24,6 +25,7 @@ public class DungeonProgress implements PostInit {
     @SerializedName("player_classes")
     @Getter(AccessLevel.NONE)
     private @NotNull ConcurrentMap<DungeonClass.Type, ConcurrentMap<String, Double>> classMap = Concurrent.newMap();
+    @Lenient
     @SerializedPath("dungeon_journal.unlocked_journals")
     private @NotNull ConcurrentList<Integer> unlockedJournals = Concurrent.newList();
     @SerializedName("dungeons_blah_blah")
