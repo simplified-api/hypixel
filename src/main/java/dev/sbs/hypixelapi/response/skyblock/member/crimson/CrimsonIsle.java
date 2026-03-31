@@ -3,7 +3,6 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.api.io.gson.SerializedPath;
 import lombok.AccessLevel;
@@ -28,9 +27,8 @@ public class CrimsonIsle implements PostInit {
     private int barbarianReputation;
 
     // Kuudra
-    private transient @NotNull Kuudra kuudra = new Kuudra();
-    @Getter(AccessLevel.NONE)
-    private @NotNull ConcurrentMap<String, Integer> kuudra_completed_tiers = Concurrent.newMap();
+    @SerializedName("kuudra_completed_tiers")
+    private @NotNull Kuudra kuudra = new Kuudra();
     @Getter(AccessLevel.NONE)
     @SerializedPath("kuudra_party_finder.search_settings")
     private Kuudra.SearchSettings kuudra_search_settings = new Kuudra.SearchSettings();
@@ -39,26 +37,20 @@ public class CrimsonIsle implements PostInit {
     private Kuudra.GroupBuilder kuudra_group_builder = new Kuudra.GroupBuilder();
 
     // Dojo
-    private transient @NotNull Dojo dojo = new Dojo();
-    @Getter(AccessLevel.NONE)
     @SerializedName("dojo")
-    private @NotNull ConcurrentMap<String, Integer> dojoMap = Concurrent.newMap();
+    private @NotNull Dojo dojo = new Dojo();
 
     @Override
     public void postInit() {
-        this.dojo = new Dojo(this.dojoMap);
-        this.kuudra = new Kuudra(
-            this.kuudra_completed_tiers,
-            this.kuudra_search_settings,
-            this.kuudra_group_builder
-        );
+        this.kuudra.searchSettings = this.kuudra_search_settings;
+        this.kuudra.groupBuilder = this.kuudra_group_builder;
     }
 
     @Getter
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Quests {
 
-        // TODO: jesus christ
+        // TODO: claude implement
 
     }
 

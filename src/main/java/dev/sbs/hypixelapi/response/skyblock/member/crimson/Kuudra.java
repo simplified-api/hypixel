@@ -3,74 +3,34 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
+import dev.sbs.api.io.gson.Capture;
 import dev.sbs.api.math.Range;
-import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.api.util.StringUtil;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 @Getter
 public class Kuudra {
 
-    private final @NotNull ConcurrentMap<Tier, Integer> completedTiers;
-    private final @NotNull ConcurrentMap<Kuudra.Tier, Integer> highestWave;
-    private final @NotNull Kuudra.SearchSettings searchSettings;
-    private final @NotNull Kuudra.GroupBuilder groupBuilder;
-
-    public Kuudra() {
-        this(Concurrent.newMap(), null, null);
-    }
-
-    public Kuudra(@NotNull ConcurrentMap<String, Integer> kuudraCompletedTiers, @Nullable Kuudra.SearchSettings kuudraSearchSettings, @Nullable Kuudra.GroupBuilder kuudraGroupBuilder) {
-        this.searchSettings = (kuudraSearchSettings != null ? kuudraSearchSettings : new Kuudra.SearchSettings());
-        this.groupBuilder = (kuudraGroupBuilder != null ? kuudraGroupBuilder : new Kuudra.GroupBuilder());
-
-        this.completedTiers = kuudraCompletedTiers.stream()
-            .filter(entry -> !entry.getKey().startsWith("highest_"))
-            .map(entry -> Pair.of(Kuudra.Tier.of(entry.getKey()), entry.getValue()))
-            .collect(Concurrent.toUnmodifiableMap());
-
-        this.highestWave = Concurrent.newUnmodifiableMap(
-            kuudraCompletedTiers.stream()
-                .filter(entry -> entry.getKey().startsWith("highest_"))
-                .map(entry -> Pair.of(Kuudra.Tier.of(entry.getKey()), entry.getValue()))
-                .collect(Concurrent.toUnmodifiableMap())
-        );
-    }
+    @Capture(filter = "^highest_wave_")
+    private @NotNull ConcurrentMap<Tier, Integer> highestWave = Concurrent.newMap();
+    @Capture
+    private @NotNull ConcurrentMap<Tier, Integer> completedTiers = Concurrent.newMap();
+    @NotNull SearchSettings searchSettings = new SearchSettings();
+    @NotNull GroupBuilder groupBuilder = new GroupBuilder();
 
     @Getter
-    @RequiredArgsConstructor
     public enum Tier {
 
-        UNKNOWN,
-        BASIC("NONE"),
+        @SerializedName("NONE")
+        BASIC,
         HOT,
         BURNING,
         FIERY,
-        INFERNAL;
-
-        private final @NotNull String internalName;
-
-        Tier() {
-            this.internalName = name();
-        }
-
-        public @NotNull String getName() {
-            return StringUtil.capitalizeFully(this.name());
-        }
-
-        public static @NotNull Kuudra.Tier of(@NotNull String name) {
-            return Arrays.stream(values())
-                .filter(tier -> tier.name().equalsIgnoreCase(name) || tier.getInternalName().equalsIgnoreCase(name))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No tier with name " + name));
-        }
+        INFERNAL
 
     }
 
