@@ -17,9 +17,9 @@ public class HeartOfTheForest {
     private int lotteryEffectLastChanged;
 
     // Whispers
-    @SerializedName("forest_whispers")
+    @SerializedName("forests_whispers")
     private int remainingForestWhispers;
-    @SerializedName("forest_whispers_spent")
+    @SerializedName("forests_whispers_spent")
     private int spentForestWhispers;
 
     // Daily Logs
