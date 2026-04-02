@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 @Getter
-public class DungeonProgress implements PostInit {
+public class Dungeons implements PostInit {
 
     @SerializedName("dungeon_types")
     @Getter(AccessLevel.NONE)
@@ -39,15 +39,15 @@ public class DungeonProgress implements PostInit {
 
     // PostInit
 
-    private transient @NotNull ConcurrentMap<DungeonEntry.Type, DungeonEntry> dungeons = Concurrent.newMap();
+    private transient @NotNull ConcurrentMap<DungeonData.Type, DungeonData> dungeons = Concurrent.newMap();
     private transient @NotNull ConcurrentMap<DungeonClass.Type, DungeonClass> classes = Concurrent.newMap();
 
     @Override
     public void postInit() {
         this.dungeons = this.dungeonMap.stream()
             .filterKey(key -> !key.startsWith("MASTER_"))
-            .mapKey(DungeonEntry.Type::of)
-            .map((type, value) -> Pair.of(type, new DungeonEntry(
+            .mapKey(DungeonData.Type::of)
+            .map((type, value) -> Pair.of(type, new DungeonData(
                 value.getExperience(),
                 value,
                 this.dungeonMap.getOrDefault(
@@ -74,7 +74,7 @@ public class DungeonProgress implements PostInit {
             .orElseThrow();
     }
 
-    public @NotNull DungeonEntry getDungeon(@NotNull DungeonEntry.Type dungeonType) {
+    public @NotNull DungeonData getDungeon(@NotNull DungeonData.Type dungeonType) {
         return this.getDungeons()
             .stream()
             .filterKey(type -> type == dungeonType)
@@ -83,7 +83,7 @@ public class DungeonProgress implements PostInit {
             .orElseThrow();
     }
 
-    public @NotNull ConcurrentMap<DungeonEntry, Weight> getWeight() {
+    public @NotNull ConcurrentMap<DungeonData, Weight> getWeight() {
         return this.getDungeons()
             .stream()
             .map((type, dungeon) -> Pair.of(

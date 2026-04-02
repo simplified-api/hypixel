@@ -12,13 +12,13 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
-public class SkillEntry implements Experience, Weighted {
+public class SkillLevel implements Experience, Weighted {
 
     private final @NotNull String id;
     private final double experience;
     private final int levelSubtractor;
 
-    public SkillEntry(@NotNull String id, double experience, @NotNull SkyBlockMember member) {
+    public SkillLevel(@NotNull String id, double experience, @NotNull SkyBlockMember member) {
         this.id = id;
         this.experience = Math.max(experience, 0);
         this.levelSubtractor = this.calcLevelSubtractor(member);

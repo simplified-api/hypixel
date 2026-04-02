@@ -9,10 +9,10 @@ import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.api.util.mutable.MutableDouble;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.*;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.attribute.AttributeProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.attribute.AttributeShards;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson.CrimsonIsle;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson.TrophyFishing;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon.DungeonProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon.Dungeons;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.foraging.Foraging;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.foraging.HeartOfTheForest;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.foraging.Temples;
@@ -20,10 +20,10 @@ import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.hoppity.Choc
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.ForgeItem;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.GlaciteTunnels;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.HeartOfTheMountain;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.PetProgress;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.rift.RiftProgress;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.skill.SkillProgress;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer.SlayerProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.Pets;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.rift.Rift;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.skill.Skills;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer.Slayers;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.AccessLevel;
@@ -53,20 +53,20 @@ public class SkyBlockMember implements PostInit {
     @SerializedName("skill_tree")
     private @NotNull SkillTree skillTree = new SkillTree();
     @SerializedName("player_data")
-    private @NotNull PlayerProgress progress = new PlayerProgress();
+    private @NotNull PlayerData playerData = new PlayerData();
     private @NotNull Currencies currencies = new Currencies();
-    private transient SkillProgress skills;
+    private transient Skills skills;
 
     // Combat
     @SerializedName("slayer")
-    private @NotNull SlayerProgress slayers = new SlayerProgress();
+    private @NotNull Slayers slayers = new Slayers();
     @SerializedName("dungeons")
-    private @NotNull DungeonProgress dungeons = new DungeonProgress();
+    private @NotNull Dungeons dungeons = new Dungeons();
     private @NotNull Bestiary bestiary = new Bestiary();
 
     // Pets
     @SerializedName("pets_data")
-    private @NotNull PetProgress pets = new PetProgress();
+    private @NotNull Pets pets = new Pets();
 
     // Mining
     @SerializedName("mining_core")
@@ -91,7 +91,7 @@ public class SkyBlockMember implements PostInit {
 
     // Rift
     @SerializedName("rift")
-    private @NotNull RiftProgress rift = new RiftProgress();
+    private @NotNull Rift rift = new Rift();
 
     // Garden
     @SerializedName("garden_player_data")
@@ -117,7 +117,7 @@ public class SkyBlockMember implements PostInit {
     @SerializedName("item_data")
     private @NotNull ItemSettings itemSettings = new ItemSettings();
     @SerializedName("shards")
-    private @NotNull AttributeProgress attributes = new AttributeProgress();
+    private @NotNull AttributeShards attributes = new AttributeShards();
 
     // Collection
     private @NotNull ConcurrentMap<String, Long> collection = Concurrent.newMap();
@@ -134,11 +134,11 @@ public class SkyBlockMember implements PostInit {
     @Override
     public void postInit() {
         this.accessoryBag.initialize(this);
-        this.skills = new SkillProgress(this.getProgress().getSkillExperience(), this);
+        this.skills = new Skills(this.getPlayerData().getSkillExperience(), this);
 
         this.collectionUnlocked = this.getCollection()
             .stream()
-            .map((itemId, value) -> Pair.of(itemId, this.getProgress()
+            .map((itemId, value) -> Pair.of(itemId, this.getPlayerData()
                 .getUnlockedCollectionTiers()
                 .stream()
                 .filter(tier -> tier.matches(String.format("^%s_[\\d]+$", itemId)))
@@ -150,7 +150,7 @@ public class SkyBlockMember implements PostInit {
     }
 
     public @NotNull ConcurrentList<Integer> getCraftedMinions(@NotNull String itemId) {
-        return this.getProgress().getCraftedMinions(itemId);
+        return this.getPlayerData().getCraftedMinions(itemId);
     }
 
     public @NotNull ChocolateFactory getChocolateFactory() {

@@ -20,7 +20,7 @@ public class DungeonClass implements Experience, Weighted {
 
     @Override
     public @NotNull ConcurrentList<Integer> getExperienceTiers() {
-        return DungeonEntry.DEFAULT_TIERS;
+        return DungeonData.DEFAULT_TIERS;
     }
 
     @Override

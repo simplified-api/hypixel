@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 
 @Getter
-public class PlayerProgress {
+public class PlayerData {
 
     @SerializedName("death_count")
     private int deathCount;

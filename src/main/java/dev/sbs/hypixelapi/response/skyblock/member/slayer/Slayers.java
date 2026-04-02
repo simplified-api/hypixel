@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Getter
-public class SlayerProgress implements PostInit {
+public class Slayers implements PostInit {
 
     @SerializedName("slayer_quest")
     private final @NotNull Optional<SlayerQuest> activeQuest = Optional.empty();

@@ -21,7 +21,7 @@ public class DungeonRun {
     @SerializedName("completion_ts")
     private SkyBlockDate.RealTime completionTime;
     @SerializedName("dungeon_type")
-    private @NotNull DungeonEntry.Type dungeonType = DungeonEntry.Type.UNKNOWN;
+    private @NotNull DungeonData.Type dungeonType = DungeonData.Type.UNKNOWN;
     @SerializedName("dungeon_tier")
     private int tier;
     private @NotNull ConcurrentList<Participant> participants = Concurrent.newList();

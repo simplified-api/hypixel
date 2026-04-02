@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Getter
-public class PetEntry implements Experience {
+public class OwnedPet implements Experience {
 
     @SerializedName("uuid")
     private @NotNull Optional<UUID> identifier = Optional.empty();

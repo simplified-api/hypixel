@@ -12,53 +12,53 @@ import org.jetbrains.annotations.NotNull;
 
 @Getter
 @RequiredArgsConstructor
-public class SkillProgress {
+public class Skills {
 
-    private final @NotNull ConcurrentList<SkillEntry> skills;
+    private final @NotNull ConcurrentList<SkillLevel> skillLevels;
 
-    public SkillProgress(@NotNull ConcurrentMap<String, Double> skillExperience, @NotNull SkyBlockMember member) {
-        this.skills = skillExperience.stream()
+    public Skills(@NotNull ConcurrentMap<String, Double> skillExperience, @NotNull SkyBlockMember member) {
+        this.skillLevels = skillExperience.stream()
             .mapKey(id -> id.replace("SKILL_", ""))
-            .collapseToSingle((id, experience) -> new SkillEntry(id, experience, member))
+            .collapseToSingle((id, experience) -> new SkillLevel(id, experience, member))
             .collect(Concurrent.toUnmodifiableList());
     }
 
-    public @NotNull SkillEntry getSkill(@NotNull String id) {
-        return this.getSkills().matchFirstOrNull(skill -> skill.getId().equalsIgnoreCase(id));
+    public @NotNull SkillLevel getSkill(@NotNull String id) {
+        return this.getSkillLevels().matchFirstOrNull(skill -> skill.getId().equalsIgnoreCase(id));
     }
 
-    public @NotNull ConcurrentList<SkillEntry> getSkills(boolean includeCosmetic) {
-        return this.getSkills()
+    public @NotNull ConcurrentList<SkillLevel> getSkillLevels(boolean includeCosmetic) {
+        return this.getSkillLevels()
             .stream()
             .filter(skill -> includeCosmetic || !skill.getSkill().isCosmetic())
             .collect(Concurrent.toList());
     }
 
     public double getAverage() {
-        return this.getSkills(false)
+        return this.getSkillLevels(false)
             .stream()
-            .mapToDouble(SkillEntry::getLevel)
+            .mapToDouble(SkillLevel::getLevel)
             .average()
             .orElse(0.0);
     }
 
     public double getExperience() {
-        return this.getSkills(false)
+        return this.getSkillLevels(false)
             .stream()
-            .mapToDouble(SkillEntry::getExperience)
+            .mapToDouble(SkillLevel::getExperience)
             .sum();
     }
 
     public double getProgressPercentage() {
-        return this.getSkills(false)
+        return this.getSkillLevels(false)
             .stream()
-            .mapToDouble(SkillEntry::getTotalProgressPercentage)
+            .mapToDouble(SkillLevel::getTotalProgressPercentage)
             .average()
             .orElse(0.0);
     }
 
-    public @NotNull ConcurrentMap<SkillEntry, Weight> getWeight() {
-        return this.getSkills(false)
+    public @NotNull ConcurrentMap<SkillLevel, Weight> getWeight() {
+        return this.getSkillLevels(false)
             .stream()
             .map(skill -> Pair.of(skill, skill.getWeight()))
             .collect(Concurrent.toMap());

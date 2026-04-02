@@ -10,27 +10,27 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 @Getter
-public class PetProgress {
+public class Pets {
 
     private final static @NotNull ConcurrentList<Integer> magicFindPetScore = Concurrent.newList(10, 25, 50, 75, 100, 130, 175, 225, 275, 325, 375, 450, 500);
-    private @NotNull ConcurrentList<PetEntry> pets = Concurrent.newList();
+    private @NotNull ConcurrentList<OwnedPet> pets = Concurrent.newList();
     @SerializedName("pet_care")
     private @NotNull PetCare petCare = new PetCare();
     private @NotNull AutoPet autopet = new AutoPet();
 
-    public @NotNull Optional<PetEntry> getActivePet() {
+    public @NotNull Optional<OwnedPet> getActivePet() {
         return this.getPets()
             .stream()
-            .filter(PetEntry::isActive)
+            .filter(OwnedPet::isActive)
             .findFirst();
     }
 
     public int getPetScore() {
         return this.getPets()
-            .sorted(PetEntry::getRarity)
+            .sorted(OwnedPet::getRarity)
             .stream()
-            .filter(StreamUtil.distinctByKey(PetEntry::getId))
-            .mapToInt(PetEntry::getScore)
+            .filter(StreamUtil.distinctByKey(OwnedPet::getId))
+            .mapToInt(OwnedPet::getScore)
             .sum();
     }
 

@@ -7,7 +7,7 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
-public class AttributeProgress {
+public class AttributeShards {
 
     private @NotNull Traps traps = new Traps();
     @SerializedName("owned")

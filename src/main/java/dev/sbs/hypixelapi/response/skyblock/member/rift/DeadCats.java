@@ -3,7 +3,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.rift;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.PetEntry;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.OwnedPet;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +22,6 @@ public class DeadCats {
     private @NotNull ConcurrentList<String> foundCats = Concurrent.newList();
     @SerializedName("unlocked_pet")
     private boolean petUnlocked;
-    private @NotNull Optional<PetEntry> montezuma = Optional.empty();
+    private @NotNull Optional<OwnedPet> montezuma = Optional.empty();
 
 }

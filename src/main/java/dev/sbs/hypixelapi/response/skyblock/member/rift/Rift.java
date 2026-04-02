@@ -8,7 +8,7 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
-public class RiftProgress {
+public class Rift {
 
     private @NotNull RiftAccess access = new RiftAccess();
     @SerializedName("slayer_quest")

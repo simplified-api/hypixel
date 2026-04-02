@@ -15,7 +15,7 @@ import java.util.Arrays;
 
 @Getter
 @RequiredArgsConstructor
-public class DungeonEntry implements Experience, Weighted {
+public class DungeonData implements Experience, Weighted {
 
     private final double experience;
     private final @NotNull FloorData normalMode;
