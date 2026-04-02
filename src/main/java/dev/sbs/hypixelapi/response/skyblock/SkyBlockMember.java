@@ -13,7 +13,9 @@ import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.attribute.At
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson.CrimsonIsle;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson.TrophyFishing;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon.DungeonProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.foraging.Foraging;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.foraging.HeartOfTheForest;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.foraging.Temples;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.hoppity.ChocolateFactory;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.ForgeItem;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.GlaciteTunnels;
@@ -37,7 +39,7 @@ import java.util.function.Function;
 @Getter
 @NoArgsConstructor
 public class SkyBlockMember implements PostInit {
-    
+
     // Profile
     @SerializedName("player_id")
     private @NotNull UUID uniqueId;
@@ -46,34 +48,25 @@ public class SkyBlockMember implements PostInit {
     @Getter(AccessLevel.NONE)
     private @NotNull Profile profile = new Profile();
 
-    // Data
-    @SerializedName("player_data")
-    private @NotNull PlayerProgress progress = new PlayerProgress();
-    @SerializedName("garden_player_data")
-    private @NotNull GardenCore garden = new GardenCore();
-    @SerializedName("slayer")
-    private @NotNull SlayerProgress slayers = new SlayerProgress();
-    @SerializedName("pets_data")
-    private @NotNull PetProgress pets = new PetProgress();
-    @SerializedName("dungeons")
-    private @NotNull DungeonProgress dungeons = new DungeonProgress();
-    @SerializedName("rift")
-    private @NotNull RiftProgress rift = new RiftProgress();
-    @SerializedName("shards")
-    private @NotNull AttributeProgress attributes = new AttributeProgress();
-    @SerializedName("player_stats")
-    private @NotNull Statistics statistics = new Statistics();
-    private transient SkillProgress skills;
-
-    // Core
-    @SerializedName("foraging_core")
-    private @NotNull HeartOfTheForest foraging = new HeartOfTheForest();
-
-    @Getter(AccessLevel.NONE)
-    private @NotNull Events events = new Events();
-
+    // Progression
+    private @NotNull Leveling leveling = new Leveling();
     @SerializedName("skill_tree")
     private @NotNull SkillTree skillTree = new SkillTree();
+    @SerializedName("player_data")
+    private @NotNull PlayerProgress progress = new PlayerProgress();
+    private @NotNull Currencies currencies = new Currencies();
+    private transient SkillProgress skills;
+
+    // Combat
+    @SerializedName("slayer")
+    private @NotNull SlayerProgress slayers = new SlayerProgress();
+    @SerializedName("dungeons")
+    private @NotNull DungeonProgress dungeons = new DungeonProgress();
+    private @NotNull Bestiary bestiary = new Bestiary();
+
+    // Pets
+    @SerializedName("pets_data")
+    private @NotNull PetProgress pets = new PetProgress();
 
     // Mining
     @SerializedName("mining_core")
@@ -83,34 +76,58 @@ public class SkyBlockMember implements PostInit {
     @SerializedName("glacite_player_data")
     private @NotNull GlaciteTunnels glaciteTunnels = new GlaciteTunnels();
 
-    private @NotNull Bestiary bestiary = new Bestiary();
-    @SerializedName("accessory_bag_storage")
-    private @NotNull AccessoryBag accessoryBag = new AccessoryBag();
-    private @NotNull Leveling leveling = new Leveling();
-    @SerializedName("nether_island_player_data")
-    private @NotNull CrimsonIsle crimsonIsle = new CrimsonIsle();
-    private @NotNull Experimentation experimentation = new Experimentation();
-    @SerializedName("fairy_soul")
-    private @NotNull FairySouls fairySouls = new FairySouls();
-    private @NotNull Currencies currencies = new Currencies();
-    @SerializedName("item_data")
-    private @NotNull ItemSettings itemSettings = new ItemSettings();
-    @SerializedName("jacobs_contest")
-    private @NotNull JacobsContest jacobsContest = new JacobsContest();
-    private @NotNull Inventory inventory = new Inventory();
-    @SerializedName("shared_inventory")
-    private @NotNull SharedInventory sharedInventory = new SharedInventory();
+    // Foraging
+    private @NotNull Foraging foraging = new Foraging();
+    @SerializedName("foraging_core")
+    private @NotNull HeartOfTheForest heartOfTheForest = new HeartOfTheForest();
     @Getter(AccessLevel.NONE)
     private @NotNull Temples temples = new Temples();
 
-    @SerializedPath("quests.trapper_quest")
-    private @NotNull Trapper trapper = new Trapper(); // TODO: quests might be optional
-
-    // Maps
+    // Crimson Isle
+    @SerializedName("nether_island_player_data")
+    private @NotNull CrimsonIsle crimsonIsle = new CrimsonIsle();
     @SerializedName("trophy_fish")
     private @NotNull TrophyFishing trophyFish = new TrophyFishing();
+
+    // Rift
+    @SerializedName("rift")
+    private @NotNull RiftProgress rift = new RiftProgress();
+
+    // Garden
+    @SerializedName("garden_player_data")
+    private @NotNull GardenCore garden = new GardenCore();
+    @SerializedName("jacobs_contest")
+    private @NotNull JacobsContest jacobsContest = new JacobsContest();
+    @SerializedPath("quests.trapper_quest")
+    private @NotNull Trapper trapper = new Trapper();
+
+    // Events
+    @Getter(AccessLevel.NONE)
+    private @NotNull Events events = new Events();
+    private @NotNull Experimentation experimentation = new Experimentation();
+    @SerializedName("fairy_soul")
+    private @NotNull FairySouls fairySouls = new FairySouls();
+
+    // Inventory
+    private @NotNull Inventory inventory = new Inventory();
+    @SerializedName("shared_inventory")
+    private @NotNull SharedInventory sharedInventory = new SharedInventory();
+    @SerializedName("accessory_bag_storage")
+    private @NotNull AccessoryBag accessoryBag = new AccessoryBag();
+    @SerializedName("item_data")
+    private @NotNull ItemSettings itemSettings = new ItemSettings();
+    @SerializedName("shards")
+    private @NotNull AttributeProgress attributes = new AttributeProgress();
+
+    // Collection
     private @NotNull ConcurrentMap<String, Long> collection = Concurrent.newMap();
     private transient @NotNull ConcurrentMap<String, Integer> collectionUnlocked = Concurrent.newMap();
+
+    // Statistics
+    @SerializedName("player_stats")
+    private @NotNull Statistics statistics = new Statistics();
+
+    // Miscellaneous
     @SerializedPath("objectives.tutorial")
     private @NotNull ConcurrentList<String> tutorialObjectives = Concurrent.newList();
 
@@ -203,14 +220,6 @@ public class SkyBlockMember implements PostInit {
         private int personalBankUpgrade;
         @SerializedName("cookie_buff_active")
         private boolean boosterCookieActive;
-
-    }
-
-    @Getter
-    private static class Temples {
-
-        @SerializedName("unlocked_temples")
-        private @NotNull ConcurrentList<String> unlockedTemples = Concurrent.newList();
 
     }
 
