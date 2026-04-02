@@ -7,7 +7,9 @@ import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.api.io.gson.Extract;
 import dev.sbs.api.io.gson.Lenient;
 import dev.sbs.api.io.gson.SerializedPath;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
@@ -25,8 +27,27 @@ public class Foraging {
     @Extract("treeGifts.milestone_tier_claimed")
     private @NotNull ConcurrentMap<String, Integer> claimedMilestoneTiers = Concurrent.newMap();
 
+    // Hina
+    @SerializedPath("hina.tasks")
+    private @NotNull Hina hina = new Hina();
+
     // Melody Harp
     @SerializedPath("songs.harp")
     private @NotNull MelodyHarp melodyHarp = new MelodyHarp();
+
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Hina {
+
+        @SerializedName("completed_tasks")
+        private @NotNull ConcurrentList<String> completedTasks = Concurrent.newList();
+        @SerializedName("task_progress")
+        private @NotNull ConcurrentMap<String, Integer> taskProgress = Concurrent.newMap();
+        @SerializedName("claimed_rewards")
+        private @NotNull ConcurrentList<String> claimedRewards = Concurrent.newList();
+        @SerializedName("tier_claimed")
+        private int tierClaimed;
+
+    }
 
 }
