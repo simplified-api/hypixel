@@ -36,6 +36,10 @@ public class VillagePlaza {
 
         @SerializedName("step_index")
         private int stepIndex;
+        @SerializedName("step_index_pt2")
+        private int stepIndexPt2;
+        @SerializedName("step_index_pt3")
+        private int stepIndexPt3;
         @SerializedName("room_clues")
         private @NotNull ConcurrentList<String> roomClues = Concurrent.newList();
 
