@@ -32,7 +32,10 @@ public class PetEntry implements Experience {
     private @NotNull Rarity baseRarity = Rarity.COMMON;
     private int candyUsed;
     private @NotNull Optional<String> heldItem = Optional.empty();
+    @SerializedName("petSoulbound")
+    private boolean soulbound;
     private @NotNull Optional<String> skin = Optional.empty();
+    private @NotNull ConcurrentMap<String, Object> extra = Concurrent.newMap();
 
     @Override
     public @NotNull ConcurrentList<Integer> getExperienceTiers() {
