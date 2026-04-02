@@ -14,6 +14,8 @@ public class Dojo {
 
     @Capture(filter = "^dojo_points_")
     private @NotNull ConcurrentMap<Type, Integer> points = Concurrent.newMap();
+    @Capture(filter = "^dojo_time_")
+    private @NotNull ConcurrentMap<Type, Integer> times = Concurrent.newMap();
 
     @Getter
     @RequiredArgsConstructor
