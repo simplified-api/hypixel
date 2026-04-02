@@ -28,7 +28,7 @@ public class MelodyHarp {
     public static class Song {
 
         @SerializedName("best_completion")
-        private int bestCompletion;
+        private double bestCompletion;
         private int completions;
         @SerializedName("perfect_completions")
         private int perfectCompletions;
