@@ -3,6 +3,7 @@ package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
+import dev.sbs.api.io.gson.Capture;
 import dev.sbs.api.io.gson.Lenient;
 import dev.sbs.api.io.gson.SerializedPath;
 import dev.sbs.minecraftapi.skyblock.common.Rarity;
@@ -19,6 +20,9 @@ public class Statistics {
     private @NotNull Races races = new Races();
     private @NotNull Mythos mythos = new Mythos();
     private @NotNull Auctions auctions = new Auctions();
+    @SerializedName("candy_collected")
+    private @NotNull CandyCollected candy = new CandyCollected();
+    private @NotNull PetStats pets = new PetStats();
     @SerializedName("end_island")
     private @NotNull EndIsland endIsland = new EndIsland();
     private @NotNull Winter winter = new Winter();
@@ -229,6 +233,32 @@ public class Statistics {
 
         private int fished;
         private int bait;
+
+    }
+
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class CandyCollected {
+
+        private int total;
+        @SerializedName("purple_candy")
+        private int purpleCandy;
+        @SerializedName("green_candy")
+        private int greenCandy;
+        @Capture
+        private @NotNull ConcurrentMap<String, FestivalCandy> festivals = Concurrent.newMap();
+
+        @Getter
+        @NoArgsConstructor(access = AccessLevel.PRIVATE)
+        public static class FestivalCandy {
+
+            private int total;
+            @SerializedName("purple_candy")
+            private int purpleCandy;
+            @SerializedName("green_candy")
+            private int greenCandy;
+
+        }
 
     }
 
