@@ -8,6 +8,7 @@ import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.Banking;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.CommunityUpgrades;
 import dev.sbs.minecraftapi.skyblock.common.GameMode;
 import dev.sbs.minecraftapi.skyblock.common.Profile;
+import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,8 @@ public class SkyBlockIsland {
 
     @SerializedName("profile_id")
     private @NotNull UUID islandId;
+    @SerializedName("created_at")
+    private @NotNull Optional<SkyBlockDate.RealTime> createdAt = Optional.empty();
     @SerializedName("community_upgrades")
     private @NotNull Optional<CommunityUpgrades> communityUpgrades = Optional.empty();
     private @NotNull Optional<Banking> banking = Optional.empty();
