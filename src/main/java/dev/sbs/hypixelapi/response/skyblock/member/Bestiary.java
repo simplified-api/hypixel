@@ -25,6 +25,9 @@ import java.util.stream.Stream;
 public class Bestiary implements PostInit {
 
     private static final @NotNull Pattern MOB_PATTERN = Pattern.compile("^([a-z_]+)_([0-9]+)$");
+    @SerializedName("migrated_stats")
+    @Getter private boolean migratedStats;
+    @Getter private boolean migration;
     @Lenient
     private @NotNull ConcurrentMap<String, Integer> kills = Concurrent.newMap();
     @Lenient
