@@ -26,6 +26,8 @@ public class Abiphone {
     private int trioContactAddons;
     @SerializedName("selected_ringtone")
     private String selectedRingtone;
+    @SerializedName("speed_dial")
+    private @NotNull Optional<String> speedDial = Optional.empty();
 
     @Getter
     public static class Contact {
