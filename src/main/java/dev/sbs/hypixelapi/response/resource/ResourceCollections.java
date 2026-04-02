@@ -2,40 +2,25 @@ package dev.sbs.minecraftapi.client.hypixel.response.resource;
 
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.io.gson.PostInit;
-import dev.sbs.api.reflection.Reflection;
 import dev.sbs.minecraftapi.persistence.model.Collection;
-import lombok.AccessLevel;
+import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Information regarding Collections.
  */
 @Getter
-@NoArgsConstructor(access = AccessLevel.NONE)
-public class ResourceCollections implements PostInit {
+public class ResourceCollections {
 
-    private static final @NotNull Reflection<Collection> REFLECTION = new Reflection<>(Collection.class);
     private boolean success;
-    private long lastUpdated;
-    private String version;
-    @SerializedName("collections")
-    @Getter(AccessLevel.NONE)
-    private @NotNull ConcurrentMap<String, Collection> collectionMap = Concurrent.newMap();
-    private transient ConcurrentList<Collection> collections = Concurrent.newList();
+    @SerializedName("lastUpdated")
+    private @NotNull SkyBlockDate.SkyBlockTime lastUpdated;
+    @SerializedName("version")
+    private @NotNull String version;
+    private @NotNull ConcurrentMap<String, Collection> collections = Concurrent.newMap();
 
-    @Override
-    public void postInit() {
-        this.collections = this.collectionMap.stream()
-            .collapseToSingle((id, collection) -> {
-                REFLECTION.setValue("id", collection, id.toUpperCase());
-                return collection;
-            })
-            .collect(Concurrent.toUnmodifiableList());
-    }
+    // TODO: Migrate away from JpaModel
 
 }
