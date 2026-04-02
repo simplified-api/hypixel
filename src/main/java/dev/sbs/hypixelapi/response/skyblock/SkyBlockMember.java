@@ -11,11 +11,13 @@ import dev.sbs.api.util.mutable.MutableDouble;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.*;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.attribute.AttributeProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson.CrimsonIsle;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson.TrophyFishing;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon.DungeonProgress;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.foraging.HeartOfTheForest;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.hoppity.ChocolateFactory;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.ForgeItem;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.GlaciteTunnels;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.MiningCore;
+import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining.HeartOfTheMountain;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.PetProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.rift.RiftProgress;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.skill.SkillProgress;
@@ -29,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -66,7 +67,7 @@ public class SkyBlockMember implements PostInit {
 
     // Core
     @SerializedName("foraging_core")
-    private @NotNull ForagingCore foraging = new ForagingCore();
+    private @NotNull HeartOfTheForest foraging = new HeartOfTheForest();
 
     @Getter(AccessLevel.NONE)
     private @NotNull Events events = new Events();
@@ -76,9 +77,9 @@ public class SkyBlockMember implements PostInit {
 
     // Mining
     @SerializedName("mining_core")
-    private @NotNull MiningCore mining = new MiningCore();
+    private @NotNull HeartOfTheMountain mining = new HeartOfTheMountain();
     @SerializedPath("forge.forge_processes.forge_1")
-    private @NotNull ConcurrentMap<Integer, ForgeItem> forge = Concurrent.newMap();
+    private @NotNull ConcurrentMap<Integer, ForgeItem> forgeSlots = Concurrent.newMap();
     @SerializedName("glacite_player_data")
     private @NotNull GlaciteTunnels glaciteTunnels = new GlaciteTunnels();
 
@@ -99,15 +100,15 @@ public class SkyBlockMember implements PostInit {
     private @NotNull Inventory inventory = new Inventory();
     @SerializedName("shared_inventory")
     private @NotNull SharedInventory sharedInventory = new SharedInventory();
-    private @NotNull Optional<Quests> quests = Optional.empty();
     @Getter(AccessLevel.NONE)
     private @NotNull Temples temples = new Temples();
 
+    @SerializedPath("quests.trapper_quest")
+    private @NotNull Trapper trapper = new Trapper(); // TODO: quests might be optional
+
     // Maps
     @SerializedName("trophy_fish")
-    @Getter(AccessLevel.NONE)
-    private @NotNull ConcurrentMap<String, Object> trophyFishMap = Concurrent.newMap();
-    private transient TrophyFishing trophyFish;
+    private @NotNull TrophyFishing trophyFish = new TrophyFishing();
     private @NotNull ConcurrentMap<String, Long> collection = Concurrent.newMap();
     private transient @NotNull ConcurrentMap<String, Integer> collectionUnlocked = Concurrent.newMap();
     @SerializedPath("objectives.tutorial")
@@ -116,7 +117,6 @@ public class SkyBlockMember implements PostInit {
     @Override
     public void postInit() {
         this.accessoryBag.initialize(this);
-        this.trophyFish = new TrophyFishing(this.trophyFishMap);
         this.skills = new SkillProgress(this.getProgress().getSkillExperience(), this);
 
         this.collectionUnlocked = this.getCollection()

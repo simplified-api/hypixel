@@ -129,7 +129,7 @@ public class AccessoryBag {
             calculatedMagicalPower += 11;*/
 
         this.contents = member.getInventory().getBags().getAccessories();
-        this.magicalPower = 0; // TODO
+        this.magicalPower = 0; // TODO: calculatedMagicalPower
         this.tuningPoints = this.magicalPower / 10;
         this.logComponent = Math.pow(Math.log(1 + (0.0019 * this.magicalPower)), 1.2);
         //this.magicalPowerMultiplier = 29.97 * Math.pow(Math.log(1 + (0.0019 * this.magicalPower)), 1.2);

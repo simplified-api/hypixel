@@ -32,7 +32,7 @@ public class SkillEntry implements Experience, Weighted {
                 subtractor += member.getCollectionUnlocked().getOrDefault("FIG_LOG", 0) < 9 ? 1 : 0;
                 subtractor += member.getCollectionUnlocked().getOrDefault("MANGROVE_LOG", 0) < 9 ? 1 : 0;
                 // TODO: Agatha Shop
-                // TODO: Hopefully collection unlocks are in the api
+                //       Hopefully collection unlocks are in the api
                 yield subtractor;
             }
             default -> 0;

@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import dev.sbs.api.collection.concurrent.Concurrent;
 import dev.sbs.api.collection.concurrent.ConcurrentList;
 import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.io.gson.PostInit;
+import dev.sbs.api.io.gson.Lenient;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
-public class FloorData implements PostInit {
+public class FloorData {
 
     protected double experience;
     @SerializedName("highest_tier_completed")
@@ -25,9 +25,9 @@ public class FloorData implements PostInit {
 
     @SerializedName("times_played")
     private @NotNull ConcurrentMap<Floor, Integer> timesPlayed = Concurrent.newMap();
-    @Getter(AccessLevel.NONE)
+    @Lenient
     @SerializedName("tier_completions")
-    private @NotNull ConcurrentMap<Object, Integer> tierCompletions = Concurrent.newMap();
+    private @NotNull ConcurrentMap<Floor, Integer> completions = Concurrent.newMap();
     @SerializedName("milestone_completions")
     private @NotNull ConcurrentMap<Floor, Integer> milestoneCompletions = Concurrent.newMap();
 
@@ -66,19 +66,6 @@ public class FloorData implements PostInit {
     private @NotNull ConcurrentMap<Floor, Integer> fastestSTierTime = Concurrent.newMap();
     @SerializedName("fastest_time_s_plus")
     private @NotNull ConcurrentMap<Floor, Integer> fastestSPlusTierTime = Concurrent.newMap();
-
-    // PostInit
-
-    private transient @NotNull ConcurrentMap<Floor, Integer> completions = Concurrent.newMap();
-
-    @Override
-    public void postInit() {
-        this.completions = this.tierCompletions.stream()
-            .filterKey(Integer.class::isInstance)
-            .mapKey(Integer.class::cast)
-            .mapKey(Floor::of)
-            .collect(Concurrent.toUnmodifiableMap());
-    }
 
     public @NotNull ConcurrentMap<Floor, Double> getMostDamage(@NotNull DungeonClass.Type classType) {
         return switch (classType) {
