@@ -22,7 +22,7 @@ public class SkillTree implements PostInit {
     @SerializedName("selected_ability")
     private @NotNull ConcurrentMap<String, String> selectedAbility = Concurrent.newMap();
     @SerializedName("tokens_spent")
-    private @NotNull ConcurrentMap<String, String> spentTokens = Concurrent.newMap();
+    private @NotNull ConcurrentMap<String, Integer> spentTokens = Concurrent.newMap();
     private @NotNull ConcurrentMap<String, Long> experience = Concurrent.newMap();
     @SerializedName("last_reset")
     private @NotNull ConcurrentMap<String, Instant> lastReset = Concurrent.newMap();
