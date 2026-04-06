@@ -1,42 +1,25 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.io.gson.PostInit;
-import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
-import lombok.AccessLevel;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.collection.tuple.pair.Pair;
+import dev.simplified.gson.Collapse;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.Optional;
 
 @Getter
-public class Slayers implements PostInit {
+public class Slayers {
 
     @SerializedName("slayer_quest")
     private final @NotNull Optional<SlayerQuest> activeQuest = Optional.empty();
-    @Getter(AccessLevel.NONE)
+    @Collapse
     @SerializedName("slayer_bosses")
-    private @NotNull ConcurrentMap<String, SlayerBoss> slayerBosses = Concurrent.newMap();
-    private transient ConcurrentList<SlayerBoss> bosses = Concurrent.newList();
-
-    @Override
-    public void postInit() {
-        this.bosses = this.slayerBosses.stream()
-            .peek((id, slayerBoss) -> slayerBoss.setId(id))
-            .map(Map.Entry::getValue)
-            .collect(Concurrent.toUnmodifiableList());
-    }
-
-    public @NotNull SlayerBoss getSlayer(@NotNull String id) {
-        return this.getBosses()
-            .matchFirst(skill -> skill.getId().equalsIgnoreCase(id))
-            .orElseThrow(() -> new IllegalArgumentException("No boss with id " + id));
-    }
+    private @NotNull ConcurrentList<SlayerBoss> bosses = Concurrent.newList();
 
     public double getAverage() {
         return this.getBosses()

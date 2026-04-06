@@ -1,78 +1,35 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.io.gson.PostInit;
-import dev.sbs.api.reflection.Reflection;
-import dev.sbs.api.util.NumberUtil;
 import dev.sbs.minecraftapi.MinecraftApi;
 import dev.sbs.minecraftapi.persistence.model.Slayer;
 import dev.sbs.minecraftapi.skyblock.common.Experience;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
 import dev.sbs.minecraftapi.skyblock.common.Weighted;
-import lombok.AccessLevel;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.gson.Capture;
+import dev.simplified.gson.Key;
+import dev.simplified.util.NumberUtil;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-
 @Getter
-public class SlayerBoss implements PostInit, Experience, Weighted {
+public class SlayerBoss implements Experience, Weighted {
 
-    @Getter(AccessLevel.NONE)
-    private final static Reflection<SlayerBoss> slayerRef = new Reflection<>(SlayerBoss.class);
-    @Setter(AccessLevel.PACKAGE)
-    private String id;
+    @Key
+    private transient String id;
     @SerializedName("xp")
     private double experience;
-
-    private ConcurrentMap<String, Boolean> claimed_levels = Concurrent.newMap(); // level_#: true
-    private int boss_kills_tier_0;
-    private int boss_kills_tier_1;
-    private int boss_kills_tier_2;
-    private int boss_kills_tier_3;
-    private int boss_kills_tier_4;
-
-    private int boss_attempts_tier_0;
-    private int boss_attempts_tier_1;
-    private int boss_attempts_tier_2;
-    private int boss_attempts_tier_3;
-    private int boss_attempts_tier_4;
-
-    @Getter private ConcurrentMap<Integer, Boolean> claimed;
-    @Getter private ConcurrentMap<Integer, Boolean> claimedSpecial;
-    @Getter private ConcurrentMap<Integer, Integer> kills;
-    @Getter private ConcurrentMap<Integer, Integer> attempts;
-
-    @Override
-    @SuppressWarnings("all")
-    public void postInit() {
-        ConcurrentMap<Integer, Boolean> claimed = Concurrent.newMap();
-        ConcurrentMap<Integer, Boolean> claimedSpecial = Concurrent.newMap();
-        ConcurrentMap<Integer, Integer> kills = Concurrent.newMap();
-        ConcurrentMap<Integer, Integer> attempts = Concurrent.newMap();
-
-        for (Map.Entry<String, Boolean> entry : this.claimed_levels.entrySet()) {
-            String entryKey = entry.getKey().replace("level_", "");
-            boolean special = entryKey.endsWith("_special");
-            entryKey = special ? entryKey.replace("_special", "") : entryKey;
-            (special ? claimedSpecial : claimed).put(Integer.parseInt(entryKey), entry.getValue());
-        }
-
-        for (int i = 0; i < 5; i++) {
-            kills.put(i + 1, (int) slayerRef.getValue(String.format("boss_kills_tier_%s", i), this));
-            attempts.put(i + 1, (int) slayerRef.getValue(String.format("boss_attempts_tier_%s", i), this));
-        }
-
-        this.claimed = claimed.toUnmodifiableMap();
-        this.claimedSpecial = claimedSpecial.toUnmodifiableMap();
-        this.kills = kills.toUnmodifiableMap();
-        this.attempts = attempts.toUnmodifiableMap();
-    }
-
+    @Capture(filter = "^level_", descend = true)
+    @SerializedName("claimed_levels")
+    private @NotNull ConcurrentMap<Integer, ClaimedLevel> claimedLevels = Concurrent.newMap();
+    @Capture(filter = "^boss_kills_tier_")
+    private @NotNull ConcurrentMap<Integer, Integer> kills = Concurrent.newMap();
+    @Capture(filter = "^boss_attempts_tier_")
+    private @NotNull ConcurrentMap<Integer, Integer> attempts = Concurrent.newMap();
 
     public @NotNull Slayer getSlayer() {
         return MinecraftApi.getRepository(Slayer.class).findFirstOrNull(Slayer::getId, this.getId());
@@ -118,8 +75,18 @@ public class SlayerBoss implements PostInit, Experience, Weighted {
     }
 
     public boolean isClaimed(int level) {
-        return this.getClaimed().getOrDefault(level, false);
+        ClaimedLevel data = this.getClaimedLevels().get(level);
+        return data != null && data.isClaimed();
     }
 
+    @Getter
+    @NoArgsConstructor
+    public static class ClaimedLevel {
+
+        @SerializedName("")
+        private boolean claimed;
+        private boolean special;
+
+    }
 
 }
