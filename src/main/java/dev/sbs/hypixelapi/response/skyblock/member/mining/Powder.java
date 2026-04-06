@@ -4,21 +4,21 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-public enum Powder {
+@Getter
+@NoArgsConstructor
+public class Powder {
 
-    MITHRIL,
-    GEMSTONE,
-    GLACITE;
+    @SerializedName("")
+    private int amount;
+    private int total;
+    @SerializedName("spent_")
+    private int spent;
 
-    @Getter
-    @NoArgsConstructor
-    public static class Data {
+    public enum Type {
 
-        @SerializedName("")
-        private int amount;
-        private int total;
-        @SerializedName("spent_")
-        private int spent;
+        MITHRIL,
+        GEMSTONE,
+        GLACITE
 
     }
 

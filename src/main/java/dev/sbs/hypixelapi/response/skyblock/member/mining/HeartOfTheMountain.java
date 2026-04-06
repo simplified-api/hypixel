@@ -44,7 +44,7 @@ public class HeartOfTheMountain {
 
     // Powder
     @Capture(filter = "^powder_")
-    private @NotNull ConcurrentMap<Powder, Powder.Data> powder = Concurrent.newMap();
+    private @NotNull ConcurrentMap<Powder.Type, Powder> powder = Concurrent.newMap();
 
     // Daily Ores
     @SerializedName("daily_ores_mined")
