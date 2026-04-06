@@ -1,11 +1,10 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.io.gson.PostInit;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
-import lombok.AccessLevel;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.gson.Capture;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 @Getter
-public class HeartOfTheMountain implements PostInit {
+public class HeartOfTheMountain {
 
     @Accessors(fluent = true)
     @SerializedName("received_free_tier")
@@ -44,25 +43,8 @@ public class HeartOfTheMountain implements PostInit {
     private @NotNull ConcurrentMap<Crystal.Type, Crystal> crystals = Concurrent.newMap();
 
     // Powder
-    private transient @NotNull Powder powder = new Powder();
-    @Getter(AccessLevel.NONE)
-    private int powder_mithril;
-    @Getter(AccessLevel.NONE)
-    private int powder_mithril_total;
-    @Getter(AccessLevel.NONE)
-    private int powder_spent_mithril;
-    @Getter(AccessLevel.NONE)
-    private int powder_gemstone;
-    @Getter(AccessLevel.NONE)
-    private int powder_gemstone_total;
-    @Getter(AccessLevel.NONE)
-    private int powder_spent_gemstone;
-    @Getter(AccessLevel.NONE)
-    private int powder_glacite;
-    @Getter(AccessLevel.NONE)
-    private int powder_glacite_total;
-    @Getter(AccessLevel.NONE)
-    private int powder_spent_glacite;
+    @Capture(filter = "^powder_")
+    private @NotNull ConcurrentMap<Powder, Powder.Data> powder = Concurrent.newMap();
 
     // Daily Ores
     @SerializedName("daily_ores_mined")
@@ -81,16 +63,5 @@ public class HeartOfTheMountain implements PostInit {
     private int dailyOresMinedGlacite;
     @SerializedName("daily_ores_mined_day_glacite")
     private int dailyOresMinedDayGlacite;
-
-    @Override
-    public void postInit() {
-        this.powder = new Powder(
-            this.powder_mithril, this.powder_mithril_total, this.powder_spent_mithril,
-            this.powder_gemstone, this.powder_gemstone_total, this.powder_spent_gemstone,
-            this.powder_glacite, this.powder_glacite_total, this.powder_spent_glacite
-        );
-    }
-
-
 
 }
