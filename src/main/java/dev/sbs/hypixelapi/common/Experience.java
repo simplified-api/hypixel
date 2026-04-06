@@ -1,6 +1,6 @@
 package dev.sbs.minecraftapi.skyblock.common;
 
-import dev.sbs.api.collection.concurrent.ConcurrentList;
+import dev.simplified.collection.ConcurrentList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.IntStream;

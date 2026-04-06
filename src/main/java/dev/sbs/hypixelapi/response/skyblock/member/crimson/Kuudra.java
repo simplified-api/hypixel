@@ -1,11 +1,11 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.io.gson.Capture;
-import dev.sbs.api.math.Range;
-import dev.sbs.api.util.StringUtil;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.gson.Capture;
+import dev.simplified.util.Range;
+import dev.simplified.util.StringUtil;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +19,8 @@ public class Kuudra {
     private @NotNull ConcurrentMap<Tier, Integer> highestWave = Concurrent.newMap();
     @Capture
     private @NotNull ConcurrentMap<Tier, Integer> completedTiers = Concurrent.newMap();
-    @NotNull SearchSettings searchSettings = new SearchSettings();
-    @NotNull GroupBuilder groupBuilder = new GroupBuilder();
+    transient @NotNull SearchSettings searchSettings = new SearchSettings();
+    transient @NotNull GroupBuilder groupBuilder = new GroupBuilder();
 
     @Getter
     public enum Tier {

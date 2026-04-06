@@ -1,13 +1,6 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.io.gson.PostInit;
-import dev.sbs.api.io.gson.SerializedPath;
-import dev.sbs.api.tuple.pair.Pair;
-import dev.sbs.api.util.mutable.MutableDouble;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.*;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.attribute.AttributeShards;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson.CrimsonIsle;
@@ -26,6 +19,13 @@ import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.skill.Skills
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer.Slayers;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.collection.tuple.pair.Pair;
+import dev.simplified.gson.PostInit;
+import dev.simplified.gson.SerializedPath;
+import dev.simplified.util.mutable.MutableDouble;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

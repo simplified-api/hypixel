@@ -1,14 +1,14 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.garden.ActiveCommission;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.garden.CommissionData;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.garden.ComposterData;
 import dev.sbs.minecraftapi.skyblock.common.Experience;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;

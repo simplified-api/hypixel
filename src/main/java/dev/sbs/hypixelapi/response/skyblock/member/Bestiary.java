@@ -1,16 +1,17 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.io.gson.Extract;
-import dev.sbs.api.io.gson.Lenient;
-import dev.sbs.api.io.gson.PostInit;
-import dev.sbs.api.tuple.pair.PairStream;
-import dev.sbs.api.util.NumberUtil;
 import dev.sbs.minecraftapi.MinecraftApi;
 import dev.sbs.minecraftapi.persistence.model.BestiaryFamily;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.collection.tuple.pair.PairStream;
+import dev.simplified.gson.Extract;
+import dev.simplified.gson.Lenient;
+import dev.simplified.gson.PostInit;
+import dev.simplified.gson.SerializedPath;
+import dev.simplified.util.NumberUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -22,25 +23,23 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+@Getter
 public class Bestiary implements PostInit {
 
     private static final @NotNull Pattern MOB_PATTERN = Pattern.compile("^([a-z_]+)_([0-9]+)$");
     @SerializedName("migrated_stats")
-    @Getter private boolean migratedStats;
-    @Getter private boolean migration;
+    private boolean migratedStats;
+    private boolean migration;
+    @Extract("kills.last_killed_mob")
+    private @NotNull Optional<String> lastKilledMob = Optional.empty();
+    @SerializedPath("milestone.last_claimed_milestone")
+    private int lastClaimedMilestone;
+    private @NotNull Miscellaneous miscellaneous = new Miscellaneous();
     @Lenient
     private @NotNull ConcurrentMap<String, Integer> kills = Concurrent.newMap();
     @Lenient
     private @NotNull ConcurrentMap<String, Integer> deaths = Concurrent.newMap();
-    @Extract("kills.last_killed_mob")
-    @Getter private @NotNull Optional<String> lastKilledMob = Optional.empty();
-    private @NotNull Milestone milestone = new Milestone();
-    private @NotNull Miscellaneous miscellaneous = new Miscellaneous();
-    @Getter private transient @NotNull ConcurrentList<Family> families = Concurrent.newList();
-
-    public int getLastClaimedMilestone() {
-        return this.milestone.getLastClaimedMilestone();
-    }
+    private transient @NotNull ConcurrentList<Family> families = Concurrent.newList();
 
     public int getMilestone() {
         return this.getUnlocked() / 10;
@@ -51,14 +50,6 @@ public class Bestiary implements PostInit {
             .stream()
             .mapToInt(Family::getLevel)
             .sum();
-    }
-
-    public boolean hasNotificationsEnabled() {
-        return this.miscellaneous.hasNotificationsEnabled();
-    }
-
-    public boolean isMaxKillsVisible() {
-        return this.miscellaneous.isMaxKillsVisible();
     }
 
     @Override
@@ -144,14 +135,6 @@ public class Bestiary implements PostInit {
             return MinecraftApi.getRepository(BestiaryFamily.class)
                 .matchFirstOrNull(family -> family.getMobs().contains(String.format("%s_%s", this.getId(), this.getLevel())));
         }
-
-    }
-
-    @Getter
-    private static class Milestone {
-
-        @SerializedName("last_claimed_milestone")
-        private int lastClaimedMilestone;
 
     }
 

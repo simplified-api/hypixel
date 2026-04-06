@@ -1,14 +1,14 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.collection.concurrent.linked.ConcurrentLinkedMap;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.Banking;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.CommunityUpgrades;
 import dev.sbs.minecraftapi.skyblock.common.GameMode;
 import dev.sbs.minecraftapi.skyblock.common.Profile;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.linked.ConcurrentLinkedMap;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;

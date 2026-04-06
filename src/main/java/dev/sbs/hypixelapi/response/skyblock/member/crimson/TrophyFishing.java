@@ -1,12 +1,12 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.io.gson.Capture;
-import dev.sbs.api.io.gson.Split;
-import dev.sbs.api.tuple.pair.PairOptional;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.collection.tuple.pair.PairOptional;
+import dev.simplified.gson.Capture;
+import dev.simplified.gson.Split;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;

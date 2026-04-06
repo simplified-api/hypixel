@@ -1,11 +1,11 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon;
 
-import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.util.NumberUtil;
-import dev.sbs.api.util.StringUtil;
 import dev.sbs.minecraftapi.skyblock.common.Experience;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
 import dev.sbs.minecraftapi.skyblock.common.Weighted;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.util.NumberUtil;
+import dev.simplified.util.StringUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;

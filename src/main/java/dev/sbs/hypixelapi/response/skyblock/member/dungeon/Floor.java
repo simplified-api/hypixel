@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.util.StringUtil;
+import dev.simplified.util.StringUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;

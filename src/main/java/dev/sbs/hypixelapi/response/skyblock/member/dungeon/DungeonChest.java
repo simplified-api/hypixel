@@ -1,9 +1,9 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.io.gson.SerializedPath;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.gson.SerializedPath;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

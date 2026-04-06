@@ -1,16 +1,16 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentList;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
-import dev.sbs.api.io.gson.PostInit;
-import dev.sbs.api.tuple.pair.Pair;
 import dev.sbs.minecraftapi.MinecraftApi;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMember;
 import dev.sbs.minecraftapi.persistence.model.Power;
 import dev.sbs.minecraftapi.persistence.model.Stat;
 import dev.sbs.minecraftapi.skyblock.common.NbtContent;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.collection.tuple.pair.Pair;
+import dev.simplified.gson.PostInit;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

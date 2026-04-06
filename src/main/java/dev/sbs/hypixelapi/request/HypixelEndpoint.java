@@ -1,7 +1,5 @@
 package dev.sbs.minecraftapi.client.hypixel.request;
 
-import dev.sbs.api.client.request.Endpoint;
-import dev.sbs.api.client.route.Route;
 import dev.sbs.minecraftapi.client.hypixel.HypixelClient;
 import dev.sbs.minecraftapi.client.hypixel.exception.HypixelApiException;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelCounts;
@@ -23,6 +21,8 @@ import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockGardenRespo
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMuseumResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockNews;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockProfiles;
+import dev.simplified.client.request.Endpoint;
+import dev.simplified.client.route.Route;
 import feign.Param;
 import feign.RequestLine;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ import java.util.UUID;
  * Rate limits are enforced per API key. The server responds with
  * {@code RateLimit-Limit}, {@code RateLimit-Remaining}, and
  * {@code RateLimit-Reset} headers, which are tracked by the underlying
- * {@link dev.sbs.api.client.ratelimit.RateLimitManager RateLimitManager}.
+ * {@link dev.simplified.client.ratelimit.RateLimitManager RateLimitManager}.
  *
  * @see HypixelClient
  * @see <a href="https://api.hypixel.net/">Hypixel Public API</a>

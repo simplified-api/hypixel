@@ -1,10 +1,10 @@
 package dev.sbs.minecraftapi.client.hypixel.response.resource;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.api.collection.concurrent.Concurrent;
-import dev.sbs.api.collection.concurrent.ConcurrentMap;
 import dev.sbs.minecraftapi.persistence.model.Collection;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentMap;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
