@@ -1,6 +1,5 @@
 package dev.sbs.minecraftapi.client.hypixel.request;
 
-import dev.sbs.minecraftapi.client.hypixel.HypixelClient;
 import dev.sbs.minecraftapi.client.hypixel.exception.HypixelApiException;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelCounts;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelGuildResponse;
@@ -21,7 +20,7 @@ import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockGardenRespo
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMuseumResponse;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockNews;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockProfiles;
-import dev.simplified.client.request.Endpoint;
+import dev.simplified.client.request.Contract;
 import dev.simplified.client.route.Route;
 import feign.Param;
 import feign.RequestLine;
@@ -30,23 +29,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 /**
- * Feign endpoint interface for the Hypixel Public API v2.
+ * Feign contract interface for the Hypixel Public API v2.
  * <p>
- * Most endpoints require authentication via the {@code API-Key} header, which
- * is supplied automatically by the {@link HypixelClient}'s dynamic headers.
- * Resource endpoints under {@code /resources/} are publicly accessible without
- * authentication.
+ * Most endpoints require authentication via the {@code API-Key} header, which is supplied
+ * automatically by the dynamic header registered when the client is built. Resource endpoints
+ * under {@code /resources/} are publicly accessible without authentication.
  * <p>
- * Rate limits are enforced per API key. The server responds with
- * {@code RateLimit-Limit}, {@code RateLimit-Remaining}, and
- * {@code RateLimit-Reset} headers, which are tracked by the underlying
- * {@link dev.simplified.client.ratelimit.RateLimitManager RateLimitManager}.
+ * Rate limits are enforced per API key. The server responds with {@code RateLimit-Limit},
+ * {@code RateLimit-Remaining}, and {@code RateLimit-Reset} headers, which are tracked by the
+ * underlying {@link dev.simplified.client.ratelimit.RateLimitManager RateLimitManager}.
  *
- * @see HypixelClient
  * @see <a href="https://api.hypixel.net/">Hypixel Public API</a>
  */
 @Route("api.hypixel.net/v2")
-public interface HypixelEndpoint extends Endpoint {
+public interface HypixelContract extends Contract {
 
     // ---- Hypixel ----
 
