@@ -1,8 +1,8 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.generator.text.ChatFormat;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.sbs.renderer.text.ChatFormat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import lombok.AccessLevel;
