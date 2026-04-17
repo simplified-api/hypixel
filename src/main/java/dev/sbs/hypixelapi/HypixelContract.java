@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.request;
+package dev.sbs.minecraftapi.client.hypixel;
 
 import dev.sbs.minecraftapi.client.hypixel.exception.HypixelApiException;
 import dev.sbs.minecraftapi.client.hypixel.response.hypixel.HypixelCounts;

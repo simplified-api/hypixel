@@ -11,7 +11,7 @@ import com.rometools.rome.feed.synd.SyndEntryImpl;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.feed.synd.SyndFeedImpl;
 import com.rometools.rome.io.SyndFeedOutput;
-import dev.sbs.minecraftapi.client.hypixel.request.HypixelForumContract;
+import dev.sbs.minecraftapi.client.hypixel.HypixelForumContract;
 import dev.simplified.client.codec.XmlDecoder;
 import dev.simplified.client.codec.XmlEncoder;
 import dev.simplified.collection.Concurrent;
