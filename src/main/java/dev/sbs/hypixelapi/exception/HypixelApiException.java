@@ -1,20 +1,18 @@
 package dev.sbs.minecraftapi.client.hypixel.exception;
 
-import dev.sbs.minecraftapi.MinecraftApi;
-import dev.simplified.client.exception.ApiException;
-import lombok.Getter;
+import com.google.gson.Gson;
+import dev.simplified.client.exception.JsonApiException;
 import org.jetbrains.annotations.NotNull;
 
-@Getter
-public final class HypixelApiException extends ApiException {
+public final class HypixelApiException extends JsonApiException {
 
-    private final @NotNull HypixelErrorResponse response;
+    public HypixelApiException(@NotNull Gson gson, @NotNull String methodKey, @NotNull feign.Response response) {
+        super(methodKey, response, "Hypixel", gson, HypixelErrorResponse.class, HypixelErrorResponse.Unknown::new);
+    }
 
-    public HypixelApiException(@NotNull String methodKey, @NotNull feign.Response response) {
-        super(methodKey, response, "Hypixel");
-        this.response = this.getBody()
-            .map(json -> super.fromJson(MinecraftApi.getGson(), json, HypixelErrorResponse.class))
-            .orElse(new HypixelErrorResponse.Unknown());
+    @Override
+    public @NotNull HypixelErrorResponse getResponse() {
+        return (HypixelErrorResponse) super.getResponse();
     }
 
 }
