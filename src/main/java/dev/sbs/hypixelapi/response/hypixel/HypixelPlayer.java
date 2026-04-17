@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.hypixel;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.renderer.text.ChatFormat;
+import dev.sbs.renderer.text.ChatColor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -108,17 +108,17 @@ public class HypixelPlayer {
         if (StringUtil.isNotEmpty(this.prefix))
             type = HypixelRank.Type.of(RegexUtil.strip(this.prefix, RegexUtil.VANILLA_PATTERN).replaceAll("[\\W]", ""));
 
-        ChatFormat rankFormat = type.getFormat();
-        ChatFormat plusFormat = type.getFormat();
+        ChatColor rankFormat = type.getColor();
+        ChatColor plusFormat = type.getColor();
 
         if (type == HypixelRank.Type.SUPERSTAR && StringUtil.isNotEmpty(this.monthlyRankColor))
-            rankFormat = ChatFormat.valueOf(this.monthlyRankColor);
+            rankFormat = ChatColor.of(this.monthlyRankColor);
 
         if (StringUtil.isNotEmpty(this.rankPlusColor))
-            plusFormat = ChatFormat.valueOf(this.rankPlusColor);
+            plusFormat = ChatColor.of(this.rankPlusColor);
 
         if (type == HypixelRank.Type.PIG)
-            plusFormat = ChatFormat.AQUA;
+            plusFormat = ChatColor.Legacy.AQUA;
 
         return new HypixelRank(type, rankFormat, plusFormat);
     }
