@@ -10,7 +10,7 @@ import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
-import dev.simplified.gson.PostInit;
+import dev.simplified.gson.Capture;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -188,7 +188,7 @@ public class AccessoryBag {
 
     @Getter
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
-    public static class Tuning implements PostInit {
+    public static class Tuning {
 
         @SerializedName("highest_unlocked_slot")
         private int highestUnlockedSlot;
@@ -196,30 +196,8 @@ public class AccessoryBag {
         @Accessors(fluent = true)
         private boolean hasClaimedRefund;
 
-        // Slots
-        @SerializedName("slot_0")
-        private @NotNull ConcurrentMap<String, Integer> selected = Concurrent.newMap();
-        @Getter(AccessLevel.NONE)
-        private @NotNull ConcurrentMap<String, Integer> slot_1 = Concurrent.newMap();
-        @Getter(AccessLevel.NONE)
-        private @NotNull ConcurrentMap<String, Integer> slot_2 = Concurrent.newMap();
-        @Getter(AccessLevel.NONE)
-        private @NotNull ConcurrentMap<String, Integer> slot_3 = Concurrent.newMap();
-        @Getter(AccessLevel.NONE)
-        private @NotNull ConcurrentMap<String, Integer> slot_4 = Concurrent.newMap();
-
-        // PostInit
-        private @NotNull ConcurrentList<ConcurrentMap<String, Integer>> slots = Concurrent.newList();
-
-        @Override
-        public void postInit() {
-            this.slots = Concurrent.newUnmodifiableList(
-                this.slot_1,
-                this.slot_2,
-                this.slot_3,
-                this.slot_4
-            );
-        }
+        @Capture(filter = "^slot_(?=[1-4]$)")
+        private @NotNull ConcurrentMap<String, Integer> slots = Concurrent.newMap();
 
     }
 
