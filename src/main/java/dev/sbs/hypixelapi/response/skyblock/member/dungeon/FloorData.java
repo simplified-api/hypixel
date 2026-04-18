@@ -69,11 +69,11 @@ public class FloorData {
 
     public @NotNull ConcurrentMap<Floor, Double> getMostDamage(@NotNull DungeonClass.Type classType) {
         return switch (classType) {
-            case HEALER -> this.mostDamageHealer.toUnmodifiableMap();
-            case MAGE -> this.mostDamageMage.toUnmodifiableMap();
-            case BERSERK -> this.mostDamageBerserk.toUnmodifiableMap();
-            case ARCHER -> this.mostDamageArcher.toUnmodifiableMap();
-            case TANK -> this.mostDamageTank.toUnmodifiableMap();
+            case HEALER -> this.mostDamageHealer.toUnmodifiable();
+            case MAGE -> this.mostDamageMage.toUnmodifiable();
+            case BERSERK -> this.mostDamageBerserk.toUnmodifiable();
+            case ARCHER -> this.mostDamageArcher.toUnmodifiable();
+            case TANK -> this.mostDamageTank.toUnmodifiable();
             default -> Concurrent.newUnmodifiableMap();
         };
     }
