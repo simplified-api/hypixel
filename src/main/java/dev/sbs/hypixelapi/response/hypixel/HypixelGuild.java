@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.hypixel;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.renderer.text.ChatFormat;
+import dev.sbs.renderer.text.ChatColor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -32,7 +32,7 @@ public class HypixelGuild {
     private int coinsEver;
     private Instant created;
     private boolean publiclyListed;
-    private @NotNull Optional<ChatFormat> tagColor = Optional.empty();
+    private @NotNull Optional<ChatColor.Legacy> tagColor = Optional.empty();
     @SerializedName("exp")
     private long experience;
     private @NotNull ConcurrentList<Member> members = Concurrent.newList();
