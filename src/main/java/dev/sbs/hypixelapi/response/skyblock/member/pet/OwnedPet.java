@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.MinecraftApi;
+import dev.sbs.minecraftapi.persistence.SkyBlockData;
 import dev.sbs.minecraftapi.persistence.model.Pet;
 import dev.sbs.minecraftapi.skyblock.common.Experience;
 import dev.sbs.minecraftapi.skyblock.common.Rarity;
@@ -44,7 +44,7 @@ public class OwnedPet implements Experience {
 
     @Override
     public int getMaxLevel() {
-        return MinecraftApi.getRepository(Pet.class)
+        return SkyBlockData.getRepository(Pet.class)
             .findFirst(Pet::getId, this.getId())
             .map(Pet::getMaxLevel)
             .orElse(100);

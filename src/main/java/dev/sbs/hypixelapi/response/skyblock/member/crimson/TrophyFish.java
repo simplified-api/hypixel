@@ -1,6 +1,6 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson;
 
-import dev.sbs.minecraftapi.MinecraftApi;
+import dev.sbs.minecraftapi.persistence.SkyBlockData;
 import dev.sbs.minecraftapi.persistence.model.Zone;
 import dev.sbs.minecraftapi.skyblock.common.Rarity;
 import lombok.Getter;
@@ -45,7 +45,7 @@ public enum TrophyFish {
     }
 
     public @NotNull Optional<Zone> getZone() {
-        return this.getZoneId().map(zoneId -> MinecraftApi.getRepository(Zone.class).findFirstOrNull(Zone::getId, zoneId));
+        return this.getZoneId().map(zoneId -> SkyBlockData.getRepository(Zone.class).findFirstOrNull(Zone::getId, zoneId));
     }
 
     public enum Tier {

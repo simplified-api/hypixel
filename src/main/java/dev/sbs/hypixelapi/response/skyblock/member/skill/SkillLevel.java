@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.skill;
 
-import dev.sbs.minecraftapi.MinecraftApi;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMember;
+import dev.sbs.minecraftapi.persistence.SkyBlockData;
 import dev.sbs.minecraftapi.persistence.model.Skill;
 import dev.sbs.minecraftapi.skyblock.common.Experience;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
@@ -40,7 +40,7 @@ public class SkillLevel implements Experience, Weighted {
     }
 
     public @NotNull Skill getSkill() {
-        return MinecraftApi.getRepository(Skill.class).findFirstOrNull(Skill::getId, this.getId());
+        return SkyBlockData.getRepository(Skill.class).findFirstOrNull(Skill::getId, this.getId());
     }
 
     @Override

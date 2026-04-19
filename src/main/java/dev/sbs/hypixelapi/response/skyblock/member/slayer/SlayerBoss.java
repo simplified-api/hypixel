@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.MinecraftApi;
+import dev.sbs.minecraftapi.persistence.SkyBlockData;
 import dev.sbs.minecraftapi.persistence.model.Slayer;
 import dev.sbs.minecraftapi.skyblock.common.Experience;
 import dev.sbs.minecraftapi.skyblock.common.Weight;
@@ -32,7 +32,7 @@ public class SlayerBoss implements Experience, Weighted {
     private @NotNull ConcurrentMap<Integer, Integer> attempts = Concurrent.newMap();
 
     public @NotNull Slayer getSlayer() {
-        return MinecraftApi.getRepository(Slayer.class).findFirstOrNull(Slayer::getId, this.getId());
+        return SkyBlockData.getRepository(Slayer.class).findFirstOrNull(Slayer::getId, this.getId());
     }
 
     @Override

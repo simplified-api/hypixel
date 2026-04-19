@@ -1,8 +1,8 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.MinecraftApi;
 import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMember;
+import dev.sbs.minecraftapi.persistence.SkyBlockData;
 import dev.sbs.minecraftapi.persistence.model.Power;
 import dev.sbs.minecraftapi.persistence.model.Stat;
 import dev.sbs.minecraftapi.skyblock.common.NbtContent;
@@ -140,7 +140,7 @@ public class AccessoryBag {
             .flatMap(power -> power.getBaseValues().stream())
             .map(entry -> Pair.of(
                 entry.getKey(),
-                MinecraftApi.getRepository(Stat.class)
+                SkyBlockData.getRepository(Stat.class)
                     .findFirstOrNull(Stat::getId, entry.getKey())
                     .getPowerCoefficient() * this.getLogComponent() * entry.getValue()
             ))
@@ -158,7 +158,7 @@ public class AccessoryBag {
     }
 
     public @NotNull Optional<Power> getSelectedPower() {
-        return this.getSelectedPowerId().flatMap(powerId -> MinecraftApi.getRepository(Power.class)
+        return this.getSelectedPowerId().flatMap(powerId -> SkyBlockData.getRepository(Power.class)
             .findFirst(Power::getId, powerId)
         );
     }
@@ -166,7 +166,7 @@ public class AccessoryBag {
     public @NotNull ConcurrentList<Power> getUnlockedPowers() {
         return this.getUnlockedPowerIds()
             .stream()
-            .map(powerId -> MinecraftApi.getRepository(Power.class)
+            .map(powerId -> SkyBlockData.getRepository(Power.class)
                 .findFirst(Power::getId, powerId)
             )
             .flatMap(Optional::stream)

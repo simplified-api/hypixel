@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.attribute;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.MinecraftApi;
+import dev.sbs.minecraftapi.persistence.SkyBlockData;
 import dev.sbs.minecraftapi.persistence.model.Region;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public class ActiveTrap {
     private int huntingToolkitIndex;
 
     public @NotNull Region getRegion() {
-        return MinecraftApi.getRepository(Region.class)
+        return SkyBlockData.getRepository(Region.class)
             .findFirstOrNull(Region::getMode, this.getRemoteId());
     }
 }

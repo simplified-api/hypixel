@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.MinecraftApi;
+import dev.sbs.minecraftapi.persistence.SkyBlockData;
 import dev.sbs.minecraftapi.persistence.model.Item;
 import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
 import lombok.AccessLevel;
@@ -22,7 +22,7 @@ public class ForgeItem {
     private boolean notified;
 
     public @NotNull Item getItem() {
-        return MinecraftApi.getRepository(Item.class).findFirstOrNull(Item::getId, this.getItemId());
+        return SkyBlockData.getRepository(Item.class).findFirstOrNull(Item::getId, this.getItemId());
     }
 
 }

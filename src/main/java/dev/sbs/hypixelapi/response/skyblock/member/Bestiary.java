@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.MinecraftApi;
+import dev.sbs.minecraftapi.persistence.SkyBlockData;
 import dev.sbs.minecraftapi.persistence.model.BestiaryFamily;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
@@ -71,7 +71,7 @@ public class Bestiary implements PostInit {
             })
             .collect(Concurrent.toUnmodifiableList());
 
-        this.families = MinecraftApi.getRepository(BestiaryFamily.class)
+        this.families = SkyBlockData.getRepository(BestiaryFamily.class)
             .stream()
             .map(family -> new Family(
                 family.getId(),
@@ -90,7 +90,7 @@ public class Bestiary implements PostInit {
         private final @NotNull ConcurrentList<Mob> mobs;
 
         public @NotNull BestiaryFamily getType() {
-            return MinecraftApi.getRepository(BestiaryFamily.class)
+            return SkyBlockData.getRepository(BestiaryFamily.class)
                 .findFirstOrNull(BestiaryFamily::getId, this.getFamilyId());
         }
 
@@ -132,7 +132,7 @@ public class Bestiary implements PostInit {
         private final int deaths;
 
         public @NotNull BestiaryFamily getFamily() {
-            return MinecraftApi.getRepository(BestiaryFamily.class)
+            return SkyBlockData.getRepository(BestiaryFamily.class)
                 .matchFirstOrNull(family -> family.getMobs().contains(String.format("%s_%s", this.getId(), this.getLevel())));
         }
 
