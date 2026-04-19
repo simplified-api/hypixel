@@ -1,11 +1,11 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.slayer;
+package dev.sbs.hypixelapi.response.skyblock.member.slayer;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.persistence.SkyBlockData;
-import dev.sbs.minecraftapi.persistence.model.Slayer;
-import dev.sbs.minecraftapi.skyblock.common.Experience;
-import dev.sbs.minecraftapi.skyblock.common.Weight;
-import dev.sbs.minecraftapi.skyblock.common.Weighted;
+import dev.sbs.skyblockdata.SkyBlockData;
+import dev.sbs.skyblockdata.model.Slayer;
+import dev.sbs.hypixelapi.common.Experience;
+import dev.sbs.hypixelapi.common.Weight;
+import dev.sbs.hypixelapi.common.Weighted;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;

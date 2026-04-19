@@ -1,8 +1,8 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.attribute;
+package dev.sbs.hypixelapi.response.skyblock.member.attribute;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.persistence.SkyBlockData;
-import dev.sbs.minecraftapi.persistence.model.Region;
+import dev.sbs.skyblockdata.SkyBlockData;
+import dev.sbs.skyblockdata.model.Region;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

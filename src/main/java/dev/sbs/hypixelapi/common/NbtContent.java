@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.skyblock.common;
+package dev.sbs.hypixelapi.common;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.SerializedName;

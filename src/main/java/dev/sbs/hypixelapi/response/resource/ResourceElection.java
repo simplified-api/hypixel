@@ -1,8 +1,8 @@
-package dev.sbs.minecraftapi.client.hypixel.response.resource;
+package dev.sbs.hypixelapi.response.resource;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.election.Election;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.election.Mayor;
+import dev.sbs.hypixelapi.response.skyblock.election.Election;
+import dev.sbs.hypixelapi.response.skyblock.election.Mayor;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

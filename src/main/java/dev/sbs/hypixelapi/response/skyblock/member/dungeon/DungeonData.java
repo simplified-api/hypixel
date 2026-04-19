@@ -1,8 +1,8 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon;
+package dev.sbs.hypixelapi.response.skyblock.member.dungeon;
 
-import dev.sbs.minecraftapi.skyblock.common.Experience;
-import dev.sbs.minecraftapi.skyblock.common.Weight;
-import dev.sbs.minecraftapi.skyblock.common.Weighted;
+import dev.sbs.hypixelapi.common.Experience;
+import dev.sbs.hypixelapi.common.Weight;
+import dev.sbs.hypixelapi.common.Weighted;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.util.NumberUtil;

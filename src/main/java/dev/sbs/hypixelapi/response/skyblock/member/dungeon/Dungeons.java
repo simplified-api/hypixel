@@ -1,7 +1,7 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon;
+package dev.sbs.hypixelapi.response.skyblock.member.dungeon;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.skyblock.common.Weight;
+import dev.sbs.hypixelapi.common.Weight;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;

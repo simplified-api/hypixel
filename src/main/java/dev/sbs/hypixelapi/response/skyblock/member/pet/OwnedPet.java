@@ -1,10 +1,10 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet;
+package dev.sbs.hypixelapi.response.skyblock.member.pet;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.persistence.SkyBlockData;
-import dev.sbs.minecraftapi.persistence.model.Pet;
-import dev.sbs.minecraftapi.skyblock.common.Experience;
-import dev.sbs.minecraftapi.skyblock.common.Rarity;
+import dev.sbs.skyblockdata.SkyBlockData;
+import dev.sbs.skyblockdata.model.Pet;
+import dev.sbs.hypixelapi.common.Experience;
+import dev.sbs.skyblockdata.common.Rarity;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;

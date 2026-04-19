@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.hoppity;
+package dev.sbs.hypixelapi.response.skyblock.member.hoppity;
 
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;

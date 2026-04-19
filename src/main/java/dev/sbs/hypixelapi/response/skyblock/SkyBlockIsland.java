@@ -1,11 +1,11 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
+package dev.sbs.hypixelapi.response.skyblock;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.Banking;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.island.CommunityUpgrades;
-import dev.sbs.minecraftapi.skyblock.common.GameMode;
-import dev.sbs.minecraftapi.skyblock.common.Profile;
-import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.sbs.hypixelapi.response.skyblock.island.Banking;
+import dev.sbs.hypixelapi.response.skyblock.island.CommunityUpgrades;
+import dev.sbs.skyblockdata.common.GameMode;
+import dev.sbs.skyblockdata.common.Profile;
+import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.linked.ConcurrentLinkedMap;

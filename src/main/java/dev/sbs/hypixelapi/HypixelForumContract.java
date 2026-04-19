@@ -1,6 +1,6 @@
-package dev.sbs.minecraftapi.client.hypixel;
+package dev.sbs.hypixelapi;
 
-import dev.sbs.minecraftapi.client.hypixel.response.forum.HypixelForum;
+import dev.sbs.hypixelapi.response.forum.HypixelForum;
 import dev.simplified.client.exception.ApiException;
 import dev.simplified.client.request.Contract;
 import dev.simplified.client.route.Route;

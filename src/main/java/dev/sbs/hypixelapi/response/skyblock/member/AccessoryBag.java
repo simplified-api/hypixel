@@ -1,11 +1,11 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
+package dev.sbs.hypixelapi.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMember;
-import dev.sbs.minecraftapi.persistence.SkyBlockData;
-import dev.sbs.minecraftapi.persistence.model.Power;
-import dev.sbs.minecraftapi.persistence.model.Stat;
-import dev.sbs.minecraftapi.skyblock.common.NbtContent;
+import dev.sbs.hypixelapi.response.skyblock.SkyBlockMember;
+import dev.sbs.skyblockdata.SkyBlockData;
+import dev.sbs.skyblockdata.model.Power;
+import dev.sbs.skyblockdata.model.Stat;
+import dev.sbs.hypixelapi.common.NbtContent;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;

@@ -1,7 +1,7 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.island;
+package dev.sbs.hypixelapi.response.skyblock.island;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.util.StringUtil;

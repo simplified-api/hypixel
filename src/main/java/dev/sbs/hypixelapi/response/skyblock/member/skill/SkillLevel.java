@@ -1,11 +1,11 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.skill;
+package dev.sbs.hypixelapi.response.skyblock.member.skill;
 
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMember;
-import dev.sbs.minecraftapi.persistence.SkyBlockData;
-import dev.sbs.minecraftapi.persistence.model.Skill;
-import dev.sbs.minecraftapi.skyblock.common.Experience;
-import dev.sbs.minecraftapi.skyblock.common.Weight;
-import dev.sbs.minecraftapi.skyblock.common.Weighted;
+import dev.sbs.hypixelapi.response.skyblock.SkyBlockMember;
+import dev.sbs.skyblockdata.SkyBlockData;
+import dev.sbs.skyblockdata.model.Skill;
+import dev.sbs.hypixelapi.common.Experience;
+import dev.sbs.hypixelapi.common.Weight;
+import dev.sbs.hypixelapi.common.Weighted;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.util.NumberUtil;
 import lombok.Getter;

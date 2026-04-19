@@ -1,7 +1,7 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.skill;
+package dev.sbs.hypixelapi.response.skyblock.member.skill;
 
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.SkyBlockMember;
-import dev.sbs.minecraftapi.skyblock.common.Weight;
+import dev.sbs.hypixelapi.response.skyblock.SkyBlockMember;
+import dev.sbs.hypixelapi.common.Weight;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;

@@ -1,9 +1,9 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.mining;
+package dev.sbs.hypixelapi.response.skyblock.member.mining;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.persistence.SkyBlockData;
-import dev.sbs.minecraftapi.persistence.model.Item;
-import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.sbs.skyblockdata.SkyBlockData;
+import dev.sbs.skyblockdata.model.Item;
+import dev.sbs.skyblockdata.date.SkyBlockDate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.foraging;
+package dev.sbs.hypixelapi.response.skyblock.member.foraging;
 
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;

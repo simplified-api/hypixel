@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.exception;
+package dev.sbs.hypixelapi.exception;
 
 import com.google.gson.Gson;
 import dev.simplified.client.exception.JsonApiException;

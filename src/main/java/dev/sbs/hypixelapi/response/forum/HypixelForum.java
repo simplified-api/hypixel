@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.forum;
+package dev.sbs.hypixelapi.response.forum;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -11,7 +11,7 @@ import com.rometools.rome.feed.synd.SyndEntryImpl;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.feed.synd.SyndFeedImpl;
 import com.rometools.rome.io.SyndFeedOutput;
-import dev.sbs.minecraftapi.client.hypixel.HypixelForumContract;
+import dev.sbs.hypixelapi.HypixelForumContract;
 import dev.simplified.client.codec.XmlDecoder;
 import dev.simplified.client.codec.XmlEncoder;
 import dev.simplified.collection.Concurrent;

@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
+package dev.sbs.hypixelapi.response.skyblock;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

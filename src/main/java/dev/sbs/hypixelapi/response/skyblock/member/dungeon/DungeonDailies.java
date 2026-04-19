@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.dungeon;
+package dev.sbs.hypixelapi.response.skyblock.member.dungeon;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;

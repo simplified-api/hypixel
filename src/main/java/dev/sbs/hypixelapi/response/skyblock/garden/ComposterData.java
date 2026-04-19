@@ -1,7 +1,7 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.garden;
+package dev.sbs.hypixelapi.response.skyblock.garden;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.sbs.skyblockdata.date.SkyBlockDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

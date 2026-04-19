@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.exception;
+package dev.sbs.hypixelapi.exception;
 
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.client.exception.ApiErrorResponse;

@@ -1,7 +1,7 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.election;
+package dev.sbs.hypixelapi.response.skyblock.election;
 
-import dev.sbs.minecraftapi.skyblock.date.Season;
-import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.sbs.skyblockdata.date.Season;
+import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.gson.PostInit;
 import lombok.AccessLevel;
 import lombok.Getter;

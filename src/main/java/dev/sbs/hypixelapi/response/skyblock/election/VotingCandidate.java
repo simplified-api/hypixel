@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.election;
+package dev.sbs.hypixelapi.response.skyblock.election;
 
 import lombok.AccessLevel;
 import lombok.Getter;

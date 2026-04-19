@@ -1,8 +1,8 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.crimson;
+package dev.sbs.hypixelapi.response.skyblock.member.crimson;
 
-import dev.sbs.minecraftapi.persistence.SkyBlockData;
-import dev.sbs.minecraftapi.persistence.model.Zone;
-import dev.sbs.minecraftapi.skyblock.common.Rarity;
+import dev.sbs.skyblockdata.SkyBlockData;
+import dev.sbs.skyblockdata.model.Zone;
+import dev.sbs.skyblockdata.common.Rarity;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;

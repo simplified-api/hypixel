@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.hypixel;
+package dev.sbs.hypixelapi.response.hypixel;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;

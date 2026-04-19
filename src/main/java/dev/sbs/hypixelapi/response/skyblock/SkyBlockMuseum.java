@@ -1,8 +1,8 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
+package dev.sbs.hypixelapi.response.skyblock;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.skyblock.common.NbtContent;
-import dev.sbs.minecraftapi.skyblock.date.SkyBlockDate;
+import dev.sbs.hypixelapi.common.NbtContent;
+import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;

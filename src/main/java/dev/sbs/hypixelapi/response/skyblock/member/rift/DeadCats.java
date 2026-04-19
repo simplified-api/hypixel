@@ -1,7 +1,7 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.rift;
+package dev.sbs.hypixelapi.response.skyblock.member.rift;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.client.hypixel.response.skyblock.member.pet.OwnedPet;
+import dev.sbs.hypixelapi.response.skyblock.member.pet.OwnedPet;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import lombok.Getter;

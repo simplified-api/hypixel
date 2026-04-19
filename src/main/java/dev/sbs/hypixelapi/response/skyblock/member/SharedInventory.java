@@ -1,7 +1,7 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock.member;
+package dev.sbs.hypixelapi.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.minecraftapi.skyblock.common.NbtContent;
+import dev.sbs.hypixelapi.common.NbtContent;
 import lombok.Getter;
 
 @Getter

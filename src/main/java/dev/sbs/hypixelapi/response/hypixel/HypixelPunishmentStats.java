@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.hypixel;
+package dev.sbs.hypixelapi.response.hypixel;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;

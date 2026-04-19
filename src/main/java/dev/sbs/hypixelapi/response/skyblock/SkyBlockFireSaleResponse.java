@@ -1,4 +1,4 @@
-package dev.sbs.minecraftapi.client.hypixel.response.skyblock;
+package dev.sbs.hypixelapi.response.skyblock;
 
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
