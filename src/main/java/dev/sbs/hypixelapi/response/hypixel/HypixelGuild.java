@@ -1,7 +1,7 @@
 package dev.sbs.minecraftapi.client.hypixel.response.hypixel;
 
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.renderer.text.ChatColor;
+import lib.minecraft.text.ChatColor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;

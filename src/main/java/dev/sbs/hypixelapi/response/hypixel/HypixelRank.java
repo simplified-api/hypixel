@@ -1,6 +1,6 @@
 package dev.sbs.minecraftapi.client.hypixel.response.hypixel;
 
-import dev.sbs.renderer.text.ChatColor;
+import lib.minecraft.text.ChatColor;
 import dev.simplified.util.StringUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
