@@ -5,10 +5,10 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import dev.simplified.util.StringUtil;
 import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtException;
 import lib.minecraft.nbt.tags.collection.CompoundTag;
-import dev.simplified.util.StringUtil;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,8 +22,6 @@ import java.io.IOException;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class NbtContent {
 
-    private static final NbtFactory NBT = new NbtFactory();
-
     @Getter(AccessLevel.NONE)
     private int type = 0; // Always 0
 
@@ -35,7 +33,7 @@ public class NbtContent {
     }
 
     public @NotNull CompoundTag getNbtData() throws NbtException {
-        return NBT.fromBase64(this.getRawData());
+        return NbtFactory.fromBase64(this.getRawData());
     }
 
     public static class Adapter extends TypeAdapter<NbtContent> {
