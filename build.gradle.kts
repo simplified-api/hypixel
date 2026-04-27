@@ -44,6 +44,7 @@ dependencies {
     api("com.github.simplified-dev:gson-extras:master-SNAPSHOT")
     api("com.github.simplified-dev:persistence:master-SNAPSHOT")
     api("com.github.simplified-dev:client:master-SNAPSHOT")
+    api("com.github.simplified-dev:expression:master-SNAPSHOT")
 
     // Minecraft-Library (github.com/minecraft-library)
     api("com.github.minecraft-library:text:master-SNAPSHOT")
