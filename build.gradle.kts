@@ -35,7 +35,7 @@ dependencies {
     testImplementation(libs.junit.platform.launcher)
 
     // Sibling API modules (composite-build substitutes by project name)
-    api("com.github.skyblock-simplified:skyblock-data-api:master-SNAPSHOT")
+    api("com.github.simplified-api:skyblock-data:master-SNAPSHOT")
 
     // Simplified Libraries (github.com/simplified-dev)
     api("com.github.simplified-dev:collections:master-SNAPSHOT")
