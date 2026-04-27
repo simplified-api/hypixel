@@ -1,1 +1,1 @@
-rootProject.name = "hypixel-api"
+rootProject.name = "hypixel"
