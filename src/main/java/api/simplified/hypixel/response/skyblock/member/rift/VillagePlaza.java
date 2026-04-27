@@ -1,0 +1,88 @@
+package api.simplified.hypixel.response.skyblock.member.rift;
+
+import com.google.gson.annotations.SerializedName;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.experimental.Accessors;
+import org.jetbrains.annotations.NotNull;
+
+@Getter
+public class VillagePlaza {
+
+    @Accessors(fluent = true)
+    @SerializedName("got_scammed")
+    private boolean hasBeenScammed;
+    private @NotNull Murder murder = new Murder();
+    @SerializedName("barry_center")
+    private @NotNull BarryCenter barryCenter = new BarryCenter();
+    private @NotNull Cowboy cowboy = new Cowboy();
+    @Getter(AccessLevel.NONE)
+    private @NotNull Lonely lonely = new Lonely();
+    @Getter(AccessLevel.NONE)
+    private @NotNull Seraphine seraphine = new Seraphine();
+
+    public int getSecondsSitting() {
+        return this.lonely.getSecondsSitting();
+    }
+
+    public int getSeraphineStepIndex() {
+        return this.seraphine.getStepIndex();
+    }
+
+    @Getter
+    public static class Murder {
+
+        @SerializedName("step_index")
+        private int stepIndex;
+        @SerializedName("step_index_pt2")
+        private int stepIndexPt2;
+        @SerializedName("step_index_pt3")
+        private int stepIndexPt3;
+        @SerializedName("room_clues")
+        private @NotNull ConcurrentList<String> roomClues = Concurrent.newList();
+
+    }
+
+    @Getter
+    public static class BarryCenter {
+
+        @SerializedName("first_talk_to_barry")
+        private boolean firstTalkToBarry;
+        @SerializedName("received_reward")
+        private boolean receivedReward;
+        private @NotNull ConcurrentList<String> convinced = Concurrent.newList();
+
+    }
+
+    @Getter
+    public static class Cowboy {
+
+        private int stage;
+        @SerializedName("hay_eaten")
+        private int hayEaten;
+        @SerializedName("rabbit_name")
+        private String rabbitName;
+        @SerializedName("exported_carrots")
+        private int exportedCarrots;
+
+    }
+
+    @Getter
+    private static class Lonely {
+
+        @SerializedName("seconds_sitting")
+        private int secondsSitting;
+
+    }
+
+    @Getter
+    private static class Seraphine {
+
+        @SerializedName("step_index")
+        private int stepIndex;
+
+    }
+
+}

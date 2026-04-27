@@ -1,0 +1,13 @@
+package api.simplified.hypixel.response.hypixel;
+
+import lombok.Getter;
+
+import java.util.Optional;
+
+@Getter
+public class HypixelPlayerResponse {
+
+    private boolean success;
+    private Optional<HypixelPlayer> player = Optional.empty();
+
+}

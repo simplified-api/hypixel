@@ -1,0 +1,25 @@
+package api.simplified.hypixel.response.skyblock.member.attribute;
+
+import com.google.gson.annotations.SerializedName;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
+
+@Getter
+public class AttributeShards {
+
+    private @NotNull Traps traps = new Traps();
+    @SerializedName("owned")
+    private @NotNull ConcurrentList<AttributeShard> ownedShards = Concurrent.newList();
+    private int fused;
+
+    @Getter
+    private static class Traps {
+
+        @SerializedName("active_traps")
+        private @NotNull ConcurrentList<ActiveTrap> activeTraps = Concurrent.newList();
+
+    }
+
+}

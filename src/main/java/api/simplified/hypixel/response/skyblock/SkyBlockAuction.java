@@ -1,0 +1,94 @@
+package api.simplified.hypixel.response.skyblock;
+
+import api.simplified.hypixel.common.NbtContent;
+import com.google.gson.annotations.SerializedName;
+import dev.sbs.skyblockdata.common.Rarity;
+import dev.sbs.skyblockdata.date.SkyBlockDate;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.util.StringUtil;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
+
+@Getter
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class SkyBlockAuction {
+
+    @SerializedName("item_bytes")
+    private @NotNull NbtContent item = new NbtContent();
+    @SerializedName("uuid")
+    private UUID auctionId;
+    @SerializedName("auctioneer")
+    private UUID auctioneerId;
+    @SerializedName("profile_id")
+    private UUID islandId;
+    @SerializedName("coop")
+    private @NotNull ConcurrentList<UUID> coopMembers = Concurrent.newList();
+    @SerializedName("start")
+    private SkyBlockDate.RealTime startedAt;
+    @SerializedName("end")
+    private SkyBlockDate.RealTime endsAt;
+    @Getter(AccessLevel.NONE)
+    @SerializedName("item_lore")
+    private @NotNull String lore = "";
+    private String extra;
+    @SerializedName("tier")
+    private @NotNull Rarity rarity = Rarity.COMMON;
+    @SerializedName("starting_big")
+    private long startingBid;
+    private boolean claimed;
+    @SerializedName("claimed_bidders")
+    private @NotNull ConcurrentList<String> claimedBidders = Concurrent.newList();
+    @SerializedName("highest_bid_amount")
+    private long highestBid;
+    private @NotNull ConcurrentList<Bid> bids = Concurrent.newList();
+    private boolean bin;
+
+    public @NotNull ConcurrentList<String> getLore() {
+        return Concurrent.newUnmodifiableList(StringUtil.split(this.lore, '\n'));
+    }
+
+    public boolean notClaimed() {
+        return !this.isClaimed();
+    }
+
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Bid {
+
+        @SerializedName("auction_id")
+        private UUID auctionId;
+        @SerializedName("bidder")
+        private UUID bidderId;
+        @SerializedName("profile_id")
+        private UUID islandId;
+        private long amount;
+        private SkyBlockDate.RealTime timestamp;
+
+    }
+
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Ended {
+
+        @SerializedName("auction_id")
+        private UUID auctionId;
+        @SerializedName("seller")
+        private UUID sellerId;
+        @SerializedName("seller_profile")
+        private UUID sellerIslandId;
+        @SerializedName("buyer")
+        private UUID buyerId;
+        private SkyBlockDate.RealTime timestamp;
+        private long price;
+        private boolean bin;
+        @SerializedName("item_bytes")
+        private NbtContent item = new NbtContent();
+
+    }
+
+}

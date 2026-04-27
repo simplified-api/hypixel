@@ -1,0 +1,44 @@
+package api.simplified.hypixel.response.skyblock.member.crimson;
+
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.gson.Capture;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+
+@Getter
+public class Dojo {
+
+    @Capture(filter = "^dojo_points_")
+    private @NotNull ConcurrentMap<Type, Integer> points = Concurrent.newMap();
+    @Capture(filter = "^dojo_time_")
+    private @NotNull ConcurrentMap<Type, Integer> times = Concurrent.newMap();
+
+    @Getter
+    @RequiredArgsConstructor
+    public enum Type {
+
+        UNKNOWN(""),
+        FORCE("mob_kb"),
+        STAMINA("wall_jump"),
+        MASTERY("archer"),
+        DISCIPLINE("sword_swap"),
+        SWIFTNESS("snake"),
+        CONTROL("fireball"),
+        TENACITY("lock_head");
+
+        private final @NotNull String internalName;
+
+        public static @NotNull Dojo.Type of(@NotNull String name) {
+            return Arrays.stream(values())
+                .filter(type -> type.name().equalsIgnoreCase(name) || type.getInternalName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(UNKNOWN);
+        }
+
+    }
+
+}
