@@ -1,6 +1,7 @@
 package dev.sbs.hypixelapi.response.skyblock;
 
 import com.google.gson.annotations.SerializedName;
+import dev.sbs.hypixelapi.profile_stats.ProfileStats;
 import dev.sbs.hypixelapi.response.skyblock.island.Banking;
 import dev.sbs.hypixelapi.response.skyblock.island.CommunityUpgrades;
 import dev.sbs.skyblockdata.common.GameMode;
@@ -72,13 +73,13 @@ public class SkyBlockIsland {
             .sorted(Comparator.naturalOrder());
     }
 
-    /*public @NotNull ProfileStats getProfileStats(@NotNull SkyBlockMember member) {
+    public @NotNull ProfileStats getProfileStats(@NotNull SkyBlockMember member) {
         return this.getProfileStats(member, true);
     }
 
     public @NotNull ProfileStats getProfileStats(@NotNull SkyBlockMember member, boolean calculateBonus) {
         return new ProfileStats(this, member, calculateBonus);
-    }*/
+    }
 
     public int getUniqueMinions() {
         return this.getMembers()

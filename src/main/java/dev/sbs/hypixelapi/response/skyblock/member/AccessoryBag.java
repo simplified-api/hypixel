@@ -1,16 +1,21 @@
 package dev.sbs.hypixelapi.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
+import dev.sbs.hypixelapi.common.NbtContent;
+import dev.sbs.hypixelapi.profile_stats.data.AccessoryData;
 import dev.sbs.hypixelapi.response.skyblock.SkyBlockMember;
 import dev.sbs.skyblockdata.SkyBlockData;
+import dev.sbs.skyblockdata.model.Accessory;
 import dev.sbs.skyblockdata.model.Power;
 import dev.sbs.skyblockdata.model.Stat;
-import dev.sbs.hypixelapi.common.NbtContent;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.collection.ConcurrentSet;
 import dev.simplified.collection.tuple.pair.Pair;
 import dev.simplified.gson.Capture;
+import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tags.primitive.StringTag;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,8 +30,8 @@ public class AccessoryBag {
     @SerializedName("bag_upgrades_purchased")
     private int bagUpgradesPurchased;
     private transient NbtContent contents = new NbtContent();
-    //private transient @NotNull ConcurrentList<AccessoryData> detectedAccessories = Concurrent.newUnmodifiableList();
-    //private transient @NotNull ConcurrentList<AccessoryData> accessories = Concurrent.newUnmodifiableList();
+    private transient @NotNull ConcurrentList<AccessoryData> detectedAccessories = Concurrent.newUnmodifiableList();
+    private transient @NotNull ConcurrentList<AccessoryData> accessories = Concurrent.newUnmodifiableList();
 
     // Power
     @SerializedName("selected_power")
@@ -47,12 +52,12 @@ public class AccessoryBag {
 
     public void initialize(@NotNull SkyBlockMember member) {
         // Read Accessory Bag
-        /*this.detectedAccessories = this.getContents()
+        this.detectedAccessories = this.getContents()
             .getNbtData()
             .<CompoundTag>getListTag("i")
             .stream()
             .filter(CompoundTag::notEmpty)
-            .flatMap(compoundTag -> SimplifiedApi.getRepository(Accessory.class)
+            .flatMap(compoundTag -> SkyBlockData.getRepository(Accessory.class)
                 .findFirst(
                     Accessory::getId,
                     compoundTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue()
@@ -98,7 +103,7 @@ public class AccessoryBag {
                             .reversed();
 
                         // Ignore Lowest Accessories
-                        Accessory topAccessory = familyData.remove(0);
+                        Accessory topAccessory = familyData.removeFirst();
                         processedAccessories.addAll(familyData);
 
                         // Top Accessory Only
@@ -126,10 +131,9 @@ public class AccessoryBag {
 
         // Rift Prism
         if (member.getRift().getAccess().hasConsumedPrism())
-            calculatedMagicalPower += 11;*/
+            calculatedMagicalPower += 11;
 
         this.contents = member.getInventory().getBags().getAccessories();
-        this.magicalPower = 0; // TODO: calculatedMagicalPower
         this.tuningPoints = this.magicalPower / 10;
         this.logComponent = Math.pow(Math.log(1 + (0.0019 * this.magicalPower)), 1.2);
         //this.magicalPowerMultiplier = 29.97 * Math.pow(Math.log(1 + (0.0019 * this.magicalPower)), 1.2);
@@ -173,7 +177,7 @@ public class AccessoryBag {
             .collect(Concurrent.toUnmodifiableList());
     }
 
-    /*private int handleMagicalPower(@NotNull AccessoryData accessoryData, @NotNull SkyBlockMember member) {
+    private int handleMagicalPower(@NotNull AccessoryData accessoryData, @NotNull SkyBlockMember member) {
         int magicalPower = accessoryData.getRarity().getMagicPower();
 
         // TODO: Dynamic
@@ -184,7 +188,7 @@ public class AccessoryBag {
             magicalPower += member.getCrimsonIsle().getAbiphone().getContacts().size() / 2;
 
         return magicalPower;
-    }*/
+    }
 
     @Getter
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
