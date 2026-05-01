@@ -7,7 +7,8 @@ import org.jetbrains.annotations.NotNull;
 public final class HypixelApiException extends JsonApiException {
 
     public HypixelApiException(@NotNull Gson gson, @NotNull String methodKey, @NotNull feign.Response response) {
-        super(methodKey, response, "Hypixel", gson, HypixelErrorResponse.class, HypixelErrorResponse.Unknown::new);
+        super(methodKey, response, "Hypixel");
+        this.resolve(gson, HypixelErrorResponse.class);
     }
 
     @Override

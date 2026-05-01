@@ -11,16 +11,8 @@ import lombok.NoArgsConstructor;
 public class HypixelErrorResponse implements ApiErrorResponse {
 
     @SerializedName("cause")
-    protected String reason;
+    protected String reason = "Unknown";
     protected boolean throttle;
     protected boolean global;
-
-    public static class Unknown extends HypixelErrorResponse {
-
-        public Unknown() {
-            super.reason = "Unknown";
-        }
-
-    }
 
 }
