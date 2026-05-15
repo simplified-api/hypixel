@@ -35,16 +35,16 @@ dependencies {
     testImplementation(libs.junit.platform.launcher)
 
     // Sibling API modules (composite-build substitutes by project name)
-    api("com.github.simplified-api:skyblock-data:master-SNAPSHOT")
+    api("com.github.simplified-api:skyblock") { version { strictly("7fb30af") } }
 
     // Simplified Libraries (github.com/simplified-dev)
-    api("com.github.simplified-dev:collections:master-SNAPSHOT")
-    api("com.github.simplified-dev:utils:master-SNAPSHOT")
-    api("com.github.simplified-dev:reflection:master-SNAPSHOT")
-    api("com.github.simplified-dev:gson-extras:master-SNAPSHOT")
-    api("com.github.simplified-dev:persistence:master-SNAPSHOT")
-    api("com.github.simplified-dev:client:master-SNAPSHOT")
-    api("com.github.simplified-dev:expression:master-SNAPSHOT")
+    api("com.github.simplified-dev:collections") { version { strictly("6586657") } }
+    api("com.github.simplified-dev:utils") { version { strictly("ca4cbca") } }
+    api("com.github.simplified-dev:reflection") { version { strictly("746e607") } }
+    api("com.github.simplified-dev:gson-extras") { version { strictly("35d2257") } }
+    api("com.github.simplified-dev:persistence") { version { strictly("b237cdc") } }
+    api("com.github.simplified-dev:client") { version { strictly("6a11168") } }
+    api("com.github.simplified-dev:expression") { version { strictly("fe020e9") } }
 
     // Minecraft-Library (github.com/minecraft-library)
     api("com.github.minecraft-library:text:master-SNAPSHOT")

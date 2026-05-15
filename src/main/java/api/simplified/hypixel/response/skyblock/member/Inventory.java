@@ -4,7 +4,7 @@ import api.simplified.hypixel.common.NbtContent;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
-import dev.simplified.collection.linked.ConcurrentLinkedMap;
+import dev.simplified.collection.ConcurrentLinkedMap;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

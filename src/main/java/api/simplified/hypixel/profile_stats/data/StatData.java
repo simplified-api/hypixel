@@ -3,8 +3,8 @@ package api.simplified.hypixel.profile_stats.data;
 import dev.sbs.skyblockdata.SkyBlockData;
 import dev.sbs.skyblockdata.model.Stat;
 import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentMap;
-import dev.simplified.collection.linked.ConcurrentLinkedMap;
 import dev.simplified.collection.tuple.pair.Pair;
 import lombok.Getter;
 
