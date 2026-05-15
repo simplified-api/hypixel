@@ -62,13 +62,15 @@ import java.util.List;
 @NoArgsConstructor
 public class HypixelForum {
 
-    /** The single {@code <channel>} element declared under {@code <rss>}. */
+    /**
+     * The single {@code <channel>} element declared under {@code <rss>}.
+     */
     private @NotNull Channel channel = new Channel();
 
     /**
      * Converts a {@code HypixelForum} instance into a ROME {@link SyndFeed} suitable for
      * writing back to RSS 2.0 XML via
-     * {@link com.rometools.rome.io.SyndFeedOutput SyndFeedOutput}.
+     * {@link SyndFeedOutput SyndFeedOutput}.
      * <p>
      * Channel-level metadata (title, description, link, language, dates, generator) maps
      * onto the corresponding {@link SyndFeed} properties; each {@link Item} becomes a
@@ -129,32 +131,48 @@ public class HypixelForum {
     @NoArgsConstructor
     public static class Channel {
 
-        /** Channel language tag, e.g. {@code "en-US"}. */
+        /**
+         * Channel language tag, e.g. {@code "en-US"}.
+         */
         private @NotNull String language = "";
 
-        /** Channel title, e.g. {@code "News and Announcements"}. */
+        /**
+         * Channel title, e.g. {@code "News and Announcements"}.
+         */
         private @NotNull String title = "";
 
-        /** Channel description. */
+        /**
+         * Channel description.
+         */
         private @NotNull String description = "";
 
-        /** Publication timestamp of the feed itself, parsed from RFC 822 {@code <pubDate>}. */
+        /**
+         * Publication timestamp of the feed itself, parsed from RFC 822 {@code <pubDate>}.
+         */
         @SerializedName("pubDate")
         @JsonAdapter(Rfc822InstantAdapter.class)
         private @NotNull Instant publishedAt = Instant.EPOCH;
 
-        /** Timestamp at which the feed was last regenerated, parsed from RFC 822 {@code <lastBuildDate>}. */
+        /**
+         * Timestamp at which the feed was last regenerated, parsed from RFC 822 {@code <lastBuildDate>}.
+         */
         @SerializedName("lastBuildDate")
         @JsonAdapter(Rfc822InstantAdapter.class)
         private @NotNull Instant lastBuiltAt = Instant.EPOCH;
 
-        /** Name of the tool that produced the feed, e.g. {@code "Hypixel Forums"}. */
+        /**
+         * Name of the tool that produced the feed, e.g. {@code "Hypixel Forums"}.
+         */
         private @NotNull String generator = "";
 
-        /** Canonical link to the forum section, resolved from the text-content {@code <link>} element. */
+        /**
+         * Canonical link to the forum section, resolved from the text-content {@code <link>} element.
+         */
         private @NotNull String link = "";
 
-        /** The ordered list of feed entries, one per {@code <item>} element. */
+        /**
+         * The ordered list of feed entries, one per {@code <item>} element.
+         */
         @SerializedName("item")
         private @NotNull ConcurrentList<Item> items = Concurrent.newList();
 
@@ -167,24 +185,36 @@ public class HypixelForum {
     @NoArgsConstructor
     public static class Item {
 
-        /** Thread title. */
+        /**
+         * Thread title.
+         */
         private @NotNull String title = "";
 
-        /** Publication timestamp of the entry, parsed from RFC 822 {@code <pubDate>}. */
+        /**
+         * Publication timestamp of the entry, parsed from RFC 822 {@code <pubDate>}.
+         */
         @SerializedName("pubDate")
         @JsonAdapter(Rfc822InstantAdapter.class)
         private @NotNull Instant publishedAt = Instant.EPOCH;
 
-        /** Canonical link to the thread. */
+        /**
+         * Canonical link to the thread.
+         */
         private @NotNull String link = "";
 
-        /** Globally unique identifier for the thread, with an {@code isPermaLink} attribute. */
+        /**
+         * Globally unique identifier for the thread, with an {@code isPermaLink} attribute.
+         */
         private @NotNull Guid guid = new Guid();
 
-        /** Plain-text author in the form {@code invalid@example.com (Name)}. */
+        /**
+         * Plain-text author in the form {@code invalid@example.com (Name)}.
+         */
         private @NotNull String author = "";
 
-        /** The {@code <category>} element, carrying a {@code domain} attribute and CDATA text. */
+        /**
+         * The {@code <category>} element, carrying a {@code domain} attribute and CDATA text.
+         */
         private @NotNull Category category = new Category();
 
         /**
@@ -199,7 +229,9 @@ public class HypixelForum {
          */
         private @NotNull String encoded = "";
 
-        /** Comment count for the thread, extracted from {@code slash:comments}. */
+        /**
+         * Comment count for the thread, extracted from {@code slash:comments}.
+         */
         private int comments;
 
     }
@@ -212,10 +244,14 @@ public class HypixelForum {
     @NoArgsConstructor
     public static class Guid {
 
-        /** Whether the {@link #getValue() guid value} is a resolvable URL. */
+        /**
+         * Whether the {@link #getValue() guid value} is a resolvable URL.
+         */
         private boolean isPermaLink;
 
-        /** The guid value itself, read from the mixed-content text under the {@value dev.simplified.client.codec.XmlDecoder#TEXT_KEY} key. */
+        /**
+         * The guid value itself, read from the mixed-content text under the {@value dev.simplified.client.codec.XmlDecoder#TEXT_KEY} key.
+         */
         @SerializedName("$")
         private @NotNull String value = "";
 
@@ -229,10 +265,14 @@ public class HypixelForum {
     @NoArgsConstructor
     public static class Category {
 
-        /** The taxonomy URI for the category, e.g. a forum section permalink. */
+        /**
+         * The taxonomy URI for the category, e.g. a forum section permalink.
+         */
         private @NotNull String domain = "";
 
-        /** The category name, read from the mixed-content text under the {@value dev.simplified.client.codec.XmlDecoder#TEXT_KEY} key. */
+        /**
+         * The category name, read from the mixed-content text under the {@value dev.simplified.client.codec.XmlDecoder#TEXT_KEY} key.
+         */
         @SerializedName("$")
         private @NotNull String value = "";
 

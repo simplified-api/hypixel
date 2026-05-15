@@ -20,6 +20,7 @@ import api.simplified.hypixel.response.skyblock.SkyBlockGardenResponse;
 import api.simplified.hypixel.response.skyblock.SkyBlockMuseumResponse;
 import api.simplified.hypixel.response.skyblock.SkyBlockNews;
 import api.simplified.hypixel.response.skyblock.SkyBlockProfiles;
+import dev.simplified.client.ratelimit.RateLimitManager;
 import dev.simplified.client.request.Contract;
 import dev.simplified.client.route.Route;
 import feign.Param;
@@ -37,7 +38,7 @@ import java.util.UUID;
  * <p>
  * Rate limits are enforced per API key. The server responds with {@code RateLimit-Limit},
  * {@code RateLimit-Remaining}, and {@code RateLimit-Reset} headers, which are tracked by the
- * underlying {@link dev.simplified.client.ratelimit.RateLimitManager RateLimitManager}.
+ * underlying {@link RateLimitManager RateLimitManager}.
  *
  * @see <a href="https://api.hypixel.net/">Hypixel Public API</a>
  */

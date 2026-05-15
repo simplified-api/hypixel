@@ -1,6 +1,7 @@
 package api.simplified.hypixel;
 
 import api.simplified.hypixel.response.forum.HypixelForum;
+import dev.simplified.client.codec.XmlDecoder;
 import dev.simplified.client.exception.ApiException;
 import dev.simplified.client.request.Contract;
 import dev.simplified.client.route.Route;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * path-less {@code /<slug>} sections that do not sit under {@code /forums/}.
  * <p>
  * All responses are RSS 2.0 XML documents, decoded into {@link HypixelForum} by the
- * {@link dev.simplified.client.codec.XmlDecoder XmlDecoder} installed on the underlying client.
+ * {@link XmlDecoder XmlDecoder} installed on the underlying client.
  * A tree transformer configured on that decoder folds the {@code <link>} / {@code <atom:link>}
  * namespace collision before Gson binding, so the DTO exposes a scalar {@code link} field.
  *
@@ -24,16 +25,24 @@ import org.jetbrains.annotations.NotNull;
 @Route("hypixel.net")
 public interface HypixelForumContract extends Contract {
 
-    /** Forum slug for SkyBlock patch notes: {@code skyblock-patch-notes.158}. */
+    /**
+     * Forum slug for SkyBlock patch notes: {@code skyblock-patch-notes.158}.
+     */
     @NotNull String SKYBLOCK_PATCH_NOTES = "skyblock-patch-notes.158";
 
-    /** Forum slug for SkyBlock general discussion: {@code skyblock-general-discussion.157}. */
+    /**
+     * Forum slug for SkyBlock general discussion: {@code skyblock-general-discussion.157}.
+     */
     @NotNull String SKYBLOCK_GENERAL_DISCUSSION = "skyblock-general-discussion.157";
 
-    /** Forum slug for news and announcements: {@code news-and-announcements.4}. */
+    /**
+     * Forum slug for news and announcements: {@code news-and-announcements.4}.
+     */
     @NotNull String NEWS_AND_ANNOUNCEMENTS = "news-and-announcements.4";
 
-    /** Top-level slug for the SkyBlock Alpha section: {@code skyblock-alpha} (served outside {@code /forums/}). */
+    /**
+     * Top-level slug for the SkyBlock Alpha section: {@code skyblock-alpha} (served outside {@code /forums/}).
+     */
     @NotNull String SKYBLOCK_ALPHA = "skyblock-alpha";
 
     /**
