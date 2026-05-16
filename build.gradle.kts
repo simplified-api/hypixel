@@ -35,16 +35,16 @@ dependencies {
     testImplementation(libs.junit.platform.launcher)
 
     // Sibling API modules (composite-build substitutes by project name)
-    api("com.github.simplified-api:skyblock") { version { strictly("7fb30af") } }
+    api("com.github.simplified-api:skyblock") { version { strictly("c536ce1") } }
 
     // Simplified Libraries (github.com/simplified-dev)
-    api("com.github.simplified-dev:collections") { version { strictly("6586657") } }
-    api("com.github.simplified-dev:utils") { version { strictly("ca4cbca") } }
-    api("com.github.simplified-dev:reflection") { version { strictly("746e607") } }
-    api("com.github.simplified-dev:gson-extras") { version { strictly("35d2257") } }
-    api("com.github.simplified-dev:persistence") { version { strictly("b237cdc") } }
-    api("com.github.simplified-dev:client") { version { strictly("6a11168") } }
-    api("com.github.simplified-dev:expression") { version { strictly("fe020e9") } }
+    api("com.github.simplified-dev:collections") { version { strictly("2f2aa58") } }
+    api("com.github.simplified-dev:utils") { version { strictly("a2f3ccd") } }
+    api("com.github.simplified-dev:reflection") { version { strictly("c02511a") } }
+    api("com.github.simplified-dev:gson-extras") { version { strictly("c494327") } }
+    api("com.github.simplified-dev:persistence") { version { strictly("2357776") } }
+    api("com.github.simplified-dev:client") { version { strictly("c368e5f") } }
+    api("com.github.simplified-dev:expression") { version { strictly("b8cfe1f") } }
 
     // Minecraft-Library (github.com/minecraft-library)
     api("com.github.minecraft-library:text:master-SNAPSHOT")
