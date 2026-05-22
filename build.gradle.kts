@@ -48,7 +48,7 @@ dependencies {
 
     // Minecraft-Library (github.com/minecraft-library)
     api("com.github.minecraft-library:text:master-SNAPSHOT")
-    api("com.github.minecraft-library:nbt-factory:master-SNAPSHOT")
+    api("com.github.minecraft-library:nbt-factory") { version { strictly("f8b5f52") } }
 
     // Gson - @GsonType-annotated inner classes plus direct Deserializer/TypeAdapter usage
     api(libs.gson)

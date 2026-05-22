@@ -11,10 +11,10 @@ import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.util.StringUtil;
-import lib.minecraft.nbt.tags.Tag;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
-import lib.minecraft.nbt.tags.primitive.IntTag;
-import lib.minecraft.nbt.tags.primitive.StringTag;
+import lib.minecraft.nbt.tag.Tag;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.IntTag;
+import lib.minecraft.nbt.tag.StringTag;
 import lombok.Getter;
 
 import java.time.Instant;

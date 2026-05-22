@@ -12,8 +12,8 @@ import dev.simplified.expression.Expression;
 import dev.simplified.util.NumberUtil;
 import dev.simplified.util.mutable.MutableBoolean;
 import dev.simplified.util.mutable.MutableDouble;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
-import lib.minecraft.nbt.tags.primitive.IntTag;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.IntTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

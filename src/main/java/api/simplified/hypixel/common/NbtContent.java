@@ -8,7 +8,7 @@ import com.google.gson.stream.JsonWriter;
 import dev.simplified.util.StringUtil;
 import lib.minecraft.nbt.NbtFactory;
 import lib.minecraft.nbt.exception.NbtException;
-import lib.minecraft.nbt.tags.collection.CompoundTag;
+import lib.minecraft.nbt.tag.CompoundTag;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
