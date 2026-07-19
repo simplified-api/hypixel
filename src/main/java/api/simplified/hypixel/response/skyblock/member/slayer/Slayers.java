@@ -6,7 +6,7 @@ import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
-import dev.simplified.gson.Collapse;
+import dev.simplified.gson.annotation.Collapse;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

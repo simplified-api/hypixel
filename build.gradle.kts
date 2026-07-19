@@ -35,13 +35,13 @@ dependencies {
     testImplementation(libs.junit.platform.launcher)
 
     // Sibling API modules (composite-build substitutes by project name)
-    api("com.github.simplified-api:skyblock") { version { strictly("1f71866") } }
+    api("com.github.simplified-api:skyblock") { version { strictly("33818f3") } }
 
     // Simplified Libraries (github.com/simplified-dev)
     api("com.github.simplified-dev:collections") { version { strictly("2f2aa58") } }
     api("com.github.simplified-dev:utils") { version { strictly("37dc4a8") } }
     api("com.github.simplified-dev:reflection") { version { strictly("b2cf834") } }
-    api("com.github.simplified-dev:gson-extras") { version { strictly("f42ee07") } }
+    api("com.github.simplified-dev:gson-extras") { version { strictly("37a2c2f") } }
     api("com.github.simplified-dev:persistence") { version { strictly("cacdb62") } }
     api("com.github.simplified-dev:client") { version { strictly("5a5d32e") } }
     api("com.github.simplified-dev:expression") { version { strictly("f8e993c") } }

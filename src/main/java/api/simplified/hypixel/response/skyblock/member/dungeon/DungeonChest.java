@@ -3,7 +3,7 @@ package api.simplified.hypixel.response.skyblock.member.dungeon;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
-import dev.simplified.gson.SerializedPath;
+import dev.simplified.gson.annotation.SerializedPath;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

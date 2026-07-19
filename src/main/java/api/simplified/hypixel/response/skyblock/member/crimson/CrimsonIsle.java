@@ -5,7 +5,7 @@ import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.PostInit;
-import dev.simplified.gson.SerializedPath;
+import dev.simplified.gson.annotation.SerializedPath;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

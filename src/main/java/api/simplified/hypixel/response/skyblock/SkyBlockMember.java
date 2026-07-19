@@ -24,7 +24,7 @@ import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
 import dev.simplified.gson.PostInit;
-import dev.simplified.gson.SerializedPath;
+import dev.simplified.gson.annotation.SerializedPath;
 import dev.simplified.util.mutable.MutableDouble;
 import lombok.AccessLevel;
 import lombok.Getter;

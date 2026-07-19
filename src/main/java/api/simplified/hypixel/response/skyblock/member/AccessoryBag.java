@@ -13,7 +13,7 @@ import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.ConcurrentSet;
 import dev.simplified.collection.tuple.pair.Pair;
-import dev.simplified.gson.Capture;
+import dev.simplified.gson.annotation.Capture;
 import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.StringTag;
 import lombok.AccessLevel;
