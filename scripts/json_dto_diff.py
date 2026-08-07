@@ -172,7 +172,11 @@ def parse_sources(src_root):
                     ann = " ".join(pend)
                     raw, args = parse_type(fm.group("rest"))
                     sn = ann_value(ann, "SerializedName", "SerializedPath")
-                    ex = ann_value(ann, "Extract")
+                    # @Extract takes a second element now, so the lone-literal form no longer
+                    # matches every site. Without the named-parameter attempt first, an
+                    # @Extract(value = ..., filter = ...) field falls back to its Java name and
+                    # reports as a phantom binding while its real key reports as unmapped.
+                    ex = ann_value(ann, "Extract", param="value") or ann_value(ann, "Extract")
                     # a bare @Capture means "filter = ''", which matches every sibling key
                     cap = None
                     if has_ann(ann, "Capture"):

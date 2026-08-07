@@ -10,6 +10,7 @@ import api.simplified.hypixel.response.skyblock.member.Toolkit;
 import api.simplified.hypixel.response.skyblock.member.WinterIsland;
 import api.simplified.hypixel.response.skyblock.member.crimson.BoardQuest;
 import api.simplified.hypixel.response.skyblock.member.crimson.CrimsonIsle;
+import api.simplified.hypixel.response.skyblock.member.crimson.Kuudra;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.dungeon.Dungeons;
@@ -32,7 +33,10 @@ import org.junit.jupiter.api.Test;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -40,6 +44,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
 /**
  * Verifies the member DTO field mappings against the bundled API response.
@@ -88,6 +93,10 @@ class MemberDtoMappingTest {
 
     private static <T> T decodePristine(String key, Class<T> type) {
         return gson.fromJson(pristine.get(key).deepCopy(), type);
+    }
+
+    private static Set<String> lowercased(Set<String> keys) {
+        return keys.stream().map(key -> key.toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
     }
 
     private static JsonObject firstMember(JsonObject root, int profileIndex) {
@@ -363,13 +372,6 @@ class MemberDtoMappingTest {
     }
 
     @Test
-    @Disabled("""
-        Currently red - "Expected: is <[armor, equipment, loadouts]> but: was \
-        <[armor, equippedArmorSet, equipment, equippedEquipmentSet, loadouts]>". @Extract never \
-        removes its own field's serialized key, so both sites here emit their extracted value \
-        twice on every serialize - once inside armor/equipment and once at the root under the \
-        Java field name, a key the input never carried. Enable once the pinned gson-extras \
-        removes the root key.""")
     @DisplayName("loadout serialization emits no root-level @Extract keys")
     void loadoutsSerializeHasNoRootExtractKeys() {
         Loadouts loadouts = decodePristine("loadout", Loadouts.class);
@@ -425,6 +427,65 @@ class MemberDtoMappingTest {
 
         assertThat(outJournals, is(equalTo(raw)));
         assertThat(out.has("unlockedJournals"), is(false));
+    }
+
+    @Test
+    @DisplayName("quest rewards split into a counted item map and a quest-to-item map")
+    void mapsQuestRewards() {
+        JsonObject raw = rawPristine("nether_island_player_data")
+            .getAsJsonObject("quests")
+            .getAsJsonObject("quest_rewards");
+        CrimsonIsle crimsonIsle = decodePristine("nether_island_player_data", CrimsonIsle.class);
+
+        long expectedCounts = raw.entrySet().stream().filter(e -> e.getValue().getAsJsonPrimitive().isNumber()).count();
+        long expectedItems = raw.entrySet().stream().filter(e -> e.getValue().getAsJsonPrimitive().isString()).count();
+
+        assertThat(expectedCounts, is(not(equalTo(0L))));
+        assertThat(expectedItems, is(not(equalTo(0L))));
+
+        // both halves are typed and neither is lost
+        assertThat((long) crimsonIsle.getQuests().getQuestRewards().size(), is(equalTo(expectedCounts)));
+        assertThat((long) crimsonIsle.getQuests().getQuestItems().size(), is(equalTo(expectedItems)));
+        assertThat(crimsonIsle.getQuests().getQuestRewards(), hasKey("KADA_LEAD"));
+        assertThat(crimsonIsle.getQuests().getQuestItems(), hasKey("crimson_isle_kill_barbarian_duke_x_c"));
+        // selection without stripping - the quest id IS the key
+        assertThat(crimsonIsle.getQuests().getQuestItems().get("crimson_isle_kill_barbarian_duke_x_c"),
+            is(equalTo("KADA_LEAD")));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(crimsonIsle)).getAsJsonObject();
+        JsonObject outRewards = out.getAsJsonObject("quests").getAsJsonObject("quest_rewards");
+
+        assertThat(outRewards.keySet(), is(equalTo(raw.keySet())));
+        assertThat(out.getAsJsonObject("quests").has("questItems"), is(false));
+    }
+
+    @Test
+    @DisplayName("unmatched kuudra tiers survive instead of collapsing onto one null key")
+    void mapsKuudraUnknownTiers() {
+        JsonObject raw = rawPristine("nether_island_player_data");
+        CrimsonIsle crimsonIsle = decodePristine("nether_island_player_data", CrimsonIsle.class);
+
+        JsonObject rawTiers = raw.getAsJsonObject("kuudra_completed_tiers");
+
+        // no key may bind onto null, and no entry may be dropped
+        assertThat(crimsonIsle.getKuudra().getCompletedTiers(), not(hasKey(nullValue(Kuudra.Tier.class))));
+        assertThat(crimsonIsle.getKuudra().getHighestWave(), not(hasKey(nullValue(Kuudra.Tier.class))));
+
+        int bound = crimsonIsle.getKuudra().getCompletedTiers().size()
+            + crimsonIsle.getKuudra().getHighestWave().size()
+            + crimsonIsle.getKuudra().getUnknownTiers().size();
+
+        assertThat(bound, is(equalTo(rawTiers.size())));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(crimsonIsle)).getAsJsonObject();
+        JsonObject outTiers = out.getAsJsonObject("kuudra_completed_tiers");
+
+        // every key survives, but its CASE does not: an enum map key is written back as its
+        // constant name, so the fixture's lowercase `none` returns as `NONE` and `highest_wave_hot`
+        // as `highest_wave_HOT` - a literal filter prefix in front of a constant name. That is the
+        // enum adapter reading case-insensitively and writing name(), and it predates this work
+        assertThat(lowercased(outTiers.keySet()), is(equalTo(lowercased(rawTiers.keySet()))));
+        assertThat(out.has("unknownTiers"), is(false));
     }
 
     @Test

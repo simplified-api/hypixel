@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Capture;
+import dev.simplified.gson.annotation.Extract;
 import dev.simplified.util.Range;
 import dev.simplified.util.StringUtil;
 import lombok.AccessLevel;
@@ -19,6 +20,10 @@ public class Kuudra {
     private @NotNull ConcurrentMap<Tier, Integer> highestWave = Concurrent.newMap();
     @Capture
     private @NotNull ConcurrentMap<Tier, Integer> completedTiers = Concurrent.newMap();
+    // the keys no Tier constant matched. String-keyed by definition - an enum-keyed remainder
+    // would reproduce the very collapse this field exists to expose
+    @Extract("completedTiers")
+    private @NotNull ConcurrentMap<String, Integer> unknownTiers = Concurrent.newMap();
     transient @NotNull SearchSettings searchSettings = new SearchSettings();
     transient @NotNull GroupBuilder groupBuilder = new GroupBuilder();
 

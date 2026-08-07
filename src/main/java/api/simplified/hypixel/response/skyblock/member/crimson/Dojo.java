@@ -3,6 +3,7 @@ package api.simplified.hypixel.response.skyblock.member.crimson;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Capture;
+import dev.simplified.gson.annotation.Extract;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,11 @@ public class Dojo {
     private @NotNull ConcurrentMap<Type, Integer> points = Concurrent.newMap();
     @Capture(filter = "^dojo_time_")
     private @NotNull ConcurrentMap<Type, Integer> times = Concurrent.newMap();
+    // the keys no Type constant matched, under the original unstripped spelling
+    @Extract("points")
+    private @NotNull ConcurrentMap<String, Integer> unknownPoints = Concurrent.newMap();
+    @Extract("times")
+    private @NotNull ConcurrentMap<String, Integer> unknownTimes = Concurrent.newMap();
 
     @Getter
     @RequiredArgsConstructor

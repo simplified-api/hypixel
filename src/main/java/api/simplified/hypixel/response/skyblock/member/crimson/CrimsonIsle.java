@@ -5,6 +5,8 @@ import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.PostInit;
+import dev.simplified.gson.annotation.Extract;
+import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.annotation.SerializedPath;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -62,8 +64,14 @@ public class CrimsonIsle implements PostInit {
         // Quest Board
         @SerializedName("quest_data")
         private @NotNull QuestBoard questBoard = new QuestBoard();
+        // one JSON object carrying two unrelated maps interleaved by value type: an item id to a
+        // count, and a quest id to the item it rewards. @Lenient takes the integer half and
+        // filters the rest into overflow, and the filtered remainder claims it back typed
+        @Lenient
         @SerializedName("quest_rewards")
-        private @NotNull ConcurrentMap<String, Object> questRewards = Concurrent.newMap();
+        private @NotNull ConcurrentMap<String, Integer> questRewards = Concurrent.newMap();
+        @Extract(value = "questRewards", filter = "^crimson_isle_")
+        private @NotNull ConcurrentMap<String, String> questItems = Concurrent.newMap();
         @SerializedName("miniboss_daily")
         private @NotNull ConcurrentMap<String, Object> minibossDaily = Concurrent.newMap();
         @SerializedName("kuuda_boss_daily")
