@@ -23,6 +23,8 @@ import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
 import dev.simplified.gson.PostInit;
+import dev.simplified.gson.annotation.Capture;
+import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.SerializedPath;
 import dev.simplified.util.mutable.MutableDouble;
 import lombok.Getter;
@@ -136,7 +138,15 @@ public class SkyBlockMember implements PostInit {
     private @NotNull Statistics statistics = new Statistics();
 
     // Miscellaneous
-    @SerializedPath("objectives.tutorial")
+    // every sibling of `tutorial` is one objective keyed by its id, and the id space is open, so the
+    // whole node is captured rather than declared. ENTRY grouping is load-bearing: the default would
+    // split ids such as talk_to_david_5 against the value class's own field names
+    @SerializedName("objectives")
+    @Capture(grouping = Capture.Grouping.ENTRY, descend = true)
+    private @NotNull ConcurrentMap<String, Objective> objectives = Concurrent.newMap();
+    // the one sibling that is a list of ids rather than an objective, read back out of the capture's
+    // overflow. The capture descends first, so a path-addressed field never sees this key
+    @Extract("objectives.tutorial")
     private @NotNull ConcurrentList<String> tutorialObjectives = Concurrent.newList();
 
     @Override

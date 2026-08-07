@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock.member.crimson;
 
+import api.simplified.hypixel.response.skyblock.member.Objective;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
@@ -15,14 +16,14 @@ public class QuestBoard {
     private @NotNull ConcurrentList<String> questList = Concurrent.newList();
 
     @SerializedName("boss")
-    private @NotNull BoardQuest bossQuest = new BoardQuest();
+    private @NotNull Objective bossQuest = new Objective();
     @SerializedName("dojo")
-    private @NotNull BoardQuest dojoQuest = new BoardQuest();
+    private @NotNull Objective dojoQuest = new Objective();
     @SerializedName("fetch")
-    private @NotNull BoardQuest fetchQuest = new BoardQuest();
+    private @NotNull Objective fetchQuest = new Objective();
     @SerializedName("fishing")
-    private @NotNull BoardQuest fishingQuest = new BoardQuest();
+    private @NotNull Objective fishingQuest = new Objective();
     @SerializedName("wanted_mini_boss")
-    private @NotNull BoardQuest miniBossQuest = new BoardQuest();
+    private @NotNull Objective miniBossQuest = new Objective();
 
 }

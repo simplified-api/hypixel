@@ -6,12 +6,12 @@ import api.simplified.hypixel.response.skyblock.member.Currencies;
 import api.simplified.hypixel.response.skyblock.member.GardenCore;
 import api.simplified.hypixel.response.skyblock.member.JacobsContest;
 import api.simplified.hypixel.response.skyblock.member.Loadouts;
+import api.simplified.hypixel.response.skyblock.member.Objective;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.Statistics;
 import api.simplified.hypixel.response.skyblock.member.Toolkit;
 import api.simplified.hypixel.response.skyblock.member.WinterIsland;
 import api.simplified.hypixel.response.skyblock.member.attribute.AttributeShards;
-import api.simplified.hypixel.response.skyblock.member.crimson.BoardQuest;
 import api.simplified.hypixel.response.skyblock.member.crimson.CrimsonIsle;
 import api.simplified.hypixel.response.skyblock.member.crimson.Dojo;
 import api.simplified.hypixel.response.skyblock.member.crimson.Kuudra;
@@ -31,7 +31,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.GsonSettings;
+import dev.simplified.gson.annotation.Capture;
+import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Fallback;
 import dev.simplified.gson.annotation.SerializedPath;
 import lib.minecraft.text.ChatFormat;
@@ -291,9 +296,9 @@ class MemberDtoMappingTest {
 
         assertThat(crimsonIsle.getHighestBarbarianReputation(), is(equalTo(12730)));
         assertThat(crimsonIsle.getQuests().getQuestBoard().getFishingQuest().getStatus(),
-            is(equalTo(BoardQuest.Status.ACTIVE)));
+            is(equalTo(Objective.Status.ACTIVE)));
         assertThat(crimsonIsle.getQuests().getQuestBoard().getMiniBossQuest().getStatus(),
-            is(equalTo(BoardQuest.Status.ACTIVE)));
+            is(equalTo(Objective.Status.ACTIVE)));
         assertThat(crimsonIsle.getQuests().getQuestBoard().getQuestList().isEmpty(), is(false));
         assertThat(crimsonIsle.getAbiphone().getContacts().get("dalir").hasGivenItems(), is(true));
     }
@@ -733,27 +738,27 @@ class MemberDtoMappingTest {
     @Test
     @DisplayName("board quest binds every status the wire spells and writes them back unchanged")
     void mapsBoardQuestStatuses() {
-        assertThat(decodeStatus("COMPLETE"), is(equalTo(BoardQuest.Status.COMPLETE)));
-        assertThat(decodeStatus("ACTIVE"), is(equalTo(BoardQuest.Status.ACTIVE)));
+        assertThat(decodeStatus("COMPLETE"), is(equalTo(Objective.Status.COMPLETE)));
+        assertThat(decodeStatus("ACTIVE"), is(equalTo(Objective.Status.ACTIVE)));
         // the enum spelled the finished state COMPLETED, which the wire names nowhere, so 790
         // objectives and every finished board quest bound onto null over a @NotNull default
-        assertThat(decodeStatus("INACTIVE"), is(equalTo(BoardQuest.Status.INACTIVE)));
+        assertThat(decodeStatus("INACTIVE"), is(equalTo(Objective.Status.INACTIVE)));
 
         JsonObject raw = new JsonObject();
         raw.addProperty("status", "COMPLETE");
         raw.addProperty("progress", 3);
 
-        BoardQuest quest = gson.fromJson(raw, BoardQuest.class);
+        Objective quest = gson.fromJson(raw, Objective.class);
         JsonObject out = JsonParser.parseString(gson.toJson(quest)).getAsJsonObject();
 
         assertThat(out.get("status").getAsString(), is(equalTo("COMPLETE")));
         assertThat(quest.getProgress(), is(equalTo(3)));
     }
 
-    private static BoardQuest.Status decodeStatus(String status) {
+    private static Objective.Status decodeStatus(String status) {
         JsonObject raw = new JsonObject();
         raw.addProperty("status", status);
-        return gson.fromJson(raw, BoardQuest.class).getStatus();
+        return gson.fromJson(raw, Objective.class).getStatus();
     }
 
     @Test
@@ -929,6 +934,84 @@ class MemberDtoMappingTest {
         // point is that an eleven-field ActiveTrap list now has a reader at all
         assertThat(shards.getActiveTraps(), is(empty()));
         assertThat(shards.getOwnedShards().isEmpty(), is(false));
+    }
+
+    @Test
+    @DisplayName("every objective binds, and tutorial still claims its key ahead of the catch-all")
+    void capturesEveryObjective() {
+        JsonObject rawObjectives = rawPristine("objectives");
+        SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
+
+        // one entry of the node is the tutorial list; every other one is an objective
+        long expected = rawObjectives.entrySet().stream()
+            .filter(entry -> entry.getValue().isJsonObject())
+            .count();
+
+        assertThat(expected, is(equalTo(792L)));
+        assertThat((long) member.getObjectives().size(), is(equalTo(expected)));
+
+        // the declared @SerializedPath claims objectives.tutorial before the catch-all descends, so
+        // the list is not swallowed by a map it cannot type - this is the precedence, executed
+        assertThat(member.getTutorialObjectives().size(),
+            is(equalTo(rawObjectives.getAsJsonArray("tutorial").size())));
+        assertThat(member.getObjectives(), not(hasKey("tutorial")));
+
+        assertThat(member.getObjectives().get("collect_lapis").getStatus(),
+            is(equalTo(Objective.Status.COMPLETE)));
+        assertThat(member.getObjectives().get("talk_to_crypt_keeper_1").getStatus(),
+            is(equalTo(Objective.Status.ACTIVE)));
+        assertThat(member.getObjectives().get("select_mage_faction").getStatus(),
+            is(equalTo(Objective.Status.INACTIVE)));
+        assertThat(member.getObjectives().get("defeat_the_monster").getCompletions().orElseThrow(),
+            is(equalTo(-1)));
+
+        // an objective's own progress keys land on the value class rather than being dropped
+        assertThat(member.getObjectives().get("faction_villagers").getRequirements().size(),
+            is(equalTo(10)));
+        assertThat(member.getObjectives().get("faction_villagers").getRequirements().get("crafter0"),
+            is(equalTo(2)));
+        // a boolean requirement is not an Integer, so it reaches overflow instead of binding
+        assertThat(member.getObjectives().get("collect_lapis").getRequirements(), is(anEmptyMap()));
+    }
+
+    @Test
+    @DisplayName("the objectives node round-trips with every key it arrived with")
+    void roundTripsObjectives() {
+        JsonObject rawObjectives = rawPristine("objectives");
+        ObjectiveNode node = gson.fromJson(shallowMember("objectives", rawObjectives), ObjectiveNode.class);
+
+        JsonObject out = JsonParser.parseString(gson.toJson(node)).getAsJsonObject();
+        JsonObject outObjectives = out.getAsJsonObject("objectives");
+
+        assertThat(out.keySet(), is(equalTo(Set.of("objectives"))));
+        assertThat(outObjectives.keySet(), is(equalTo(rawObjectives.keySet())));
+
+        // the six item-bearing objectives carry keys no field declares, and a boolean one is the
+        // case that had to travel through overflow to get back
+        assertThat(outObjectives.getAsJsonObject("collect_lapis"),
+            is(equalTo(rawObjectives.getAsJsonObject("collect_lapis"))));
+        assertThat(outObjectives.getAsJsonObject("faction_villagers"),
+            is(equalTo(rawObjectives.getAsJsonObject("faction_villagers"))));
+        assertThat(outObjectives.getAsJsonArray("tutorial"),
+            is(equalTo(rawObjectives.getAsJsonArray("tutorial"))));
+    }
+
+    /**
+     * The two fields that share the {@code objectives} node, declared here rather than reused from
+     * the member.
+     * <p>
+     * No whole {@link SkyBlockMember} can be serialized - several date fields are null on a default
+     * sub-object and the {@code SkyBlockDate} adapters are not null-safe - so the write half of the
+     * round trip needs a vehicle carrying only the two annotations under test.
+     */
+    private static class ObjectiveNode {
+
+        @SerializedName("objectives")
+        @Capture(grouping = Capture.Grouping.ENTRY, descend = true)
+        private ConcurrentMap<String, Objective> objectives = Concurrent.newMap();
+        @Extract("objectives.tutorial")
+        private ConcurrentList<String> tutorialObjectives = Concurrent.newList();
+
     }
 
 }
