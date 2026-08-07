@@ -19,6 +19,8 @@ import api.simplified.hypixel.response.skyblock.member.crimson.Kuudra;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonRun;
+import api.simplified.hypixel.response.skyblock.member.dungeon.Floor;
+import api.simplified.hypixel.response.skyblock.member.dungeon.FloorData;
 import api.simplified.hypixel.response.skyblock.member.dungeon.Dungeons;
 import api.simplified.hypixel.response.skyblock.member.foraging.Foraging;
 import api.simplified.hypixel.response.skyblock.member.foraging.HeartOfTheForest;
@@ -1150,6 +1152,39 @@ class MemberDtoMappingTest {
         }
 
         assertThat(anyExtra, is(true));
+    }
+
+    @Test
+    @DisplayName("class damage captures onto its class and re-prefixes on write")
+    void mapsFloorMostDamage() {
+        JsonObject rawCatacombs = rawPristine("dungeons")
+            .getAsJsonObject("dungeon_types")
+            .getAsJsonObject("catacombs");
+        Dungeons dungeons = decodePristine("dungeons", Dungeons.class);
+        FloorData normal = dungeons.getDungeon(DungeonData.Type.CATACOMBS).getFloorData(false);
+
+        // five near-identical fields and a switch over them became one map keyed by the class
+        assertThat(normal.getMostDamage().size(), is(equalTo(5)));
+        assertThat(normal.getMostDamage(DungeonClass.Type.HEALER).get(Floor.SEVEN),
+            is(equalTo(rawCatacombs.getAsJsonObject("most_damage_healer").get("7").getAsDouble())));
+        assertThat(normal.getMostDamage(DungeonClass.Type.ARCHER).size(),
+            is(equalTo(rawCatacombs.getAsJsonObject("most_damage_archer").size())));
+        assertThat(normal.getMostDamage(DungeonClass.Type.UNKNOWN), is(anEmptyMap()));
+
+        // the two neighbours that could have been captured by accident were not
+        assertThat(normal.getMostHealing().isEmpty(), is(false));
+        assertThat(normal.getMostMobsKilled().isEmpty(), is(false));
+
+        JsonObject outCatacombs = JsonParser.parseString(gson.toJson(dungeons))
+            .getAsJsonObject()
+            .getAsJsonObject("dungeon_types")
+            .getAsJsonObject("catacombs");
+
+        // the filter's literal prefix goes back in front of each key, so no most_damage_ entry is
+        // lost - but an enum key is written as its constant name, so the wire's lowercase spelling
+        // returns uppercased. Same case drift the kuudra tiers already document
+        assertThat(lowercased(outCatacombs.keySet()), is(equalTo(lowercased(rawCatacombs.keySet()))));
+        assertThat(outCatacombs.has("mostDamage"), is(false));
     }
 
 }

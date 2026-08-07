@@ -5,6 +5,7 @@ import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Lenient;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -43,21 +44,11 @@ public class FloorData {
     private @NotNull ConcurrentMap<Floor, Double> mostHealing = Concurrent.newMap();
 
     // Class Damage
-    @Getter(AccessLevel.NONE)
-    @SerializedName("most_damage_healer")
-    private @NotNull ConcurrentMap<Floor, Double> mostDamageHealer = Concurrent.newMap();
-    @Getter(AccessLevel.NONE)
-    @SerializedName("most_damage_mage")
-    private @NotNull ConcurrentMap<Floor, Double> mostDamageMage = Concurrent.newMap();
-    @Getter(AccessLevel.NONE)
-    @SerializedName("most_damage_berserk")
-    private @NotNull ConcurrentMap<Floor, Double> mostDamageBerserk = Concurrent.newMap();
-    @Getter(AccessLevel.NONE)
-    @SerializedName("most_damage_archer")
-    private @NotNull ConcurrentMap<Floor, Double> mostDamageArcher = Concurrent.newMap();
-    @Getter(AccessLevel.NONE)
-    @SerializedName("most_damage_tank")
-    private @NotNull ConcurrentMap<Floor, Double> mostDamageTank = Concurrent.newMap();
+    // one key per dungeon class, so the class is the key rather than five fields and a switch over
+    // them. most_healing and most_mobs_killed sit beside these and match neither the filter nor a
+    // class name, so they stay where they are
+    @Capture(filter = "^most_damage_")
+    private @NotNull ConcurrentMap<DungeonClass.Type, ConcurrentMap<Floor, Double>> mostDamage = Concurrent.newMap();
 
     // Fastest Times
     @SerializedName("fastest_time")
@@ -68,14 +59,9 @@ public class FloorData {
     private @NotNull ConcurrentMap<Floor, Integer> fastestSPlusTierTime = Concurrent.newMap();
 
     public @NotNull ConcurrentMap<Floor, Double> getMostDamage(@NotNull DungeonClass.Type classType) {
-        return switch (classType) {
-            case HEALER -> this.mostDamageHealer.toUnmodifiable();
-            case MAGE -> this.mostDamageMage.toUnmodifiable();
-            case BERSERK -> this.mostDamageBerserk.toUnmodifiable();
-            case ARCHER -> this.mostDamageArcher.toUnmodifiable();
-            case TANK -> this.mostDamageTank.toUnmodifiable();
-            default -> Concurrent.newUnmodifiableMap();
-        };
+        return this.getMostDamage()
+            .getOrDefault(classType, Concurrent.newMap())
+            .toUnmodifiable();
     }
 
     @Getter
