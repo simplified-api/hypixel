@@ -112,11 +112,11 @@ class MemberDtoMappingTest {
         AccessoryBag sparseBag = this.decode(sparse, "accessory_bag_storage", AccessoryBag.class);
 
         assertThat(populatedBag.getTuning().getSlots(), hasKey(0));
-        assertThat(populatedBag.getTuning().getSlotStats(0), hasKey("critical_damage"));
-        assertThat(populatedBag.getTuning().getSlotStats(0).get("critical_damage"), is(equalTo(211L)));
-        assertThat(populatedBag.getTuning().getSlotStats(0), not(hasKey("purchase_ts")));
+        assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats(), hasKey("critical_damage"));
+        assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats().get("critical_damage"), is(equalTo(211)));
+        assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats(), not(hasKey("purchase_ts")));
         assertThat(sparseBag.getTuning().hasClaimedSecondRefund(), is(true));
-        assertThat(sparseBag.getTuning().getSlotPurchased(1).isPresent(), is(true));
+        assertThat(sparseBag.getTuning().getSlot(1).orElseThrow().getPurchased().isPresent(), is(true));
     }
 
     @Test
@@ -200,6 +200,22 @@ class MemberDtoMappingTest {
         assertThat(statistics.getItemsFished().getTrophyFrog(), is(equalTo(263)));
         assertThat(statistics.getEndIsland().getDragonFight().getEnderCrystalsDestroyed(), is(equalTo(168)));
         assertThat(statistics.getEndIsland().getDragonFight().getAmountSummoned().isEmpty(), is(false));
+    }
+
+    @Test
+    @DisplayName("candy collected decodes one festival per key outside its named fields")
+    void mapsCandyFestivals() {
+        Statistics statistics = this.decode(populated, "player_stats", Statistics.class);
+        JsonObject raw = populated.getAsJsonObject("player_stats").getAsJsonObject("candy_collected");
+
+        // every raw key other than the three declared fields is a festival
+        int expected = raw.size() - 3;
+
+        assertThat(statistics.getCandy().getFestivals().size(), is(equalTo(expected)));
+        assertThat(statistics.getCandy().getTotal(), is(equalTo(raw.get("total").getAsInt())));
+        assertThat(statistics.getCandy().getFestivals(), hasKey("spooky_festival_1"));
+        assertThat(statistics.getCandy().getFestivals().get("spooky_festival_1").getTotal(),
+            is(equalTo(raw.getAsJsonObject("spooky_festival_1").get("total").getAsInt())));
     }
 
     @Test

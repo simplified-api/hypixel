@@ -44,16 +44,22 @@ public class HeartOfTheForest {
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static class BiomeWhispers {
 
-        private static final @NotNull String SPENT_KEY = "spent";
-
         private int total;
         @Capture
-        private @NotNull ConcurrentMap<Integer, ConcurrentMap<String, Integer>> tiers = Concurrent.newMap();
+        private @NotNull ConcurrentMap<Integer, Tier> tiers = Concurrent.newMap();
 
         public int getSpent(int tier) {
-            return this.getTiers()
-                .getOrDefault(tier, Concurrent.newUnmodifiableMap())
-                .getOrDefault(SPENT_KEY, 0);
+            return Optional.ofNullable(this.getTiers().get(tier))
+                .map(Tier::getSpent)
+                .orElse(0);
+        }
+
+        @Getter
+        @NoArgsConstructor(access = AccessLevel.PRIVATE)
+        public static class Tier {
+
+            private int spent;
+
         }
 
     }

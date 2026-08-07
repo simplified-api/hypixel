@@ -196,8 +196,6 @@ public class AccessoryBag {
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Tuning {
 
-        private static final @NotNull String PURCHASED_KEY = "purchase_ts";
-
         @SerializedName("highest_unlocked_slot")
         private int highestUnlockedSlot;
         @SerializedName("refund_1")
@@ -208,21 +206,21 @@ public class AccessoryBag {
         private boolean hasClaimedSecondRefund;
 
         @Capture(filter = "^slot_")
-        private @NotNull ConcurrentMap<Integer, ConcurrentMap<String, Long>> slots = Concurrent.newMap();
+        private @NotNull ConcurrentMap<Integer, Slot> slots = Concurrent.newMap();
 
-        public @NotNull ConcurrentMap<String, Long> getSlot(int slot) {
-            return this.getSlots().getOrDefault(slot, Concurrent.newUnmodifiableMap());
+        public @NotNull Optional<Slot> getSlot(int slot) {
+            return Optional.ofNullable(this.getSlots().get(slot));
         }
 
-        public @NotNull ConcurrentMap<String, Long> getSlotStats(int slot) {
-            return this.getSlot(slot)
-                .stream()
-                .filterKey(key -> !PURCHASED_KEY.equals(key))
-                .collect(Concurrent.toMap());
-        }
+        @Getter
+        @NoArgsConstructor(access = AccessLevel.PRIVATE)
+        public static class Slot {
 
-        public @NotNull Optional<SkyBlockDate.RealTime> getSlotPurchased(int slot) {
-            return Optional.ofNullable(this.getSlot(slot).get(PURCHASED_KEY)).map(SkyBlockDate.RealTime::new);
+            @SerializedName("purchase_ts")
+            private @NotNull Optional<SkyBlockDate.RealTime> purchased = Optional.empty();
+            @Capture
+            private @NotNull ConcurrentMap<String, Integer> stats = Concurrent.newMap();
+
         }
 
     }
