@@ -1,6 +1,7 @@
 package api.simplified.hypixel.response.skyblock;
 
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
+import api.simplified.hypixel.response.skyblock.member.Bestiary;
 import api.simplified.hypixel.response.skyblock.member.GardenCore;
 import api.simplified.hypixel.response.skyblock.member.Loadouts;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
@@ -19,10 +20,12 @@ import api.simplified.hypixel.response.skyblock.member.mining.HeartOfTheMountain
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.hypixel.response.skyblock.member.rift.Rift;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.simplified.gson.GsonSettings;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
@@ -50,6 +54,16 @@ class MemberDtoMappingTest {
     private static JsonObject sparse;
     private static JsonObject populated;
 
+    /**
+     * Snapshot of {@link #populated} taken before any decode runs.
+     * <p>
+     * A {@code @Lenient} decode rewrites the caller's own tree - gson hands a
+     * {@code JsonTreeReader} the live element rather than a copy, so the filter phase's
+     * {@code replaceElement} strips overflow entries out of the fixture itself. Tests that need
+     * the untouched wire shape read it from here and decode from a fresh copy.
+     */
+    private static JsonObject pristine;
+
     @BeforeAll
     static void loadFixture() throws Exception {
         gson = GsonSettings.defaults().create();
@@ -64,7 +78,16 @@ class MemberDtoMappingTest {
 
             sparse = firstMember(root, 0);
             populated = firstMember(root, 1);
+            pristine = populated.deepCopy();
         }
+    }
+
+    private static JsonObject rawPristine(String key) {
+        return pristine.getAsJsonObject(key);
+    }
+
+    private static <T> T decodePristine(String key, Class<T> type) {
+        return gson.fromJson(pristine.get(key).deepCopy(), type);
     }
 
     private static JsonObject firstMember(JsonObject root, int profileIndex) {
@@ -206,7 +229,10 @@ class MemberDtoMappingTest {
     @DisplayName("candy collected decodes one festival per key outside its named fields")
     void mapsCandyFestivals() {
         Statistics statistics = this.decode(populated, "player_stats", Statistics.class);
-        JsonObject raw = populated.getAsJsonObject("player_stats").getAsJsonObject("candy_collected");
+        // read the expectation from the pristine snapshot: a decode can rewrite the caller's tree
+        // in place, and deriving both sides of the comparison from the same live tree would let a
+        // loss cancel itself out instead of failing
+        JsonObject raw = rawPristine("player_stats").getAsJsonObject("candy_collected");
 
         // every raw key other than the three declared fields is a festival
         int expected = raw.size() - 3;
@@ -278,6 +304,127 @@ class MemberDtoMappingTest {
         }
 
         assertThat(anyHeldItemUniqueId, is(true));
+    }
+
+    @Test
+    @DisplayName("a @Lenient decode strips overflow entries out of the caller's own tree")
+    void lenientDecodeRewritesCallerTree() {
+        JsonObject own = rawPristine("loadout").deepCopy();
+
+        assertThat(own.getAsJsonObject("armor").has("equipped_set"), is(true));
+
+        gson.fromJson(own, Loadouts.class);
+
+        // gson hands a JsonTreeReader the live element, so the filter phase's replaceElement
+        // rewrites the caller's object - the overflowed key is gone once the decode returns
+        assertThat(own.getAsJsonObject("armor").has("equipped_set"), is(false));
+        assertThat(own.getAsJsonObject("equipment").has("equipped_set"), is(false));
+    }
+
+    @Test
+    @DisplayName("loadout round-trips both equipped set ids back into their own sub-objects")
+    void roundTripsLoadouts() {
+        JsonObject raw = rawPristine("loadout");
+        Loadouts first = decodePristine("loadout", Loadouts.class);
+
+        int rawArmorEquipped = raw.getAsJsonObject("armor").get("equipped_set").getAsInt();
+        int rawEquipmentEquipped = raw.getAsJsonObject("equipment").get("equipped_set").getAsInt();
+
+        assertThat(first.getEquippedArmorSet().orElseThrow(), is(equalTo(rawArmorEquipped)));
+        assertThat(first.getEquippedEquipmentSet().orElseThrow(), is(equalTo(rawEquipmentEquipped)));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(first)).getAsJsonObject();
+
+        // each claim goes back into its own source's sub-object, keyed as the wire spelled it
+        assertThat(out.getAsJsonObject("armor").get("equipped_set").getAsInt(), is(equalTo(rawArmorEquipped)));
+        assertThat(out.getAsJsonObject("equipment").get("equipped_set").getAsInt(), is(equalTo(rawEquipmentEquipped)));
+        // the third @Lenient field carries no @Extract, and every one of its wire entries is
+        // compatible, so it has no overflow at all and must gain nothing
+        assertThat(out.getAsJsonObject("loadouts").has("equipped_set"), is(false));
+        assertThat(out.getAsJsonObject("loadouts").keySet(),
+            is(equalTo(raw.getAsJsonObject("loadouts").keySet())));
+        assertThat(out.getAsJsonObject("armor").has("1"), is(true));
+
+        // `out` currently also carries root-level equippedArmorSet/equippedEquipmentSet, and
+        // neither field has a @SerializedName, so the reflective binder would set both Optionals
+        // straight from those root keys. Strip them, or the re-decode below proves nothing about
+        // the @Extract claim; once they are gone these removals are a no-op
+        out.remove("equippedArmorSet");
+        out.remove("equippedEquipmentSet");
+
+        Loadouts second = gson.fromJson(out, Loadouts.class);
+
+        assertThat(second.getEquippedArmorSet().orElseThrow(), is(equalTo(rawArmorEquipped)));
+        assertThat(second.getEquippedEquipmentSet().orElseThrow(), is(equalTo(rawEquipmentEquipped)));
+        assertThat(second.getArmorSets(), hasKey(1));
+        assertThat(second.getEquipmentSets(), hasKey(1));
+        assertThat(second.getLoadout(1).orElseThrow().getName(),
+            is(equalTo(first.getLoadout(1).orElseThrow().getName())));
+    }
+
+    @Test
+    @Disabled("""
+        Currently red - "Expected: is <[armor, equipment, loadouts]> but: was \
+        <[armor, equippedArmorSet, equipment, equippedEquipmentSet, loadouts]>". @Extract never \
+        removes its own field's serialized key, so both sites here emit their extracted value \
+        twice on every serialize - once inside armor/equipment and once at the root under the \
+        Java field name, a key the input never carried. Enable once the pinned gson-extras \
+        removes the root key.""")
+    @DisplayName("loadout serialization emits no root-level @Extract keys")
+    void loadoutsSerializeHasNoRootExtractKeys() {
+        Loadouts loadouts = decodePristine("loadout", Loadouts.class);
+        JsonObject out = JsonParser.parseString(gson.toJson(loadouts)).getAsJsonObject();
+
+        assertThat(out.keySet(), is(equalTo(rawPristine("loadout").keySet())));
+        assertThat(out.has("equippedArmorSet"), is(false));
+        assertThat(out.has("equippedEquipmentSet"), is(false));
+    }
+
+    @Test
+    @DisplayName("bestiary extracts the last killed mob and returns it to kills on write")
+    void mapsBestiary() {
+        JsonObject raw = rawPristine("bestiary");
+        Bestiary bestiary = decodePristine("bestiary", Bestiary.class);
+
+        String rawLastKilled = raw.getAsJsonObject("kills").get("last_killed_mob").getAsString();
+
+        // the entry reaches overflow because its VALUE is a String, not because of the key
+        assertThat(bestiary.getLastKilledMob().orElseThrow(), is(equalTo(rawLastKilled)));
+        assertThat(bestiary.getKills(), not(hasKey("last_killed_mob")));
+        assertThat(bestiary.getKills().size(), is(equalTo(raw.getAsJsonObject("kills").size() - 1)));
+        // deaths is a second @Lenient field on the same class whose overflow stays empty
+        assertThat(bestiary.getDeaths().size(), is(equalTo(raw.getAsJsonObject("deaths").size())));
+        assertThat(bestiary.getLastClaimedMilestone(),
+            is(equalTo(raw.getAsJsonObject("milestone").get("last_claimed_milestone").getAsInt())));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(bestiary)).getAsJsonObject();
+
+        assertThat(out.getAsJsonObject("kills").get("last_killed_mob").getAsString(), is(equalTo(rawLastKilled)));
+        assertThat(out.getAsJsonObject("kills").size(), is(equalTo(raw.getAsJsonObject("kills").size())));
+        assertThat(out.getAsJsonObject("deaths").size(), is(equalTo(raw.getAsJsonObject("deaths").size())));
+    }
+
+    @Test
+    @DisplayName("dungeon journal overflows entirely and is restored verbatim on write")
+    void mapsDungeonsUnlockedJournals() {
+        JsonArray raw = rawPristine("dungeons")
+            .getAsJsonObject("dungeon_journal")
+            .getAsJsonArray("unlocked_journals");
+        Dungeons dungeons = decodePristine("dungeons", Dungeons.class);
+
+        // the only collection-shaped @Lenient field in the workspace, so the JsonArray half of
+        // the factory has single-site coverage and this is the site. It also drives the
+        // @SerializedPath branch of locateElement/replaceElement, which it shares with exactly one
+        // other field, Statistics.spawnedSpookyBats. Every wire entry is a String against a
+        // declared ConcurrentList<Integer>, so the field binds empty and the whole list is overflow
+        assertThat(raw.isEmpty(), is(false));
+        assertThat(dungeons.getUnlockedJournals(), is(empty()));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(dungeons)).getAsJsonObject();
+        JsonArray outJournals = out.getAsJsonObject("dungeon_journal").getAsJsonArray("unlocked_journals");
+
+        assertThat(outJournals, is(equalTo(raw)));
+        assertThat(out.has("unlockedJournals"), is(false));
     }
 
     @Test
