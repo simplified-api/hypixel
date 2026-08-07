@@ -4,6 +4,7 @@ import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.Bestiary;
 import api.simplified.hypixel.response.skyblock.member.Currencies;
 import api.simplified.hypixel.response.skyblock.member.GardenCore;
+import api.simplified.hypixel.response.skyblock.member.JacobsContest;
 import api.simplified.hypixel.response.skyblock.member.Loadouts;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.Statistics;
@@ -724,6 +725,88 @@ class MemberDtoMappingTest {
         assertThat(unformatted.getName(), is(equalTo("CraftedFury")));
         assertThat(unformatted.getClassType(), is(equalTo(DungeonClass.Type.UNKNOWN)));
         assertThat(unformatted.getClassLevel(), is(equalTo(0)));
+    }
+
+    @Test
+    @DisplayName("board quest binds every status the wire spells and writes them back unchanged")
+    void mapsBoardQuestStatuses() {
+        assertThat(decodeStatus("COMPLETE"), is(equalTo(BoardQuest.Status.COMPLETE)));
+        assertThat(decodeStatus("ACTIVE"), is(equalTo(BoardQuest.Status.ACTIVE)));
+        // the enum spelled the finished state COMPLETED, which the wire names nowhere, so 790
+        // objectives and every finished board quest bound onto null over a @NotNull default
+        assertThat(decodeStatus("INACTIVE"), is(equalTo(BoardQuest.Status.INACTIVE)));
+
+        JsonObject raw = new JsonObject();
+        raw.addProperty("status", "COMPLETE");
+        raw.addProperty("progress", 3);
+
+        BoardQuest quest = gson.fromJson(raw, BoardQuest.class);
+        JsonObject out = JsonParser.parseString(gson.toJson(quest)).getAsJsonObject();
+
+        assertThat(out.get("status").getAsString(), is(equalTo("COMPLETE")));
+        assertThat(quest.getProgress(), is(equalTo(3)));
+    }
+
+    private static BoardQuest.Status decodeStatus(String status) {
+        JsonObject raw = new JsonObject();
+        raw.addProperty("status", status);
+        return gson.fromJson(raw, BoardQuest.class).getStatus();
+    }
+
+    @Test
+    @DisplayName("an auction binds its starting bid off the key the wire actually sends")
+    void mapsAuctionStartingBid() {
+        JsonObject raw = new JsonObject();
+        raw.addProperty("starting_bid", 4_500_000L);
+        raw.addProperty("highest_bid_amount", 9_000_000L);
+
+        SkyBlockAuction auction = gson.fromJson(raw, SkyBlockAuction.class);
+
+        // the annotation read starting_big, so every auction's starting bid bound to zero
+        assertThat(auction.getStartingBid(), is(equalTo(4_500_000L)));
+        assertThat(auction.getHighestBid(), is(equalTo(9_000_000L)));
+    }
+
+    @Test
+    @DisplayName("the hoppity shop, time tower and hitman expose their bound fields")
+    void mapsHoppitySubObjects() {
+        JsonObject easter = rawPristine("events").getAsJsonObject("easter");
+        JsonObject rawShop = easter.getAsJsonObject("shop");
+        JsonObject rawTower = easter.getAsJsonObject("time_tower");
+        JsonObject rawHitman = easter.getAsJsonObject("rabbit_hitmen");
+        ChocolateFactory factory = gson.fromJson(easter.deepCopy(), ChocolateFactory.class);
+
+        // all three classes carried no @Getter at all, so thirteen bound fields had no reader
+        assertThat(factory.getShop().getYear(), is(equalTo(rawShop.get("year").getAsInt())));
+        assertThat(factory.getShop().getChocolateSpent(), is(equalTo(rawShop.get("chocolate_spent").getAsLong())));
+        assertThat(factory.getShop().getChocolateFortune(),
+            is(equalTo(rawShop.get("cocoa_fortune_upgrades").getAsInt())));
+        assertThat(factory.getShop().getRabbitsPurchased().isEmpty(), is(false));
+        assertThat(factory.getTimeTower().getLevel(), is(equalTo(rawTower.get("level").getAsInt())));
+        assertThat(factory.getTimeTower().getCharges(), is(equalTo(rawTower.get("charges").getAsInt())));
+        assertThat(factory.getHitman().getSlots(),
+            is(equalTo(rawHitman.get("rabbit_hitmen_slots").getAsInt())));
+        assertThat(factory.getHitman().getEggSlotCooldownSum(),
+            is(equalTo(rawHitman.get("egg_slot_cooldown_sum").getAsInt())));
+    }
+
+    @Test
+    @DisplayName("jacobs contest keeps its derived contest fields off the wire")
+    void jacobsContestDerivedFieldsAreNotSerialized() {
+        JacobsContest jacobsContest = decodePristine("jacobs_contest", JacobsContest.class);
+        JsonObject out = JsonParser.parseString(gson.toJson(jacobsContest)).getAsJsonObject();
+        JsonObject outContests = out.getAsJsonObject("contests");
+
+        assertThat(outContests.size(), is(not(equalTo(0))));
+        assertThat(outContests.keySet(),
+            is(equalTo(rawPristine("jacobs_contest").getAsJsonObject("contests").keySet())));
+
+        // both are written by the enclosing hook out of the map KEY, so serializing them emitted two
+        // keys per contest that the upstream shape has never carried
+        for (Map.Entry<String, JsonElement> entry : outContests.entrySet()) {
+            assertThat(entry.getValue().getAsJsonObject().has("skyBlockDate"), is(false));
+            assertThat(entry.getValue().getAsJsonObject().has("collectionName"), is(false));
+        }
     }
 
 }

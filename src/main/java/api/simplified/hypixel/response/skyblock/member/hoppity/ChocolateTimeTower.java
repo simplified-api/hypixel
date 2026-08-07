@@ -1,9 +1,11 @@
 package api.simplified.hypixel.response.skyblock.member.hoppity;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Getter;
 
 import java.time.Instant;
 
+@Getter
 public class ChocolateTimeTower {
 
     private int charges;

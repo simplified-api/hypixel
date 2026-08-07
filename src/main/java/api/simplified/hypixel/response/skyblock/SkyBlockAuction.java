@@ -38,7 +38,7 @@ public class SkyBlockAuction {
     private String extra;
     @SerializedName("tier")
     private @NotNull Rarity rarity = Rarity.COMMON;
-    @SerializedName("starting_big")
+    @SerializedName("starting_bid")
     private long startingBid;
     private boolean claimed;
     @SerializedName("claimed_bidders")

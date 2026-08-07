@@ -105,8 +105,8 @@ public class JacobsContest implements PostInit {
         private int position;
         @SerializedName("claimed_participants")
         private int participants;
-        private SkyBlockDate skyBlockDate;
-        private String collectionName;
+        private transient SkyBlockDate skyBlockDate;
+        private transient String collectionName;
 
         @Getter(AccessLevel.NONE)
         @SerializedName("claimed_medal")

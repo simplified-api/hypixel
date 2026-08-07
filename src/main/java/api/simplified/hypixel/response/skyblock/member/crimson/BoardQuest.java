@@ -20,9 +20,9 @@ public class BoardQuest {
     public enum Status {
 
         UNKNOWN,
+        INACTIVE,
         ACTIVE,
-        @SerializedName(value = "COMPLETED", alternate = "COMPLETE")
-        COMPLETED
+        COMPLETE
 
     }
 
