@@ -34,7 +34,11 @@ public class Bestiary implements PostInit {
     private @NotNull Optional<String> lastKilledMob = Optional.empty();
     @SerializedPath("milestone.last_claimed_milestone")
     private int lastClaimedMilestone;
-    private @NotNull Miscellaneous miscellaneous = new Miscellaneous();
+    @SerializedPath("miscellaneous.max_kills_visible")
+    private boolean maxKillsVisible;
+    @Accessors(fluent = true)
+    @SerializedPath("miscellaneous.milestones_notifications")
+    private boolean hasNotificationsEnabled;
     @Lenient
     private @NotNull ConcurrentMap<String, Integer> kills = Concurrent.newMap();
     @Lenient
@@ -135,17 +139,6 @@ public class Bestiary implements PostInit {
             return SkyBlockData.getRepository(BestiaryFamily.class)
                 .matchFirstOrNull(family -> family.getMobs().contains(String.format("%s_%s", this.getId(), this.getLevel())));
         }
-
-    }
-
-    @Getter
-    private static class Miscellaneous {
-
-        @SerializedName("max_kills_visible")
-        private boolean maxKillsVisible;
-        @Accessors(fluent = true)
-        @SerializedName("milestones_notifications")
-        private boolean hasNotificationsEnabled;
 
     }
 

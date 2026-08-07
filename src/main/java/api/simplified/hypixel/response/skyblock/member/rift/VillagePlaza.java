@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import lombok.AccessLevel;
+import dev.simplified.gson.annotation.SerializedPath;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
@@ -21,18 +21,10 @@ public class VillagePlaza {
     @SerializedName("barter_bank")
     private @NotNull ConcurrentMap<String, Object> barterBank = Concurrent.newMap();
     private @NotNull Cowboy cowboy = new Cowboy();
-    @Getter(AccessLevel.NONE)
-    private @NotNull Lonely lonely = new Lonely();
-    @Getter(AccessLevel.NONE)
-    private @NotNull Seraphine seraphine = new Seraphine();
-
-    public int getSecondsSitting() {
-        return this.lonely.getSecondsSitting();
-    }
-
-    public int getSeraphineStepIndex() {
-        return this.seraphine.getStepIndex();
-    }
+    @SerializedPath("lonely.seconds_sitting")
+    private int secondsSitting;
+    @SerializedPath("seraphine.step_index")
+    private int seraphineStepIndex;
 
     @Getter
     public static class Murder {
@@ -69,22 +61,6 @@ public class VillagePlaza {
         private String rabbitName;
         @SerializedName("exported_carrots")
         private int exportedCarrots;
-
-    }
-
-    @Getter
-    private static class Lonely {
-
-        @SerializedName("seconds_sitting")
-        private int secondsSitting;
-
-    }
-
-    @Getter
-    private static class Seraphine {
-
-        @SerializedName("step_index")
-        private int stepIndex;
 
     }
 

@@ -3,7 +3,7 @@ package api.simplified.hypixel.response.skyblock.member.rift;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
-import lombok.AccessLevel;
+import dev.simplified.gson.annotation.SerializedPath;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,9 +20,8 @@ public class Rift {
     private @NotNull ConcurrentList<String> purchasedBoundaries = Concurrent.newList();
     @SerializedName("enigma")
     private @NotNull EnigmasCrib enigmasCrib = new EnigmasCrib();
-    @Getter(AccessLevel.NONE)
-    @SerializedName("wither_cage")
-    private @NotNull Porhtal porhtal = new Porhtal();
+    @SerializedPath("wither_cage.killed_eyes")
+    private @NotNull ConcurrentList<String> killedEyes = Concurrent.newList();
     @SerializedName("dead_cats")
     private @NotNull DeadCats deadCats = new DeadCats();
 
@@ -40,17 +39,5 @@ public class Rift {
     private @NotNull VillagePlaza villagePlaza = new VillagePlaza();
     @SerializedName("castle")
     private @NotNull StillgoreChateau stillgoreChateau = new StillgoreChateau();
-
-    public @NotNull ConcurrentList<String> getKilledEyes() {
-        return this.porhtal.getKilledEyes();
-    }
-
-    @Getter
-    private static class Porhtal {
-
-        @SerializedName("killed_eyes")
-        private @NotNull ConcurrentList<String> killedEyes = Concurrent.newList();
-
-    }
 
 }

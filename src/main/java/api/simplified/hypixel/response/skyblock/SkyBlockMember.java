@@ -8,7 +8,6 @@ import api.simplified.hypixel.response.skyblock.member.crimson.TrophyFishing;
 import api.simplified.hypixel.response.skyblock.member.dungeon.Dungeons;
 import api.simplified.hypixel.response.skyblock.member.foraging.Foraging;
 import api.simplified.hypixel.response.skyblock.member.foraging.HeartOfTheForest;
-import api.simplified.hypixel.response.skyblock.member.foraging.Temples;
 import api.simplified.hypixel.response.skyblock.member.hoppity.ChocolateFactory;
 import api.simplified.hypixel.response.skyblock.member.mining.ForgeItem;
 import api.simplified.hypixel.response.skyblock.member.mining.GlaciteTunnels;
@@ -26,7 +25,6 @@ import dev.simplified.collection.tuple.pair.Pair;
 import dev.simplified.gson.PostInit;
 import dev.simplified.gson.annotation.SerializedPath;
 import dev.simplified.util.mutable.MutableDouble;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +43,12 @@ public class SkyBlockMember implements PostInit {
     private @NotNull UUID uniqueId;
     @SerializedName("first_join_hub")
     private SkyBlockDate.SkyBlockTime firstJoinHub;
-    @Getter(AccessLevel.NONE)
-    private @NotNull Profile profile = new Profile();
+    @SerializedPath("profile.first_join")
+    private SkyBlockDate.RealTime firstJoin;
+    @SerializedPath("profile.personal_bank_upgrade")
+    private int personalBankUpgrade;
+    @SerializedPath("profile.cookie_buff_active")
+    private boolean boosterCookieActive;
 
     // Progression
     private @NotNull Leveling leveling = new Leveling();
@@ -80,8 +82,8 @@ public class SkyBlockMember implements PostInit {
     private @NotNull Foraging foraging = new Foraging();
     @SerializedName("foraging_core")
     private @NotNull HeartOfTheForest heartOfTheForest = new HeartOfTheForest();
-    @Getter(AccessLevel.NONE)
-    private @NotNull Temples temples = new Temples();
+    @SerializedPath("temples.unlocked_temples")
+    private @NotNull ConcurrentList<String> unlockedTemples = Concurrent.newList();
 
     // Crimson Isle
     @SerializedName("nether_island_player_data")
@@ -102,8 +104,8 @@ public class SkyBlockMember implements PostInit {
     private @NotNull Trapper trapper = new Trapper();
 
     // Events
-    @Getter(AccessLevel.NONE)
-    private @NotNull Events events = new Events();
+    @SerializedPath("events.easter")
+    private @NotNull ChocolateFactory chocolateFactory = new ChocolateFactory();
     @SerializedName("winter_player_data")
     private @NotNull WinterIsland jerrysWorkshop = new WinterIsland();
     private @NotNull Experimentation experimentation = new Experimentation();
@@ -159,26 +161,6 @@ public class SkyBlockMember implements PostInit {
         return this.getPlayerData().getCraftedMinions(itemId);
     }
 
-    public @NotNull ChocolateFactory getChocolateFactory() {
-        return this.events.getChocolateFactory();
-    }
-
-    public @NotNull SkyBlockDate getFirstJoin() {
-        return this.profile.firstJoin;
-    }
-
-    public int getPersonalBankUpgrade() {
-        return this.profile.personalBankUpgrade;
-    }
-
-    public @NotNull ConcurrentList<String> getUnlockedTemples() {
-        return this.temples.getUnlockedTemples();
-    }
-
-    public boolean isBoosterCookieActive() {
-        return this.profile.boosterCookieActive;
-    }
-
     // Weight
 
     public @NotNull Weight getTotalWeight() {
@@ -207,26 +189,6 @@ public class SkyBlockMember implements PostInit {
             });
 
         return Weight.of(totalWeight.get(), totalOverflow.get());
-    }
-
-    @Getter
-    private static class Events {
-
-        @SerializedName("easter")
-        private @NotNull ChocolateFactory chocolateFactory = new ChocolateFactory();
-
-    }
-
-    @Getter
-    private static class Profile {
-
-        @SerializedName("first_join")
-        private SkyBlockDate.RealTime firstJoin;
-        @SerializedName("personal_bank_upgrade")
-        private int personalBankUpgrade;
-        @SerializedName("cookie_buff_active")
-        private boolean boosterCookieActive;
-
     }
 
 }

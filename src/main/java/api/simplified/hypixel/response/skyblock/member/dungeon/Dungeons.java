@@ -41,8 +41,10 @@ public class Dungeons implements PostInit {
     private @NotNull DungeonClass.Type selectedClass = DungeonClass.Type.UNKNOWN;
     @SerializedName("daily_runs")
     private @NotNull DungeonDailies dailies = new DungeonDailies();
-    @Getter(AccessLevel.NONE)
-    private @NotNull DungeonTreasures treasures = new DungeonTreasures();
+    @SerializedPath("treasures.runs")
+    private @NotNull ConcurrentList<DungeonRun> runs = Concurrent.newList();
+    @SerializedPath("treasures.chests")
+    private @NotNull ConcurrentList<DungeonChest> chests = Concurrent.newList();
     private int secrets;
     @SerializedName("last_dungeon_run")
     private @NotNull Optional<String> lastRun = Optional.empty();
@@ -132,22 +134,6 @@ public class Dungeons implements PostInit {
                 dungeonClass.getWeight()
             ))
             .collect(Concurrent.toMap());
-    }
-
-    public @NotNull ConcurrentList<DungeonChest> getChests() {
-        return this.treasures.getChests();
-    }
-
-    public @NotNull ConcurrentList<DungeonRun> getRuns() {
-        return this.treasures.getRuns();
-    }
-
-    @Getter
-    private static class DungeonTreasures {
-
-        private @NotNull ConcurrentList<DungeonRun> runs = Concurrent.newList();
-        private @NotNull ConcurrentList<DungeonChest> chests = Concurrent.newList();
-
     }
 
     @Getter

@@ -58,7 +58,7 @@ is applied.
 
 ## What has to happen first
 
-One of these, in preference order:
+**Decided: option 1.** The other two are recorded because they were weighed, not because they are open.
 
 1. **Stop following inverse-side associations in `RepositoryFactory.resolveModels`.** Registration
    order is a property of the owning side; an `@OneToMany(mappedBy = ...)` field is a mirror and
@@ -147,3 +147,32 @@ value: `bestiary.getFamilies()` is non-empty.
   and lazily they throw at the caller rather than into a catch.
 - `ProfileStats` cannot work at all until this is fixed, which is worth knowing before anyone
   re-opens `loadMiningCore`.
+
+## A second upstream blocker, found in `s20-holder-collapse`
+
+Unrelated to the cycle above, and it does not block that stage - but it changes what any stage can
+assert, so it is recorded here rather than rediscovered.
+
+**No whole `SkyBlockMember` can be serialized.** `SkyBlockDate.RealTime.Adapter.write` and
+`SkyBlockDate.SkyBlockTime.Adapter.write` both declare `@NotNull` on the value and dereference it
+immediately, and `SkyBlockDataGsonContributor`:25-26 registers both without `nullSafe()`. Gson calls a
+registered adapter for a null field unless it is null-safe, so the first null date in the object graph
+throws `NullPointerException`.
+
+There are plenty. The fixture member carries no `first_join_hub`, so `SkyBlockMember.firstJoinHub` is
+null; supply one and `PlayerData.lastDeath` is next; behind that sit `Trapper.lastTask`,
+`RiftAccess.lastFree`, `RiftAccess.chargeTrack`, `ComposterData.lastSave` and roughly a dozen more,
+every one of them null on a default sub-object. Decoding is unaffected - only the write path.
+
+The fix belongs in `skyblock`: wrap both registrations in `nullSafe()`, or give the two adapters a
+null branch the way `NbtContent.Adapter` has. One JitPack cycle in a module this pack does not
+otherwise touch.
+
+What it cost: `20-implementation-plan.md` §6 asks the holder collapse to prove the shared-prefix
+re-nesting by decoding a member, serializing it, and asserting one `profile` object. That cannot be
+run. The prerequisite is instead discharged two ways, both executed and both passing -
+`roundTripsSharedPathPrefix` declares the same three `profile.*` paths on a local class and asserts
+the output carries exactly one `profile` object holding all three, and `mapsRelocatedHolderFields`
+asserts the same reuse on a shipping DTO, where `treasures.runs` and `treasures.chests` come back
+under one `treasures` object. The factory's reuse branch is confirmed; only the whole-member vehicle
+for confirming it was unavailable.

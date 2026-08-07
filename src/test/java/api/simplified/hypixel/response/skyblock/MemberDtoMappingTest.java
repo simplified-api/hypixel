@@ -10,6 +10,7 @@ import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.Statistics;
 import api.simplified.hypixel.response.skyblock.member.Toolkit;
 import api.simplified.hypixel.response.skyblock.member.WinterIsland;
+import api.simplified.hypixel.response.skyblock.member.attribute.AttributeShards;
 import api.simplified.hypixel.response.skyblock.member.crimson.BoardQuest;
 import api.simplified.hypixel.response.skyblock.member.crimson.CrimsonIsle;
 import api.simplified.hypixel.response.skyblock.member.crimson.Dojo;
@@ -32,6 +33,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.gson.GsonSettings;
 import dev.simplified.gson.annotation.Fallback;
+import dev.simplified.gson.annotation.SerializedPath;
 import lib.minecraft.text.ChatFormat;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -58,6 +60,7 @@ import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -807,6 +810,125 @@ class MemberDtoMappingTest {
             assertThat(entry.getValue().getAsJsonObject().has("skyBlockDate"), is(false));
             assertThat(entry.getValue().getAsJsonObject().has("collectionName"), is(false));
         }
+    }
+
+    /**
+     * Executes the re-nesting the collapsed holders depend on.
+     * <p>
+     * Three fields share the {@code profile} prefix, and the write path builds that prefix once per
+     * field - the first creates the object and the other two have to find and reuse it rather than
+     * overwrite it. That branch was read closely and never run, so this is a prerequisite of the
+     * collapse rather than a nicety.
+     */
+    @Test
+    @DisplayName("three fields sharing one path prefix re-nest into a single object on write")
+    void roundTripsSharedPathPrefix() {
+        JsonObject rawProfile = rawPristine("profile");
+        SharedPrefix decoded = gson.fromJson(shallowMember("profile", rawProfile), SharedPrefix.class);
+
+        assertThat(decoded.firstJoin, is(equalTo(rawProfile.get("first_join").getAsLong())));
+        assertThat(decoded.personalBankUpgrade,
+            is(equalTo(rawProfile.get("personal_bank_upgrade").getAsInt())));
+        assertThat(decoded.boosterCookieActive,
+            is(equalTo(rawProfile.get("cookie_buff_active").getAsBoolean())));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(decoded)).getAsJsonObject();
+
+        // the first field creates `profile` and the other two have to find and reuse it. Three
+        // objects here, or two, would mean the last write won and the earlier ones were lost
+        assertThat(out.keySet(), is(equalTo(Set.of("profile"))));
+        assertThat(out.getAsJsonObject("profile"), is(equalTo(rawProfile)));
+    }
+
+    private static JsonObject shallowMember(String key, JsonObject value) {
+        JsonObject raw = new JsonObject();
+        raw.add(key, value.deepCopy());
+        return raw;
+    }
+
+    /**
+     * Three fields sharing one {@code @SerializedPath} prefix, declared here rather than reused from
+     * the member.
+     * <p>
+     * The only three-field prefix that ships is on {@link SkyBlockMember}, and no whole member can be
+     * serialized: {@code PlayerData.lastDeath} and several other date fields are null on a default
+     * sub-object, and the {@code SkyBlockDate} adapters are not null-safe, so the write throws before
+     * it reaches any path. This carries the same three paths against the same factory.
+     */
+    private static class SharedPrefix {
+
+        @SerializedPath("profile.first_join")
+        private long firstJoin;
+        @SerializedPath("profile.personal_bank_upgrade")
+        private int personalBankUpgrade;
+        @SerializedPath("profile.cookie_buff_active")
+        private boolean boosterCookieActive;
+
+    }
+
+    @Test
+    @DisplayName("every relocated holder field still reads what its forwarder returned")
+    void mapsRelocatedHolderFields() {
+        JsonObject rawRift = rawPristine("rift");
+        JsonObject rawPlaza = rawRift.getAsJsonObject("village_plaza");
+        JsonObject rawProfile = rawPristine("profile");
+        SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
+
+        assertThat(member.getFirstJoin().getRealTime(),
+            is(equalTo(rawProfile.get("first_join").getAsLong())));
+        assertThat(member.getPersonalBankUpgrade(),
+            is(equalTo(rawProfile.get("personal_bank_upgrade").getAsInt())));
+        assertThat(member.isBoosterCookieActive(),
+            is(equalTo(rawProfile.get("cookie_buff_active").getAsBoolean())));
+        assertThat(member.getUnlockedTemples(), is(equalTo(List.of("forest", "desert"))));
+        assertThat(member.getChocolateFactory().getChocolateLevel(),
+            is(equalTo(rawPristine("events").getAsJsonObject("easter").get("chocolate_level").getAsInt())));
+
+        Rift rift = decodePristine("rift", Rift.class);
+
+        assertThat(rift.getKilledEyes().size(),
+            is(equalTo(rawRift.getAsJsonObject("wither_cage").getAsJsonArray("killed_eyes").size())));
+        assertThat(rift.getKilledEyes(), hasItem("mountaintop"));
+        assertThat(rift.getVillagePlaza().getSecondsSitting(),
+            is(equalTo(rawPlaza.getAsJsonObject("lonely").get("seconds_sitting").getAsInt())));
+        assertThat(rift.getVillagePlaza().getSeraphineStepIndex(),
+            is(equalTo(rawPlaza.getAsJsonObject("seraphine").get("step_index").getAsInt())));
+        // the sibling that kept its own class must not be disturbed by the two that lost theirs
+        assertThat(rift.getVillagePlaza().getMurder().getStepIndex(),
+            is(equalTo(rawPlaza.getAsJsonObject("murder").get("step_index").getAsInt())));
+
+        Dungeons dungeons = decodePristine("dungeons", Dungeons.class);
+
+        assertThat(dungeons.getRuns(), is(empty()));
+        assertThat(dungeons.getChests(), is(empty()));
+
+        // a second, independently serializable witness for the prefix reuse: the two relocated
+        // treasure fields must come back under one `treasures` object, not two
+        JsonObject out = JsonParser.parseString(gson.toJson(dungeons)).getAsJsonObject();
+
+        assertThat(out.getAsJsonObject("treasures").keySet(), is(equalTo(Set.of("runs", "chests"))));
+        assertThat(out.has("runs"), is(false));
+        assertThat(out.has("chests"), is(false));
+    }
+
+    @Test
+    @DisplayName("the two holders with no forwarder become readable for the first time")
+    void exposesPreviouslyUnreachableHolderFields() {
+        JsonObject rawBestiary = rawPristine("bestiary").getAsJsonObject("miscellaneous");
+        Bestiary bestiary = decodePristine("bestiary", Bestiary.class);
+        AttributeShards shards = decodePristine("shards", AttributeShards.class);
+
+        // both holders kept the class-level @Getter, so Lombok emitted an accessor returning a
+        // private nested type - uncallable from anywhere outside the declaring class
+        assertThat(bestiary.isMaxKillsVisible(),
+            is(equalTo(rawBestiary.get("max_kills_visible").getAsBoolean())));
+        assertThat(bestiary.hasNotificationsEnabled(),
+            is(equalTo(rawBestiary.get("milestones_notifications").getAsBoolean())));
+
+        // shards.traps is {} in the fixture, so the path is skipped and the default stands - the
+        // point is that an eleven-field ActiveTrap list now has a reader at all
+        assertThat(shards.getActiveTraps(), is(empty()));
+        assertThat(shards.getOwnedShards().isEmpty(), is(false));
     }
 
 }
