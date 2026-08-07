@@ -1,5 +1,10 @@
 # s20-dark-feature-fixes - two of the nine are blocked upstream
 
+> **The cycle described below is fixed.** `persistence` `78bfa94` stops reading an inverse
+> association as a dependency; `skyblock` and `hypixel` are re-pinned to it, and `SkyBlockData` now
+> class-initializes. What remains is recorded in "What is left after the fix" at the end of this file.
+> The rest of this document is kept as the diagnosis.
+
 Seven of the nine stage-1 fixes landed. Two did not, and they are the two the pack ranked highest:
 `AccessoryBag`'s read-before-assign and `Bestiary`'s matcher. Both are **written and correct** - they
 are preserved verbatim in `s20-dark-feature-fixes-BLOCKED.patch` - and both are held out of the tree
@@ -147,6 +152,33 @@ value: `bestiary.getFamilies()` is non-empty.
   and lazily they throw at the caller rather than into a catch.
 - `ProfileStats` cannot work at all until this is fixed, which is worth knowing before anyone
   re-opens `loadMiningCore`.
+
+## What is left after the fix
+
+`persistence` `78bfa94` carries two commits. The second filters inverse sides out of the model graph;
+the first is an unrelated pre-existing bug found while getting the suite green - `JpaConfig` built its
+`GsonSettings` from a bare builder, which skips the `ServiceLoader` sweep that `collections` uses to
+ship `ConcurrentTypeAdapterFactory`, so every JSON-backed source parsed a `ConcurrentList` into an
+`ArrayList` and threw `ClassCastException` on its own result.
+
+With both in, `SkyBlockData` initializes and `JpaModelTest` runs all 31 of its methods for the first
+time. **They fail on the next layer down: every repository loads empty.**
+
+`JsonSource` reads `{resourceBase}/{@Table.name}.json` off the classpath and returns an empty list
+when the stream is null - silently, at `JsonSource.java`:47-48. `SkyBlockFactory` sets the base to
+`skyblock`, so `Region` wants `skyblock/regions.json`, `Zone` wants `skyblock/zones.json`, and so on.
+The skyblock module's `src/main/resources` contains **only** `META-INF/services`. There is no model
+JSON anywhere in the repo.
+
+So the SkyBlock model data is not where the code expects it. That is a skyblock-module question -
+whether the data is generated, fetched, or was simply never committed - and it is entirely separate
+from the cycle. It was unreachable until now because the class could not initialize.
+
+**Consequence for the two held fixes: nothing changed.** They still cannot demonstrate a populated
+`families` or a non-zero magical power, because the repositories they read are empty rather than
+absent. But the reason has moved from "throws an `Error` that escapes the decode" to "returns
+nothing", which is a much less hostile failure - and the escape route is gone either way once
+`s20-derivation-retirements` moves both call sites out of the decode path.
 
 ## A second upstream blocker, found in `s20-holder-collapse`
 
