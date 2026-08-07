@@ -20,12 +20,22 @@ Read the pack's baseline table as history, not as current state.
 | Stage | State | Notes |
 | --- | --- | --- |
 | `s20-dark-feature-fixes` | **7 of 9** | `AccessoryBag` and `Bestiary` held - see the blockers file |
-| `s20-free-retirements` | not started | |
+| `s20-free-retirements` | **done** | `Election`, `CrimsonIsle`/`Kuudra`; `implements PostInit` 6 to 4 |
 | `s20-holder-collapse` | **done** | 8 files, 13 fields, `Temples.java` deleted |
 | `s20-objectives-catchall` | **done** | differ 792 to 0, exit 0 |
 
 The differ is a hard gate from here. `python scripts/json_dto_diff.py` exits 0 today; any later stage
 that raises the count above 0 has broken a binding.
+
+`implements PostInit` in `response/` is down to four - `Bestiary`, `Dungeons`, `JacobsContest`,
+`SkyBlockMember` - which is the count the plan predicts after this stage.
+
+The `Election` regression guard is real rather than circular: the four cycle bounds for year 278 were
+read off the hook before it was deleted and are asserted as literals
+(`1684145700000`, `1684480500000`, `1684480500000`, `1684926900000`). Note there are **two** `Election`
+classes in the workspace - `api.simplified.hypixel.response.skyblock.election.Election` is the one
+this stage retired; `dev.sbs.skyblockdata.date.Election` is the separate copy `s20-skyblock-election`
+targets, and it still implements `PostInit`.
 
 ## Settled risks
 

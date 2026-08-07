@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import dev.simplified.gson.PostInit;
 import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.annotation.SerializedPath;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 @Getter
-public class CrimsonIsle implements PostInit {
+public class CrimsonIsle {
 
     private @NotNull Abiphone abiphone = new Abiphone();
     private @NotNull Matriarch matriarch = new Matriarch();
@@ -37,12 +36,12 @@ public class CrimsonIsle implements PostInit {
     // Kuudra
     @SerializedName("kuudra_completed_tiers")
     private @NotNull Kuudra kuudra = new Kuudra();
-    @Getter(AccessLevel.NONE)
+    // the wire puts kuudra_party_finder beside kuudra_completed_tiers, so these are Kuudra's
+    // siblings rather than its children and are named for where they live
     @SerializedPath("kuudra_party_finder.search_settings")
-    private Kuudra.SearchSettings kuudra_search_settings = new Kuudra.SearchSettings();
-    @Getter(AccessLevel.NONE)
+    private @NotNull Kuudra.SearchSettings partyFinderSearch = new Kuudra.SearchSettings();
     @SerializedPath("kuudra_party_finder.group_builder")
-    private Kuudra.GroupBuilder kuudra_group_builder = new Kuudra.GroupBuilder();
+    private @NotNull Kuudra.GroupBuilder partyFinderGroupBuilder = new Kuudra.GroupBuilder();
 
     // Dojo
     @SerializedName("dojo")
@@ -50,12 +49,6 @@ public class CrimsonIsle implements PostInit {
 
     // Quests
     private @NotNull Quests quests = new Quests();
-
-    @Override
-    public void postInit() {
-        this.kuudra.searchSettings = this.kuudra_search_settings;
-        this.kuudra.groupBuilder = this.kuudra_group_builder;
-    }
 
     @Getter
     @NoArgsConstructor(access = AccessLevel.PRIVATE)

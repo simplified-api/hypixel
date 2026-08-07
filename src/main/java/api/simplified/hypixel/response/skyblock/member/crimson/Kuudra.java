@@ -24,8 +24,6 @@ public class Kuudra {
     // would reproduce the very collapse this field exists to expose
     @Extract("completedTiers")
     private @NotNull ConcurrentMap<String, Integer> unknownTiers = Concurrent.newMap();
-    transient @NotNull SearchSettings searchSettings = new SearchSettings();
-    transient @NotNull GroupBuilder groupBuilder = new GroupBuilder();
 
     @Getter
     public enum Tier {

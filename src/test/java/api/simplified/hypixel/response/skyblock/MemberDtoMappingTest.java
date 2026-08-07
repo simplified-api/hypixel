@@ -1046,4 +1046,31 @@ class MemberDtoMappingTest {
         assertThat(new Election(278), is(not(equalTo(new Election(279)))));
     }
 
+    @Test
+    @DisplayName("the party finder binds as kuudra's sibling and round-trips as one")
+    void mapsKuudraPartyFinder() {
+        JsonObject rawFinder = rawPristine("nether_island_player_data")
+            .getAsJsonObject("kuudra_party_finder");
+        CrimsonIsle crimsonIsle = decodePristine("nether_island_player_data", CrimsonIsle.class);
+
+        assertThat(crimsonIsle.getPartyFinderSearch().getTier(), is(equalTo(Kuudra.Tier.INFERNAL)));
+        assertThat(crimsonIsle.getPartyFinderSearch().getSort(),
+            is(equalTo(Kuudra.SearchSettings.Sort.HIGHEST_COMBAT_LEVEL)));
+        assertThat(crimsonIsle.getPartyFinderSearch().getCombatLevel().getMinimum(), is(equalTo(5)));
+        assertThat(crimsonIsle.getPartyFinderGroupBuilder().getNote().orElseThrow(), is(equalTo("spec")));
+        assertThat(crimsonIsle.getPartyFinderGroupBuilder().getRequiredCombatLevel(),
+            is(equalTo(rawFinder.getAsJsonObject("group_builder").get("combat_level_required").getAsInt())));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(crimsonIsle)).getAsJsonObject();
+        JsonObject outFinder = out.getAsJsonObject("kuudra_party_finder");
+
+        // a new capability rather than a preserved one: the values used to be copied onto two
+        // transient fields of Kuudra, which were never serialized at all
+        assertThat(outFinder.keySet(), is(equalTo(rawFinder.keySet())));
+        assertThat(outFinder.getAsJsonObject("group_builder").get("combat_level_required").getAsInt(),
+            is(equalTo(rawFinder.getAsJsonObject("group_builder").get("combat_level_required").getAsInt())));
+        assertThat(out.has("partyFinderSearch"), is(false));
+        assertThat(out.has("partyFinderGroupBuilder"), is(false));
+    }
+
 }
