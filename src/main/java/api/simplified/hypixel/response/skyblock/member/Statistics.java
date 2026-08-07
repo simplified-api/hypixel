@@ -37,9 +37,6 @@ public class Statistics {
 
     private @NotNull ConcurrentMap<String, Integer> kills = Concurrent.newMap();
     private @NotNull ConcurrentMap<String, Integer> deaths = Concurrent.newMap();
-    // the rift node is 29 counters and two objects. Typing it takes the counters and filters the two
-    // into overflow, where they round-trip; the vermin tally is claimed back typed, and shen's
-    // purchases keep an open item vocabulary and stay there
     @Lenient
     @SerializedName("rift")
     private @NotNull ConcurrentMap<String, Integer> riftStats = Concurrent.newMap();

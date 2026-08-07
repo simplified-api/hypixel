@@ -64,8 +64,7 @@ public class DungeonRun {
         }
 
         /**
-         * Matches the chat-formatted display name once, so the three accessors read their groups off a
-         * matcher that has matched rather than off a fresh one.
+         * Matches the chat-formatted display name.
          *
          * @return the matched display name, or empty when it does not carry the expected shape
          */

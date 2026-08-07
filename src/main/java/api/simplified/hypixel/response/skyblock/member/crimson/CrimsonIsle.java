@@ -36,8 +36,6 @@ public class CrimsonIsle {
     // Kuudra
     @SerializedName("kuudra_completed_tiers")
     private @NotNull Kuudra kuudra = new Kuudra();
-    // the wire puts kuudra_party_finder beside kuudra_completed_tiers, so these are Kuudra's
-    // siblings rather than its children and are named for where they live
     @SerializedPath("kuudra_party_finder.search_settings")
     private @NotNull Kuudra.SearchSettings partyFinderSearch = new Kuudra.SearchSettings();
     @SerializedPath("kuudra_party_finder.group_builder")
@@ -57,9 +55,6 @@ public class CrimsonIsle {
         // Quest Board
         @SerializedName("quest_data")
         private @NotNull QuestBoard questBoard = new QuestBoard();
-        // one JSON object carrying two unrelated maps interleaved by value type: an item id to a
-        // count, and a quest id to the item it rewards. @Lenient takes the integer half and
-        // filters the rest into overflow, and the filtered remainder claims it back typed
         @Lenient
         @SerializedName("quest_rewards")
         private @NotNull ConcurrentMap<String, Integer> questRewards = Concurrent.newMap();

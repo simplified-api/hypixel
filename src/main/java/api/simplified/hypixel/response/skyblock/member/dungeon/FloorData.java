@@ -44,9 +44,6 @@ public class FloorData {
     private @NotNull ConcurrentMap<Floor, Double> mostHealing = Concurrent.newMap();
 
     // Class Damage
-    // one key per dungeon class, so the class is the key rather than five fields and a switch over
-    // them. most_healing and most_mobs_killed sit beside these and match neither the filter nor a
-    // class name, so they stay where they are
     @Capture(filter = "^most_damage_")
     private @NotNull ConcurrentMap<DungeonClass.Type, ConcurrentMap<Floor, Double>> mostDamage = Concurrent.newMap();
 

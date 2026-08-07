@@ -21,8 +21,6 @@ public class Kuudra {
     private @NotNull ConcurrentMap<Tier, Integer> highestWave = Concurrent.newMap();
     @Capture
     private @NotNull ConcurrentMap<Tier, Integer> completedTiers = Concurrent.newMap();
-    // the keys no Tier constant matched. String-keyed by definition - an enum-keyed remainder
-    // would reproduce the very collapse this field exists to expose
     @Extract("completedTiers")
     private @NotNull ConcurrentMap<String, Integer> unknownTiers = Concurrent.newMap();
 

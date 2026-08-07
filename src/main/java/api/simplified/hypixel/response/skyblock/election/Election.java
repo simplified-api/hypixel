@@ -47,8 +47,6 @@ public class Election {
 
         Election election = (Election) o;
 
-        // both cycles are pure functions of the year, so they add nothing to identity - and Cycle
-        // declares no equals, so comparing them made two elections of one year unequal
         return this.getYear() == election.getYear();
     }
 

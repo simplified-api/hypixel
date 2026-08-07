@@ -25,11 +25,8 @@ public class Objective {
     private @NotNull Optional<Integer> completions = Optional.empty();
 
     /**
-     * Progress the wire stores beside the shared fields, keyed however the objective spells it - a
-     * collected item id, a talked-to npc, a required material.
-     * <p>
-     * The vocabulary is open and the value types are mixed, so an entry whose value is not a number
-     * reaches overflow rather than binding, and round-trips from there.
+     * Per-objective progress, keyed however the objective spells it - a collected item id, a
+     * talked-to npc, a required material
      */
     @Capture
     private @NotNull ConcurrentMap<String, Integer> requirements = Concurrent.newMap();

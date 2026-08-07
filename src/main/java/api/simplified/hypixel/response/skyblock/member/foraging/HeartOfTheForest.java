@@ -45,9 +45,6 @@ public class HeartOfTheForest {
     public static class BiomeWhispers {
 
         private int total;
-        // suppressed rather than collapsed: this key family is mid-growth - desert gained a total
-        // key between two profiles of one account - so Tier is the cheapest place to absorb the next
-        // one. Keeping it unpublished is what makes the shape reversible in either direction
         @Getter(AccessLevel.NONE)
         @Capture
         private @NotNull ConcurrentMap<Integer, Tier> tiers = Concurrent.newMap();

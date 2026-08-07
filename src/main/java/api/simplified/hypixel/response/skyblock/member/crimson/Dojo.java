@@ -18,7 +18,6 @@ public class Dojo {
     private @NotNull ConcurrentMap<Type, Integer> points = Concurrent.newMap();
     @Capture(filter = "^dojo_time_")
     private @NotNull ConcurrentMap<Type, Integer> times = Concurrent.newMap();
-    // the keys no Type constant matched, under the original unstripped spelling
     @Extract("points")
     private @NotNull ConcurrentMap<String, Integer> unknownPoints = Concurrent.newMap();
     @Extract("times")

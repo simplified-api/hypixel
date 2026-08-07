@@ -38,8 +38,6 @@ public class OwnedPet implements Experience {
     @SerializedName("petSoulbound")
     private boolean soulbound;
     private @NotNull Optional<String> skin = Optional.empty();
-    // per-pet counters under an open key vocabulary, so anything that is not a number round-trips
-    // through overflow rather than forcing the map back to Object
     @Lenient
     private @NotNull ConcurrentMap<String, Long> extra = Concurrent.newMap();
 

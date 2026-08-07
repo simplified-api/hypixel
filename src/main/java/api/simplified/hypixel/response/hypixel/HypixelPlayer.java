@@ -41,8 +41,6 @@ public class HypixelPlayer {
     private String mostRecentGameType;
     private ConcurrentList<String> knownAliases;
     private HypixelSocial socialMedia;
-    // the list interleaves achievement names with entries of other shapes, so typing it takes the
-    // names and leaves the rest in overflow, where they round-trip
     @Lenient
     private ConcurrentList<String> achievementsOneTime = Concurrent.newList();
     private String currentClickEffect;
@@ -117,7 +115,7 @@ public class HypixelPlayer {
     }
 
     /**
-     * The player's SkyBlock profiles, keyed by island id on the wire and returned in wire order
+     * The player's SkyBlock profiles, in wire order
      */
     public @NotNull ConcurrentList<SkyBlockProfile> getSkyBlockProfiles() {
         return Concurrent.newUnmodifiableList(this.skyBlockProfiles.values());
