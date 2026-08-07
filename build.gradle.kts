@@ -38,16 +38,16 @@ dependencies {
     api("com.github.simplified-api:skyblock") { version { strictly("33818f3") } }
 
     // Simplified Libraries (github.com/simplified-dev)
-    api("com.github.simplified-dev:collections") { version { strictly("2f2aa58") } }
-    api("com.github.simplified-dev:utils") { version { strictly("37dc4a8") } }
-    api("com.github.simplified-dev:reflection") { version { strictly("b2cf834") } }
-    api("com.github.simplified-dev:gson-extras") { version { strictly("37a2c2f") } }
+    api("com.github.simplified-dev:collections") { version { strictly("652c22d") } }
+    api("com.github.simplified-dev:utils") { version { strictly("7c2feb7") } }
+    api("com.github.simplified-dev:reflection") { version { strictly("7a28c3a") } }
+    api("com.github.simplified-dev:gson-extras") { version { strictly("2ba8143") } }
     api("com.github.simplified-dev:persistence") { version { strictly("cacdb62") } }
-    api("com.github.simplified-dev:client") { version { strictly("5a5d32e") } }
+    api("com.github.simplified-dev:client") { version { strictly("3d87a03") } }
     api("com.github.simplified-dev:expression") { version { strictly("f8e993c") } }
 
     // Minecraft-Library (github.com/minecraft-library)
-    api("com.github.minecraft-library:text:master-SNAPSHOT")
+    api("com.github.minecraft-library:text") { version { strictly("117775e") } }
     api("com.github.minecraft-library:nbt-factory") { version { strictly("f8b5f52") } }
 
     // Gson - @GsonType-annotated inner classes plus direct Deserializer/TypeAdapter usage
