@@ -24,6 +24,7 @@ Read the pack's baseline table as history, not as current state.
 | `s20-holder-collapse` | **done** | 8 files, 13 fields, `Temples.java` deleted |
 | `s20-objectives-catchall` | **done** | differ 792 to 0, exit 0 |
 | `s20-existing-annotation-sweep` | **done** | 4 commits rather than 8 - commit 8 had already landed |
+| `s20-shape-retirements` | **done** | `JacobsContest`, `Dungeons`; `implements PostInit` 4 to 2 |
 
 The differ is a hard gate from here. `python scripts/json_dto_diff.py` exits 0 today; any later stage
 that raises the count above 0 has broken a binding.
@@ -90,8 +91,15 @@ entries are appended rather than restored to their original index. Whole-array o
 (`dungeons.dungeon_journal.unlocked_journals`) is unaffected because there is nothing to interleave
 with. Pinned by `mapsHypixelPlayerProfiles`.
 
+**`DungeonClass` never had to go through `UnsafeAllocator`.** The plan offered that as the thing to
+assert and the safer form as an alternative; the safer form was taken. Dropping `final` makes
+`@RequiredArgsConstructor` generate a no-arg constructor, which then collides with
+`@NoArgsConstructor` - so the pair is `@AllArgsConstructor` + `@NoArgsConstructor(PRIVATE)`, not
+`@RequiredArgsConstructor` + `@NoArgsConstructor`.
+
 ## Still open
 
 - `CommissionData.totalCompleted` - unchanged, still needs a live `/skyblock/garden` response.
-- `DungeonClass` binding through `UnsafeAllocator` - not exercised yet; gates
-  `s20-shape-retirements`.
+- The `@Capture(descend = true)` route for the master-mode pairing, which would make the case defect
+  structurally unreachable. Deliberately off the critical path - the memoised accessor already
+  retired the implementor, and neither route costs a library cycle.
