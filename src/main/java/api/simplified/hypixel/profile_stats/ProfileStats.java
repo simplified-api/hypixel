@@ -9,6 +9,8 @@ import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.island.Banking;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
+import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
+import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import dev.sbs.skyblockdata.SkyBlockData;
 import dev.sbs.skyblockdata.common.Rarity;
@@ -72,42 +74,31 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                 (double) member.getSkills().getSkill(skillModel.getId()).getLevel()
             ));
 
-        // TODO(profile_stats-restore): Dungeons.getDungeon(type).asEnhanced() + getClass(type).asEnhanced() no longer exist.
-        // Re-wire once the new Dungeons API exposes level lookups, or restore .asEnhanced() helpers on DungeonData/DungeonClass.
-        /*
-        for (FloorData.Type dungeonType : FloorData.Type.values()) {
-            if (dungeonType == FloorData.Type.UNKNOWN) continue;
+        for (DungeonData.Type dungeonType : DungeonData.Type.values()) {
+            if (dungeonType == DungeonData.Type.UNKNOWN) continue;
             this.expressionVariables.put(
                 String.format("DUNGEON_LEVEL_%s", dungeonType.name()),
                 (double) member.getDungeons()
                     .getDungeon(dungeonType)
-                    .asEnhanced()
                     .getLevel()
             );
         }
 
-        for (FloorData.Class.Type classType : FloorData.Class.Type.values()) {
-            if (classType == FloorData.Class.Type.UNKNOWN) continue;
+        for (DungeonClass.Type classType : DungeonClass.Type.values()) {
+            if (classType == DungeonClass.Type.UNKNOWN) continue;
             this.expressionVariables.put(
                 String.format("DUNGEON_CLASS_LEVEL_%s", classType.name()),
                 (double) member.getDungeons()
                     .getClass(classType)
-                    .asEnhanced()
                     .getLevel()
             );
         }
-        */
 
-        // TODO(profile_stats-restore): SkyBlockMember.getCollection(CollectionModel) removed; the new
-        // member.getCollection() is a zero-arg accessor. Re-wire once a per-CollectionModel state
-        // lookup is re-exposed.
-        /*
-        SkyBlockData.getRepository(Collection.class)
-            .stream()
-            .map(member::getCollection)
-            .flatMap(collection -> collection.getCollected().stream())
-            .forEach(collectionItemEntry -> this.expressionVariables.put(String.format("COLLECTION_%s", collectionItemEntry.getKey().getItem().getItemId()), (double) collectionItemEntry.getValue()));
-        */
+        member.getCollection()
+            .forEach((itemId, collected) -> this.expressionVariables.put(
+                String.format("COLLECTION_%s", itemId),
+                (double) collected
+            ));
 
         // --- Load Damage Multiplier ---
         this.damageMultiplier = SkyBlockData.getRepository(Skill.class)
@@ -460,14 +451,9 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
     }
 
     private void loadBestiary(SkyBlockMember member) {
-        // TODO(profile_stats-restore): Bestiary.asEnhanced() no longer exists. Bestiary.getMilestone()
-        // still returns an int directly, so once the EnhancedBestiary surface is re-established
-        // (or we accept the raw value), re-enable this block.
-        /*
         SkyBlockData.getRepository(Stat.class)
             .findFirst(Stat::getId, "HEALTH")
-            .ifPresent(healthStatModel -> this.addBase(this.stats.get(Type.BESTIARY).get(healthStatModel), member.getBestiary().asEnhanced().getMilestone() * 2.0));
-        */
+            .ifPresent(healthStatModel -> this.addBase(this.stats.get(Type.BESTIARY).get(healthStatModel), member.getBestiary().getMilestone() * 2.0));
     }
 
     private void loadBoosterCookie(SkyBlockMember member) {
@@ -492,15 +478,11 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
     }
 
     private void loadDungeons(SkyBlockMember member) {
-        // TODO(profile_stats-restore): DungeonData.asEnhanced() removed during the Hypixel-API extraction.
-        // Re-enable once Dungeons exposes a stable "dungeon level" accessor.
-        /*
-        for (FloorData.Type dungeonType : FloorData.Type.values()) {
-            if (dungeonType == FloorData.Type.UNKNOWN) continue;
+        for (DungeonData.Type dungeonType : DungeonData.Type.values()) {
+            if (dungeonType == DungeonData.Type.UNKNOWN) continue;
 
             int dungeonLevel = member.getDungeons()
                 .getDungeon(dungeonType)
-                .asEnhanced()
                 .getLevel();
 
             if (dungeonLevel > 0) {
@@ -509,7 +491,6 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                     .ifPresent(healthStat -> this.addBase(this.stats.get(Type.DUNGEONS).get(healthStat), dungeonLevel * 2.0));
             }
         }
-        */
     }
 
     private void loadEssencePerks(SkyBlockMember member) {
@@ -596,7 +577,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                         .stream()
                         .filter(skillLevelModel -> skillLevelModel.getLevel() <= skillLevel)
                         .map(Skill.Level::getEffects)
-                        .flatMap(AtomicMap::stream)
+                        .flatMap(ConcurrentMap::stream)
                         .forEach(entry -> SkyBlockData.getRepository(Stat.class)
                             .findFirst(Stat::getId, entry.getKey())
                             .ifPresent(statModel -> this.addBase(this.stats.get(Type.SKILLS).get(statModel), entry.getValue()))
@@ -606,29 +587,26 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
     }
 
     private void loadSlayers(SkyBlockMember member) {
-        // TODO(profile_stats-restore): Slayers.getSlayer(String) removed. Re-enable once
-        // Slayers exposes per-boss lookup (by id or SlayerBoss reference).
-        /*
-        SkyBlockData.getRepository(Slayer.class)
-            .stream()
-            .forEach(slayerModel -> {
-                int slayerLevel = member.getSlayers()
-                    .getSlayer(slayerModel.getId())
-                    .getLevel();
+        member.getSlayers()
+            .getBosses()
+            .forEach(slayerBoss -> SkyBlockData.getRepository(Slayer.class)
+                .findFirst(Slayer::getId, slayerBoss.getId())
+                .ifPresent(slayerModel -> {
+                    int slayerLevel = slayerBoss.getLevel();
 
-                if (slayerLevel > 0) {
-                    slayerModel.getLevels()
-                        .stream()
-                        .filter(slayerLevelModel -> slayerLevelModel.getLevel() <= slayerLevel)
-                        .map(Slayer.Level::getEffects)
-                        .flatMap(map -> map.entrySet().stream())
-                        .forEach(entry -> SkyBlockData.getRepository(Stat.class)
-                            .findFirst(Stat::getId, entry.getKey())
-                            .ifPresent(statModel -> this.addBase(this.stats.get(Type.SKILLS).get(statModel), entry.getValue()))
-                        );
-                }
-            });
-        */
+                    if (slayerLevel > 0) {
+                        slayerModel.getLevels()
+                            .stream()
+                            .filter(slayerLevelModel -> slayerLevelModel.getLevel() <= slayerLevel)
+                            .map(Slayer.Level::getEffects)
+                            .flatMap(ConcurrentMap::stream)
+                            .forEach(entry -> SkyBlockData.getRepository(Stat.class)
+                                .findFirst(Stat::getId, entry.getKey())
+                                .ifPresent(statModel -> this.addBase(this.stats.get(Type.SLAYERS).get(statModel), entry.getValue()))
+                            );
+                    }
+                })
+            );
     }
 
     @Getter

@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock.member.foraging;
 
+import api.simplified.hypixel.response.skyblock.member.Toolkit;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
@@ -19,6 +20,8 @@ public class Foraging {
     private @NotNull ConcurrentMap<String, Integer> personalBests = Concurrent.newMap();
     @SerializedName("fish_family")
     private @NotNull ConcurrentList<String> fishFamily = Concurrent.newList();
+    @SerializedName("hunting_toolkit")
+    private @NotNull Toolkit huntingToolkit = new Toolkit();
 
     // Tree Gifts
     @Lenient

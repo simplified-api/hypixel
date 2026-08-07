@@ -10,12 +10,13 @@ import org.jetbrains.annotations.NotNull;
 public class GardenCore {
 
     private int copper;
-    @SerializedName( "larva_consumed")
+    @SerializedName("larva_consumed")
     private int larvaConsumed;
     @SerializedName("analyzed_greenhouse_crops")
     private @NotNull ConcurrentList<String> analyzedGreenhouseCrops = Concurrent.newList();
     @SerializedName("discovered_greenhouse_crops")
     private @NotNull ConcurrentList<String> discoveredGreenhouseCrops = Concurrent.newList();
-
+    @SerializedName("farming_toolkit")
+    private @NotNull Toolkit farmingToolkit = new Toolkit();
 
 }

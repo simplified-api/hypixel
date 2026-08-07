@@ -20,6 +20,7 @@ public class ChocolateFactory {
     private long totalChocolate;
     @SerializedName("chocolate_since_prestige")
     private long chocolateSincePrestige;
+    @SerializedName("chocolate_level")
     private int chocolateLevel;
     @SerializedName("last_viewed_chocolate_factory")
     private Instant lastViewed;
@@ -29,7 +30,7 @@ public class ChocolateFactory {
     private @NotNull RabbitSort rabbitSort = RabbitSort.A_TO_Z;
     @SerializedName("rabbit_filter")
     private @NotNull RabbitFilter rabbitFilter = RabbitFilter.NONE;
-    @SerializedName("rabbit_hotspit_filer")
+    @SerializedName("rabbit_hotspot_filer")
     private @NotNull String rabbitHotspot = "NONE";
 
     // Rabbits

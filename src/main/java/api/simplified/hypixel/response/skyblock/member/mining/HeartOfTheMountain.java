@@ -38,6 +38,9 @@ public class HeartOfTheMountain {
     private int spentTokens;
     @SerializedName("retroactive_tier2_token")
     private boolean retroactiveTier2Token;
+    @Accessors(fluent = true)
+    @SerializedName("hotm_migrator_tree_reset_send_message")
+    private boolean hasPendingTreeResetMessage;
     @SerializedName("selected_pickaxe_ability")
     private Optional<String> selectedPickaxeAbility = Optional.empty();
     private @NotNull ConcurrentMap<Crystal.Type, Crystal> crystals = Concurrent.newMap();

@@ -44,6 +44,20 @@ public class Statistics {
     @SerializedName("glowing_mushrooms_broken")
     private int glowingMushroomsBroken;
 
+    // Attribute Shards
+    @SerializedName("unique_shards")
+    private int uniqueShards;
+    @SerializedName("shard_combat_hunts")
+    private int combatShardHunts;
+    @SerializedName("shard_fishing_hunts")
+    private int fishingShardHunts;
+    @SerializedName("shard_forest_hunts")
+    private int forestShardHunts;
+    @SerializedName("shard_trap_hunts")
+    private int trapShardHunts;
+    @SerializedName("shard_salt_hunts")
+    private int saltShardHunts;
+
     // Damage
     @SerializedName("highest_damage")
     private double highestDamage;
@@ -141,7 +155,7 @@ public class Statistics {
 
             @SerializedName("highest_rank")
             private @NotNull ConcurrentMap<Type, Integer> highestRank = Concurrent.newMap();
-            @SerializedName("ammount_summoned")
+            @SerializedName("amount_summoned")
             private @NotNull ConcurrentMap<Type, Integer> amountSummoned = Concurrent.newMap();
             @SerializedName("fastest_kill")
             private @NotNull ConcurrentMap<Type, Integer> fastestKill = Concurrent.newMap();
@@ -149,8 +163,8 @@ public class Statistics {
             private @NotNull ConcurrentMap<Type, Double> mostDamage = Concurrent.newMap();
             @SerializedName("summoning_eyes_contributed")
             private @NotNull ConcurrentMap<Type, Integer> summoningEyesContributed = Concurrent.newMap();
-            @SerializedName("ender_crystals_collected")
-            private int enderCrystalsCollected;
+            @SerializedName("ender_crystals_destroyed")
+            private int enderCrystalsDestroyed;
 
             public enum Type {
 
@@ -198,10 +212,13 @@ public class Statistics {
 
         @SerializedName("trophy_fish")
         private int trophyFish;
+        @SerializedName("trophy_frog")
+        private int trophyFrog;
         private int normal;
         private int treasure;
         @SerializedName("large_treasure")
         private int largeTreasure;
+        private int outstanding;
         private int total;
 
     }

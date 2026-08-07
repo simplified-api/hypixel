@@ -7,17 +7,22 @@ import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.ConcurrentSet;
 import dev.simplified.collection.tuple.pair.Pair;
-import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.PostInit;
+import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.annotation.SerializedPath;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Getter
 public class Dungeons implements PostInit {
+
+    private static final @NotNull DungeonClass EMPTY_CLASS = new DungeonClass(0);
+    private static final @NotNull DungeonData EMPTY_DUNGEON = new DungeonData(0, new FloorData(), new FloorData());
 
     @SerializedName("dungeon_types")
     @Getter(AccessLevel.NONE)
@@ -36,6 +41,11 @@ public class Dungeons implements PostInit {
     private @NotNull DungeonDailies dailies = new DungeonDailies();
     @Getter(AccessLevel.NONE)
     private @NotNull DungeonTreasures treasures = new DungeonTreasures();
+    private int secrets;
+    @SerializedName("last_dungeon_run")
+    private @NotNull Optional<String> lastRun = Optional.empty();
+    @SerializedName("dungeon_hub_race_settings")
+    private @NotNull RaceSettings raceSettings = new RaceSettings();
 
     // PostInit
 
@@ -66,21 +76,11 @@ public class Dungeons implements PostInit {
     }
 
     public @NotNull DungeonClass getClass(@NotNull DungeonClass.Type classType) {
-        return this.getClasses()
-            .stream()
-            .filterKey(type -> type == classType)
-            .map(Map.Entry::getValue)
-            .findFirst()
-            .orElseThrow();
+        return this.getClasses().getOrDefault(classType, EMPTY_CLASS);
     }
 
     public @NotNull DungeonData getDungeon(@NotNull DungeonData.Type dungeonType) {
-        return this.getDungeons()
-            .stream()
-            .filterKey(type -> type == dungeonType)
-            .map(Map.Entry::getValue)
-            .findFirst()
-            .orElseThrow();
+        return this.getDungeons().getOrDefault(dungeonType, EMPTY_DUNGEON);
     }
 
     public @NotNull ConcurrentMap<DungeonData, Weight> getWeight() {
@@ -142,6 +142,18 @@ public class Dungeons implements PostInit {
 
         private @NotNull ConcurrentList<DungeonRun> runs = Concurrent.newList();
         private @NotNull ConcurrentList<DungeonChest> chests = Concurrent.newList();
+
+    }
+
+    @Getter
+    public static class RaceSettings {
+
+        @SerializedName("selected_race")
+        private @NotNull Optional<String> selectedRace = Optional.empty();
+        @SerializedName("selected_setting")
+        private @NotNull Optional<String> selectedSetting = Optional.empty();
+        @Accessors(fluent = true)
+        private boolean runback;
 
     }
 

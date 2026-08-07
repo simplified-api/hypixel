@@ -9,6 +9,7 @@ import java.time.Instant;
 @Getter
 public class SlayerQuest {
 
+    @SerializedName("type")
     private @NotNull String id = "UNKNOWN";
     private int tier;
     @SerializedName("start_timestamp")

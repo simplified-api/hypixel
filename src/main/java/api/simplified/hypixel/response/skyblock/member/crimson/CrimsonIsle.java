@@ -29,6 +29,8 @@ public class CrimsonIsle implements PostInit {
     private int mageReputation;
     @SerializedName("barbarians_reputation")
     private int barbarianReputation;
+    @SerializedName("barbarians_reputation_highest")
+    private int highestBarbarianReputation;
 
     // Kuudra
     @SerializedName("kuudra_completed_tiers")

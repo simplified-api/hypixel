@@ -104,6 +104,8 @@ public class SkyBlockMember implements PostInit {
     // Events
     @Getter(AccessLevel.NONE)
     private @NotNull Events events = new Events();
+    @SerializedName("winter_player_data")
+    private @NotNull WinterIsland jerrysWorkshop = new WinterIsland();
     private @NotNull Experimentation experimentation = new Experimentation();
     @SerializedName("fairy_soul")
     private @NotNull FairySouls fairySouls = new FairySouls();
@@ -118,6 +120,10 @@ public class SkyBlockMember implements PostInit {
     private @NotNull ItemSettings itemSettings = new ItemSettings();
     @SerializedName("shards")
     private @NotNull AttributeShards attributes = new AttributeShards();
+    @SerializedPath("attributes.stacks")
+    private @NotNull ConcurrentMap<String, Integer> attributeStacks = Concurrent.newMap();
+    @SerializedName("loadout")
+    private @NotNull Loadouts loadouts = new Loadouts();
 
     // Collection
     private @NotNull ConcurrentMap<String, Long> collection = Concurrent.newMap();

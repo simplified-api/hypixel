@@ -5,6 +5,7 @@ import api.simplified.hypixel.profile_stats.data.AccessoryData;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.skyblockdata.SkyBlockData;
+import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.sbs.skyblockdata.model.Accessory;
 import dev.sbs.skyblockdata.model.Power;
 import dev.sbs.skyblockdata.model.Stat;
@@ -23,6 +24,7 @@ import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 @Getter
 public class AccessoryBag {
@@ -96,11 +98,11 @@ public class AccessoryBag {
 
                     if (accessoryData.getAccessory().getFamily().get().getRank() >= 0) {
                         // Sort By Highest
-                        familyData = familyData.sorted(accessory -> accessory.getFamily()
-                                .map(Accessory.Family::getRank)
-                                .orElse(0)
-                            )
-                            .reversed();
+                        Function<Accessory, Integer> byFamilyRank = accessory -> accessory.getFamily()
+                            .map(Accessory.Family::getRank)
+                            .orElse(0);
+
+                        familyData = familyData.sorted(byFamilyRank).reversed();
 
                         // Ignore Lowest Accessories
                         Accessory topAccessory = familyData.removeFirst();
@@ -194,14 +196,34 @@ public class AccessoryBag {
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Tuning {
 
+        private static final @NotNull String PURCHASED_KEY = "purchase_ts";
+
         @SerializedName("highest_unlocked_slot")
         private int highestUnlockedSlot;
         @SerializedName("refund_1")
         @Accessors(fluent = true)
         private boolean hasClaimedRefund;
+        @SerializedName("refund_2")
+        @Accessors(fluent = true)
+        private boolean hasClaimedSecondRefund;
 
-        @Capture(filter = "^slot_(?=[1-4]$)")
-        private @NotNull ConcurrentMap<String, Integer> slots = Concurrent.newMap();
+        @Capture(filter = "^slot_")
+        private @NotNull ConcurrentMap<Integer, ConcurrentMap<String, Long>> slots = Concurrent.newMap();
+
+        public @NotNull ConcurrentMap<String, Long> getSlot(int slot) {
+            return this.getSlots().getOrDefault(slot, Concurrent.newUnmodifiableMap());
+        }
+
+        public @NotNull ConcurrentMap<String, Long> getSlotStats(int slot) {
+            return this.getSlot(slot)
+                .stream()
+                .filterKey(key -> !PURCHASED_KEY.equals(key))
+                .collect(Concurrent.toMap());
+        }
+
+        public @NotNull Optional<SkyBlockDate.RealTime> getSlotPurchased(int slot) {
+            return Optional.ofNullable(this.getSlot(slot).get(PURCHASED_KEY)).map(SkyBlockDate.RealTime::new);
+        }
 
     }
 

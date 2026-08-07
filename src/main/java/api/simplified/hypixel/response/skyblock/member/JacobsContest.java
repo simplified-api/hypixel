@@ -28,6 +28,9 @@ public class JacobsContest implements PostInit {
     @SerializedPath("perks.farming_level_cap")
     private int farmingLevelCap;
     @Accessors(fluent = true)
+    @SerializedPath("perks.personal_bests")
+    private boolean hasPersonalBestsPerk;
+    @Accessors(fluent = true)
     @SerializedName("talked")
     private boolean hasTalked;
     @Getter(AccessLevel.NONE)

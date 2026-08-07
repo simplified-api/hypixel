@@ -24,6 +24,10 @@ public class SkillTree {
     private @NotNull ConcurrentMap<String, Instant> lastReset = Concurrent.newMap();
     @SerializedName("refund_ability_free")
     private boolean refundAbilityFree;
+    @SerializedName("selected_skill_tree_slot")
+    private @NotNull ConcurrentMap<String, Integer> selectedSlot = Concurrent.newMap();
+    @SerializedName("last_free_trial_day")
+    private int lastFreeTrialDay;
 
     @Getter
     @NoArgsConstructor

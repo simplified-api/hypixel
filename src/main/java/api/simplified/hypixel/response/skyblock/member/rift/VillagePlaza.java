@@ -3,6 +3,7 @@ package api.simplified.hypixel.response.skyblock.member.rift;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -17,6 +18,8 @@ public class VillagePlaza {
     private @NotNull Murder murder = new Murder();
     @SerializedName("barry_center")
     private @NotNull BarryCenter barryCenter = new BarryCenter();
+    @SerializedName("barter_bank")
+    private @NotNull ConcurrentMap<String, Object> barterBank = Concurrent.newMap();
     private @NotNull Cowboy cowboy = new Cowboy();
     @Getter(AccessLevel.NONE)
     private @NotNull Lonely lonely = new Lonely();

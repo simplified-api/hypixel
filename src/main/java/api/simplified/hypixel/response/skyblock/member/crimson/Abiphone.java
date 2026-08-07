@@ -44,6 +44,9 @@ public class Abiphone {
         private boolean questCompleted;
         @SerializedName("dnd_enabled")
         private boolean doNotDisturb;
+        @Accessors(fluent = true)
+        @SerializedName("items_given")
+        private boolean hasGivenItems;
         private @NotNull ConcurrentMap<String, Object> specific = Concurrent.newMap();
 
         // Calls
