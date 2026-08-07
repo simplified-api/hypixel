@@ -38,12 +38,12 @@ dependencies {
     api("com.github.simplified-api:skyblock") { version { strictly("33818f3") } }
 
     // Simplified Libraries (github.com/simplified-dev)
-    api("com.github.simplified-dev:collections") { version { strictly("652c22d") } }
-    api("com.github.simplified-dev:utils") { version { strictly("7c2feb7") } }
-    api("com.github.simplified-dev:reflection") { version { strictly("7a28c3a") } }
-    api("com.github.simplified-dev:gson-extras") { version { strictly("97d29a4") } }
-    api("com.github.simplified-dev:persistence") { version { strictly("78bfa94") } }
-    api("com.github.simplified-dev:client") { version { strictly("3d87a03") } }
+    api("com.github.simplified-dev:collections") { version { strictly("7699a31") } }
+    api("com.github.simplified-dev:utils") { version { strictly("036cc09") } }
+    api("com.github.simplified-dev:reflection") { version { strictly("33b2f05") } }
+    api("com.github.simplified-dev:gson-extras") { version { strictly("6421324") } }
+    api("com.github.simplified-dev:persistence") { version { strictly("d2ee7b4") } }
+    api("com.github.simplified-dev:client") { version { strictly("e9dbd5d") } }
     api("com.github.simplified-dev:expression") { version { strictly("f8e993c") } }
 
     // Minecraft-Library (github.com/minecraft-library)
