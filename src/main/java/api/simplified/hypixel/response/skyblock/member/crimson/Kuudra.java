@@ -3,10 +3,11 @@ package api.simplified.hypixel.response.skyblock.member.crimson;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.collection.tuple.pair.PairOptional;
 import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Extract;
+import dev.simplified.gson.annotation.Split;
 import dev.simplified.util.Range;
-import dev.simplified.util.StringUtil;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -44,12 +45,12 @@ public class Kuudra {
         private @NotNull Optional<String> search = Optional.empty();
         private @NotNull Kuudra.SearchSettings.Sort sort = Kuudra.SearchSettings.Sort.RECENTLY_CREATED;
         @Getter(AccessLevel.NONE)
-        private @NotNull Optional<String> combat_level = Optional.empty();
+        @SerializedName("combat_level")
+        @Split("-")
+        private @NotNull PairOptional<Integer, Integer> combatLevel = PairOptional.empty();
 
         public @NotNull Range<Integer> getCombatLevel() {
-            return this.combat_level.map(range -> StringUtil.split(range, "-"))
-                .map(parts -> Range.between(Integer.parseInt(parts[0]), Integer.parseInt(parts[1])))
-                .orElse(Range.between(0, 60));
+            return this.combatLevel.map(Range::between).orElse(Range.between(0, 60));
         }
 
         public enum Sort {

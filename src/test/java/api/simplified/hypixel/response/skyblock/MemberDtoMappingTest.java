@@ -40,6 +40,7 @@ import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Fallback;
 import dev.simplified.gson.annotation.SerializedPath;
+import dev.simplified.util.Range;
 import lib.minecraft.text.ChatFormat;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -1073,8 +1074,28 @@ class MemberDtoMappingTest {
         assertThat(outFinder.keySet(), is(equalTo(rawFinder.keySet())));
         assertThat(outFinder.getAsJsonObject("group_builder").get("combat_level_required").getAsInt(),
             is(equalTo(rawFinder.getAsJsonObject("group_builder").get("combat_level_required").getAsInt())));
+        // the range is split into a pair on read and re-joined on write, so the wire string returns
+        assertThat(outFinder.getAsJsonObject("search_settings").get("combat_level").getAsString(),
+            is(equalTo(rawFinder.getAsJsonObject("search_settings").get("combat_level").getAsString())));
         assertThat(out.has("partyFinderSearch"), is(false));
         assertThat(out.has("partyFinderGroupBuilder"), is(false));
+    }
+
+    @Test
+    @DisplayName("a combat range the wire never sends falls back instead of throwing")
+    void kuudraCombatRangeFallsBack() {
+        // the hand-rolled parse split on '-' and called Integer.parseInt on both halves, so an
+        // absent or malformed range threw at the caller rather than yielding the default
+        JsonObject empty = new JsonObject();
+
+        assertThat(gson.fromJson(empty, Kuudra.SearchSettings.class).getCombatLevel(),
+            is(equalTo(Range.between(0, 60))));
+
+        JsonObject malformed = new JsonObject();
+        malformed.addProperty("combat_level", "anything");
+
+        assertThat(gson.fromJson(malformed, Kuudra.SearchSettings.class).getCombatLevel(),
+            is(equalTo(Range.between(0, 60))));
     }
 
     @Test
