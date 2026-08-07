@@ -4,13 +4,16 @@ import com.google.gson.annotations.SerializedName;
 import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
+import dev.simplified.util.NumberUtil;
 import lib.minecraft.text.ChatFormat;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Getter
@@ -38,20 +41,37 @@ public class DungeonRun {
         @SerializedName("player_uuid")
         private UUID playerId;
         @SerializedName("display_name")
-        private String displayName;
+        private @NotNull String displayName = "";
         @SerializedName("class_milestone")
         private int milestone;
 
         public int getClassLevel() {
-            return Integer.parseInt(DISPLAY_PATTERN.matcher(this.getDisplayName()).group(4));
+            return this.matchDisplayName()
+                .map(matcher -> NumberUtil.tryParseInt(matcher.group(4)))
+                .orElse(0);
         }
 
         public @NotNull DungeonClass.Type getClassType() {
-            return DungeonClass.Type.of(DISPLAY_PATTERN.matcher(this.getDisplayName()).group(3).toUpperCase());
+            return this.matchDisplayName()
+                .map(matcher -> DungeonClass.Type.of(matcher.group(3)))
+                .orElse(DungeonClass.Type.UNKNOWN);
         }
 
         public @NotNull String getName() {
-            return DISPLAY_PATTERN.matcher(this.getDisplayName()).group(2);
+            return this.matchDisplayName()
+                .map(matcher -> matcher.group(2))
+                .orElse(this.getDisplayName());
+        }
+
+        /**
+         * Matches the chat-formatted display name once, so the three accessors read their groups off a
+         * matcher that has matched rather than off a fresh one.
+         *
+         * @return the matched display name, or empty when it does not carry the expected shape
+         */
+        private @NotNull Optional<Matcher> matchDisplayName() {
+            Matcher matcher = DISPLAY_PATTERN.matcher(this.getDisplayName());
+            return matcher.find() ? Optional.of(matcher) : Optional.empty();
         }
 
     }

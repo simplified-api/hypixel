@@ -15,12 +15,14 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
 @Getter
 public class Dungeons implements PostInit {
 
+    private static final @NotNull String MASTER_PREFIX = "MASTER_";
     private static final @NotNull DungeonClass EMPTY_CLASS = new DungeonClass(0);
     private static final @NotNull DungeonData EMPTY_DUNGEON = new DungeonData(0, new FloorData(), new FloorData());
 
@@ -54,16 +56,19 @@ public class Dungeons implements PostInit {
 
     @Override
     public void postInit() {
-        this.dungeons = this.dungeonMap.stream()
-            .filterKey(key -> !key.startsWith("MASTER_"))
+        // the wire spells these keys lowercase and a master-mode floor is found by prefixing a constant
+        // name, so the key space is normalised once rather than compared in two different cases
+        ConcurrentMap<String, FloorData> floors = this.dungeonMap.stream()
+            .mapKey(key -> key.toUpperCase(Locale.ROOT))
+            .toMap();
+
+        this.dungeons = floors.stream()
+            .filterKey(key -> !key.startsWith(MASTER_PREFIX))
             .mapKey(DungeonData.Type::of)
-            .map((type, value) -> Pair.of(type, new DungeonData(
-                value.getExperience(),
-                value,
-                this.dungeonMap.getOrDefault(
-                    String.format("MASTER_%s", type.name()),
-                    new FloorData()
-                )
+            .map((type, floorData) -> Pair.of(type, new DungeonData(
+                floorData.getExperience(),
+                floorData,
+                floors.getOrDefault(MASTER_PREFIX + type.name(), new FloorData())
             )))
             .collect(Concurrent.toUnmodifiableMap());
 

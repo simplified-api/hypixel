@@ -15,6 +15,7 @@ import api.simplified.hypixel.response.skyblock.member.crimson.Dojo;
 import api.simplified.hypixel.response.skyblock.member.crimson.Kuudra;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
+import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonRun;
 import api.simplified.hypixel.response.skyblock.member.dungeon.Dungeons;
 import api.simplified.hypixel.response.skyblock.member.foraging.Foraging;
 import api.simplified.hypixel.response.skyblock.member.foraging.HeartOfTheForest;
@@ -30,6 +31,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.gson.GsonSettings;
 import dev.simplified.gson.annotation.Fallback;
+import lib.minecraft.text.ChatFormat;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -651,6 +653,77 @@ class MemberDtoMappingTest {
 
         assertThat(decoded.isEmpty(), is(false));
         assertThat(decoded, hasKey("magic_find"));
+    }
+
+    @Test
+    @DisplayName("master mode pairs onto its normal floor instead of becoming a second dungeon")
+    void mapsDungeonMasterMode() {
+        JsonObject rawTypes = rawPristine("dungeons").getAsJsonObject("dungeon_types");
+        Dungeons dungeons = decodePristine("dungeons", Dungeons.class);
+
+        // the wire spells both halves lowercase, so a case-sensitive prefix filter let master_catacombs
+        // through as its own dungeon under Type.UNKNOWN and left the real master floor unpaired
+        assertThat(dungeons.getDungeons(), hasKey(DungeonData.Type.CATACOMBS));
+        assertThat(dungeons.getDungeons(), not(hasKey(DungeonData.Type.UNKNOWN)));
+        assertThat(dungeons.getDungeons().size(), is(equalTo(1)));
+
+        DungeonData catacombs = dungeons.getDungeon(DungeonData.Type.CATACOMBS);
+
+        assertThat(catacombs.getExperience(),
+            is(equalTo(rawTypes.getAsJsonObject("catacombs").get("experience").getAsDouble())));
+        assertThat(catacombs.getFloorData(false).getHighestCompletedTier(),
+            is(equalTo(rawTypes.getAsJsonObject("catacombs").get("highest_tier_completed").getAsInt())));
+        assertThat(catacombs.getFloorData(true).getHighestCompletedTier(),
+            is(equalTo(rawTypes.getAsJsonObject("master_catacombs").get("highest_tier_completed").getAsInt())));
+
+        // the two floors are separable rather than merely both present: master mode carried an empty
+        // FloorData for every profile ever decoded, and the fixture gives it no times_played at all
+        assertThat(catacombs.getFloorData(true).getCompletions().isEmpty(), is(false));
+        assertThat(catacombs.getFloorData(true).getTimesPlayed(), is(anEmptyMap()));
+        assertThat(catacombs.getFloorData(false).getTimesPlayed().isEmpty(), is(false));
+    }
+
+    @Test
+    @DisplayName("a dungeon run participant reads its class and name off one matched display name")
+    void mapsDungeonRunParticipant() {
+        JsonObject participant = new JsonObject();
+        participant.addProperty("display_name", String.format(
+            "%1$sbCraftedFury%1$sf: %1$scBerserk%1$sf (%1$sd50%1$sf)",
+            ChatFormat.SECTION_SYMBOL
+        ));
+        participant.addProperty("class_milestone", 3);
+
+        JsonArray participants = new JsonArray();
+        participants.add(participant);
+
+        JsonObject raw = new JsonObject();
+        raw.addProperty("dungeon_type", "catacombs");
+        raw.addProperty("dungeon_tier", 7);
+        raw.add("participants", participants);
+
+        DungeonRun run = gson.fromJson(raw, DungeonRun.class);
+        DungeonRun.Participant first = run.getParticipants().getFirst();
+
+        // all three accessors read a group off a matcher nothing had matched, so every one of them
+        // threw IllegalStateException and any path through a run participant was dead
+        assertThat(run.getDungeonType(), is(equalTo(DungeonData.Type.CATACOMBS)));
+        assertThat(first.getName(), is(equalTo("CraftedFury")));
+        assertThat(first.getClassType(), is(equalTo(DungeonClass.Type.BERSERK)));
+        assertThat(first.getClassLevel(), is(equalTo(50)));
+        assertThat(first.getMilestone(), is(equalTo(3)));
+    }
+
+    @Test
+    @DisplayName("a display name that carries no class falls back rather than throwing")
+    void mapsDungeonRunParticipantWithoutFormatting() {
+        JsonObject participant = new JsonObject();
+        participant.addProperty("display_name", "CraftedFury");
+
+        DungeonRun.Participant unformatted = gson.fromJson(participant, DungeonRun.Participant.class);
+
+        assertThat(unformatted.getName(), is(equalTo("CraftedFury")));
+        assertThat(unformatted.getClassType(), is(equalTo(DungeonClass.Type.UNKNOWN)));
+        assertThat(unformatted.getClassLevel(), is(equalTo(0)));
     }
 
 }
