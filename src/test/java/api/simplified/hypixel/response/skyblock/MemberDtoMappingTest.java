@@ -1245,4 +1245,43 @@ class MemberDtoMappingTest {
         assertThat(outAchievements.get(outAchievements.size() - 1), is(equalTo(achievements.get(1))));
     }
 
+    @Test
+    @DisplayName("jacobs contests collapse onto their key and parse a colon-bearing collection id")
+    void mapsJacobsContests() {
+        JsonObject rawContests = rawPristine("jacobs_contest").getAsJsonObject("contests");
+        JacobsContest jacobsContest = decodePristine("jacobs_contest", JacobsContest.class);
+
+        assertThat(jacobsContest.getContests().size(), is(equalTo(rawContests.size())));
+        assertThat(jacobsContest.getContests().size(), is(equalTo(810)));
+
+        JacobsContest.Contest pumpkin = contestById(jacobsContest, "99:6_27:PUMPKIN");
+
+        assertThat(pumpkin.getCollectionName(), is(equalTo("PUMPKIN")));
+        assertThat(pumpkin.getSkyBlockDate().getYear(), is(equalTo(99)));
+        assertThat(pumpkin.getCollected(),
+            is(equalTo(rawContests.getAsJsonObject("99:6_27:PUMPKIN").get("collected").getAsInt())));
+
+        // the id splits into four parts, not three - truncating at three gives INK_SACK and passes
+        // every assertion written against the other 758 keys
+        JacobsContest.Contest brownDye = contestById(jacobsContest, "229:5_31:INK_SACK:3");
+
+        assertThat(brownDye.getCollectionName(), is(equalTo("INK_SACK:3")));
+        assertThat(brownDye.getSkyBlockDate().getYear(), is(equalTo(229)));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(jacobsContest)).getAsJsonObject();
+        JsonObject outContests = out.getAsJsonObject("contests");
+
+        assertThat(outContests.keySet(), is(equalTo(rawContests.keySet())));
+        assertThat(outContests.getAsJsonObject("229:5_31:INK_SACK:3"),
+            is(equalTo(rawContests.getAsJsonObject("229:5_31:INK_SACK:3"))));
+    }
+
+    private static JacobsContest.Contest contestById(JacobsContest jacobsContest, String id) {
+        return jacobsContest.getContests()
+            .stream()
+            .filter(contest -> contest.getId().equals(id))
+            .findFirst()
+            .orElseThrow();
+    }
+
 }

@@ -5,7 +5,8 @@ import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import dev.simplified.gson.PostInit;
+import dev.simplified.gson.annotation.Collapse;
+import dev.simplified.gson.annotation.Key;
 import dev.simplified.gson.annotation.SerializedPath;
 import dev.simplified.util.NumberUtil;
 import dev.simplified.util.StringUtil;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 @Getter
-public class JacobsContest implements PostInit {
+public class JacobsContest {
 
     @SerializedName("medals_inv")
     private @NotNull ConcurrentMap<Medal, Integer> medals = Concurrent.newMap();
@@ -33,34 +34,14 @@ public class JacobsContest implements PostInit {
     @Accessors(fluent = true)
     @SerializedName("talked")
     private boolean hasTalked;
-    @Getter(AccessLevel.NONE)
+    @Collapse
     @SerializedName("contests")
-    private @NotNull ConcurrentMap<String, Contest> contestMap = Concurrent.newMap();
-    private transient @NotNull ConcurrentList<Contest> contests = Concurrent.newList();
+    private @NotNull ConcurrentList<Contest> contests = Concurrent.newList();
     @SerializedName("unique_brackets")
     private @NotNull ConcurrentMap<Medal, ConcurrentList<String>> uniqueBrackets = Concurrent.newMap();
     private boolean migration;
     @SerializedName("personal_bests")
     private @NotNull ConcurrentMap<String, Integer> personalBests = Concurrent.newMap();
-
-    @Override
-    public void postInit() {
-        this.contests = this.contestMap.stream()
-            .map(entry -> {
-                Contest contest = entry.getValue();
-
-                String[] dataString = entry.getKey().split(":");
-                String[] calendarString = dataString[1].split("_");
-                int year = NumberUtil.toInt(dataString[0]);
-                int month = NumberUtil.toInt(calendarString[0]);
-                int day = NumberUtil.toInt(calendarString[1]);
-
-                contest.collectionName = StringUtil.join(dataString, ":", 2, dataString.length);
-                contest.skyBlockDate = new SkyBlockDate(year, month, day);
-                return contest;
-            })
-            .collect(Concurrent.toUnmodifiableList());
-    }
 
     @Getter
     @RequiredArgsConstructor
@@ -105,12 +86,35 @@ public class JacobsContest implements PostInit {
         private int position;
         @SerializedName("claimed_participants")
         private int participants;
-        private transient SkyBlockDate skyBlockDate;
-        private transient String collectionName;
+        @Key
+        private transient @NotNull String id = "";
 
         @Getter(AccessLevel.NONE)
         @SerializedName("claimed_medal")
         private @NotNull Optional<Medal> claimedMedal = Optional.empty();
+
+        /**
+         * Collection the contest was farmed for, which may itself carry colons - the brown-dye
+         * contests are spelled {@code INK_SACK:3}
+         */
+        public @NotNull String getCollectionName() {
+            String[] parts = this.getId().split(":");
+            return StringUtil.join(parts, ":", 2, parts.length);
+        }
+
+        /**
+         * SkyBlock date the contest ran on
+         */
+        public @NotNull SkyBlockDate getSkyBlockDate() {
+            String[] parts = this.getId().split(":");
+            String[] calendar = parts[1].split("_");
+
+            return new SkyBlockDate(
+                NumberUtil.toInt(parts[0]),
+                NumberUtil.toInt(calendar[0]),
+                NumberUtil.toInt(calendar[1])
+            );
+        }
 
         public @NotNull Medal getMedal() {
             return Medal.fromContest(this);
