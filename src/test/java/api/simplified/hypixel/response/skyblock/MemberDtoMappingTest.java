@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock;
 
+import api.simplified.hypixel.response.skyblock.election.Election;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.Bestiary;
 import api.simplified.hypixel.response.skyblock.member.Currencies;
@@ -1012,6 +1013,37 @@ class MemberDtoMappingTest {
         @Extract("objectives.tutorial")
         private ConcurrentList<String> tutorialObjectives = Concurrent.newList();
 
+    }
+
+    @Test
+    @DisplayName("election cycles compute the same bounds the hook used to store")
+    void computesElectionCycles() {
+        Election election = new Election(278);
+
+        // captured off the hook before it was removed, so these are the pre-change values rather
+        // than a restatement of the expressions that now produce them
+        assertThat(election.getVoting().getStart().getRealTime(), is(equalTo(1684145700000L)));
+        assertThat(election.getVoting().getEnd().getRealTime(), is(equalTo(1684480500000L)));
+        assertThat(election.getTerm().getStart().getRealTime(), is(equalTo(1684480500000L)));
+        assertThat(election.getTerm().getEnd().getRealTime(), is(equalTo(1684926900000L)));
+
+        // a term begins the moment voting closes
+        assertThat(election.getTerm().getStart().getRealTime(),
+            is(equalTo(election.getVoting().getEnd().getRealTime())));
+
+        // the no-arg constructor no longer leaves a half-built object: gson binds year, and both
+        // cycles follow from it whenever they are asked for
+        assertThat(new Election().getVoting().getStart().getRealTime(),
+            is(not(equalTo(election.getVoting().getStart().getRealTime()))));
+    }
+
+    @Test
+    @DisplayName("two elections of one year are equal and hash alike")
+    void electionIdentityIsItsYear() {
+        // Cycle declares no equals, so folding the derived cycles into identity made this false
+        assertThat(new Election(278), is(equalTo(new Election(278))));
+        assertThat(new Election(278).hashCode(), is(equalTo(new Election(278).hashCode())));
+        assertThat(new Election(278), is(not(equalTo(new Election(279)))));
     }
 
 }
