@@ -70,6 +70,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 /**
@@ -230,7 +231,10 @@ class MemberDtoMappingTest {
 
         assertThat(forest.getBiomeWhispers(), hasKey("forest"));
         assertThat(forest.getBiomeWhispers(), hasKey("desert"));
-        assertThat(forest.getBiomeWhispers().get("forest").getTiers(), hasKey(1));
+        // getTiers() is suppressed, so the tier map is reachable only through getSpent - which is
+        // what makes the internal shape free to change without a caller seeing it
+        assertThat(forest.getBiomeWhispers().get("forest").getSpent(1), is(not(equalTo(0))));
+        assertThat(forest.getBiomeWhispers().get("forest").getSpent(999), is(equalTo(0)));
         assertThat(forest.getBiomeWhispers().get("forest").getSpent(1),
             is(equalTo(rawForest.getAsJsonObject("1").get("spent").getAsInt())));
         assertThat(forest.getBiomeWhispers().get("forest").getTotal(),
@@ -1071,6 +1075,60 @@ class MemberDtoMappingTest {
             is(equalTo(rawFinder.getAsJsonObject("group_builder").get("combat_level_required").getAsInt())));
         assertThat(out.has("partyFinderSearch"), is(false));
         assertThat(out.has("partyFinderGroupBuilder"), is(false));
+    }
+
+    @Test
+    @DisplayName("rift statistics type as counters and give the vermin tally its own class")
+    void mapsRiftStatistics() {
+        JsonObject rawRift = rawPristine("player_stats").getAsJsonObject("rift");
+        Statistics statistics = decodePristine("player_stats", Statistics.class);
+
+        long counters = rawRift.entrySet().stream()
+            .filter(entry -> entry.getValue().isJsonPrimitive())
+            .count();
+
+        // the node was one Object map; the counters are now typed and the two objects are not
+        assertThat(counters, is(equalTo(29L)));
+        assertThat((long) statistics.getRiftStats().size(), is(equalTo(counters)));
+        assertThat(statistics.getRiftStats().get("visits"),
+            is(equalTo(rawRift.get("visits").getAsInt())));
+        assertThat(statistics.getRiftStats(), not(hasKey("west_vermin_vacuumed")));
+
+        JsonObject rawVermin = rawRift.getAsJsonObject("west_vermin_vacuumed");
+
+        assertThat(statistics.getVerminVacuumed().getTotal(),
+            is(equalTo(rawVermin.get("total").getAsInt())));
+        assertThat(statistics.getVerminVacuumed().getSilverfish(),
+            is(equalTo(rawVermin.get("silverfish").getAsInt())));
+        assertThat(statistics.getVerminVacuumed().getMosquito(),
+            is(equalTo(rawVermin.get("mosquito").getAsInt())));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(statistics)).getAsJsonObject();
+        JsonObject outRift = out.getAsJsonObject("rift");
+
+        // the claimed object goes back inside rift, and the one left in overflow comes with it
+        assertThat(outRift.keySet(), is(equalTo(rawRift.keySet())));
+        assertThat(outRift.getAsJsonObject("west_vermin_vacuumed"), is(equalTo(rawVermin)));
+        assertThat(outRift.getAsJsonObject("shen_item_bought"),
+            is(equalTo(rawRift.getAsJsonObject("shen_item_bought"))));
+        assertThat(out.has("verminVacuumed"), is(false));
+    }
+
+    @Test
+    @DisplayName("pet extra counters type as numbers instead of Object")
+    void mapsPetExtra() {
+        boolean anyExtra = false;
+
+        for (JsonElement element : pristine.getAsJsonObject("pets_data").getAsJsonArray("pets")) {
+            OwnedPet pet = gson.fromJson(element.deepCopy(), OwnedPet.class);
+
+            for (Map.Entry<String, Long> entry : pet.getExtra().entrySet()) {
+                anyExtra = true;
+                assertThat(entry.getValue(), is(notNullValue()));
+            }
+        }
+
+        assertThat(anyExtra, is(true));
     }
 
 }

@@ -5,6 +5,7 @@ import dev.sbs.skyblockdata.common.Rarity;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Capture;
+import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.annotation.SerializedPath;
 import lombok.AccessLevel;
@@ -36,8 +37,14 @@ public class Statistics {
 
     private @NotNull ConcurrentMap<String, Integer> kills = Concurrent.newMap();
     private @NotNull ConcurrentMap<String, Integer> deaths = Concurrent.newMap();
+    // the rift node is 29 counters and two objects. Typing it takes the counters and filters the two
+    // into overflow, where they round-trip; the vermin tally is claimed back typed, and shen's
+    // purchases keep an open item vocabulary and stay there
+    @Lenient
     @SerializedName("rift")
-    private @NotNull ConcurrentMap<String, Object> riftStats = Concurrent.newMap();
+    private @NotNull ConcurrentMap<String, Integer> riftStats = Concurrent.newMap();
+    @Extract("riftStats.west_vermin_vacuumed")
+    private @NotNull VerminVacuumed verminVacuumed = new VerminVacuumed();
     @Lenient
     @SerializedPath("spooky.bats_spawned")
     private @NotNull ConcurrentMap<Integer, Integer> spawnedSpookyBats = Concurrent.newMap();
@@ -276,6 +283,17 @@ public class Statistics {
             private int greenCandy;
 
         }
+
+    }
+
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class VerminVacuumed {
+
+        private int total;
+        private int silverfish;
+        private int spider;
+        private int mosquito;
 
     }
 

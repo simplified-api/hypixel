@@ -9,6 +9,7 @@ import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
+import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.util.StringUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,10 @@ public class OwnedPet implements Experience {
     @SerializedName("petSoulbound")
     private boolean soulbound;
     private @NotNull Optional<String> skin = Optional.empty();
-    private @NotNull ConcurrentMap<String, Object> extra = Concurrent.newMap();
+    // per-pet counters under an open key vocabulary, so anything that is not a number round-trips
+    // through overflow rather than forcing the map back to Object
+    @Lenient
+    private @NotNull ConcurrentMap<String, Long> extra = Concurrent.newMap();
 
     @Override
     public @NotNull ConcurrentList<Integer> getExperienceTiers() {
