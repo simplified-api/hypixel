@@ -2,6 +2,7 @@ package api.simplified.hypixel.response.skyblock;
 
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.Bestiary;
+import api.simplified.hypixel.response.skyblock.member.Currencies;
 import api.simplified.hypixel.response.skyblock.member.GardenCore;
 import api.simplified.hypixel.response.skyblock.member.Loadouts;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
@@ -23,9 +24,12 @@ import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.hypixel.response.skyblock.member.rift.Rift;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.annotations.SerializedName;
 import dev.simplified.gson.GsonSettings;
+import dev.simplified.gson.annotation.Fallback;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -33,16 +37,24 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -506,6 +518,129 @@ class MemberDtoMappingTest {
         assertThat(crimsonIsle.getDojo().getPoints(), hasKey(Dojo.Type.FORCE));
         assertThat(crimsonIsle.getDojo().getUnknownPoints(), is(anEmptyMap()));
         assertThat(crimsonIsle.getDojo().getUnknownTimes(), is(anEmptyMap()));
+    }
+
+    @Test
+    @DisplayName("currencies essence binds through the collapsed wrapper shape")
+    void mapsCurrenciesEssence() {
+        JsonObject rawEssence = rawPristine("currencies").getAsJsonObject("essence");
+        Currencies currencies = decodePristine("currencies", Currencies.class);
+
+        assertThat(rawEssence.size(), is(not(equalTo(0))));
+        assertThat(currencies.getEssence().size(), is(equalTo(rawEssence.size())));
+        assertThat(currencies.getEssence().get("WITHER"),
+            is(equalTo(rawEssence.getAsJsonObject("WITHER").get("current").getAsInt())));
+    }
+
+    @Test
+    @DisplayName("currencies essence re-wraps on write, dropping any wrapper sibling")
+    void currenciesEssenceRoundTripDropsSiblings() {
+        JsonObject own = rawPristine("currencies").deepCopy();
+        // give one entry a sibling the collapsed type has no room for
+        own.getAsJsonObject("essence").getAsJsonObject("WITHER").addProperty("total", 3000);
+
+        Currencies currencies = gson.fromJson(own, Currencies.class);
+
+        assertThat(currencies.getEssence().get("WITHER"), is(equalTo(1955)));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(currencies)).getAsJsonObject();
+        JsonObject outWither = out.getAsJsonObject("essence").getAsJsonObject("WITHER");
+
+        // pins the declared loss rather than asserting a byte-equality that does not hold: the
+        // collapse is a projection, so the sibling is gone
+        assertThat(outWither.get("current").getAsInt(), is(equalTo(1955)));
+        assertThat(outWither.has("total"), is(false));
+    }
+
+    /**
+     * Nothing carries {@code @Fallback} yet, and this is the test that says why.
+     * <p>
+     * The vocabulary it checks is the whole member subtree, not just the keys the enum in question
+     * binds, so it is deliberately stricter than the rule it enforces - a constant named
+     * {@code UNKNOWN} is rejected because some unrelated subtree carries a {@code unknown} key. That
+     * conservatism is the point: a wrong mark is silent data corruption with no compile error and no
+     * other test failure, while a wrong refusal costs a {@code null} that was already there. Every
+     * sentinel-shaped constant in this module is either wire-named or shares a name with something
+     * in that vocabulary, so adopting the marker means adding a new constant first.
+     */
+    @Test
+    @DisplayName("no @Fallback constant is reachable from the wire")
+    void noMarkedConstantIsWireVisible() throws Exception {
+        List<Class<?>> enums = responseEnums();
+
+        // guard the guard - a scan that silently found nothing would pass vacuously forever
+        assertThat(enums.size(), is(greaterThan(20)));
+
+        Set<String> vocabulary = fixtureVocabulary();
+
+        for (Class<?> type : enums) {
+            for (Object constant : type.getEnumConstants()) {
+                Enum<?> value = (Enum<?>) constant;
+                Field field = type.getField(value.name());
+
+                if (!field.isAnnotationPresent(Fallback.class))
+                    continue;
+
+                // the rule, executable. A marked constant the wire can name means an unrecognised
+                // value and a real one collapse onto it - and in a map key position the unknown
+                // entry silently overwrites a correct one, which is worse than the null it replaces
+                String where = type.getSimpleName() + "." + value.name();
+                SerializedName serialized = field.getAnnotation(SerializedName.class);
+
+                assertThat(where + " is marked @Fallback but carries @SerializedName",
+                    serialized, is(nullValue()));
+                assertThat(where + " is marked @Fallback but the fixture names it",
+                    vocabulary.contains(value.name().toLowerCase(Locale.ROOT)), is(false));
+            }
+        }
+    }
+
+    /**
+     * Every enum compiled under the response package, loaded from the build output directory.
+     */
+    private static List<Class<?>> responseEnums() throws Exception {
+        Path root = Path.of(Currencies.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        Path pkg = root.resolve("api/simplified/hypixel/response");
+        List<Class<?>> found = new ArrayList<>();
+
+        try (Stream<Path> paths = Files.walk(pkg)) {
+            for (Path path : paths.filter(p -> p.toString().endsWith(".class")).toList()) {
+                String name = root.relativize(path).toString()
+                    .replace(java.io.File.separatorChar, '.')
+                    .replaceAll("\\.class$", "");
+
+                Class<?> type = Class.forName(name, false, MemberDtoMappingTest.class.getClassLoader());
+
+                if (type.isEnum())
+                    found.add(type);
+            }
+        }
+
+        return found;
+    }
+
+    /**
+     * Every key and every string value the fixture carries, lowercased - the vocabulary a marked
+     * constant must not collide with.
+     */
+    private static Set<String> fixtureVocabulary() {
+        Set<String> words = new HashSet<>();
+        collectVocabulary(pristine, words);
+        collectVocabulary(sparse, words);
+        return words;
+    }
+
+    private static void collectVocabulary(JsonElement element, Set<String> words) {
+        if (element.isJsonObject()) {
+            for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+                words.add(entry.getKey().toLowerCase(Locale.ROOT));
+                collectVocabulary(entry.getValue(), words);
+            }
+        } else if (element.isJsonArray()) {
+            for (JsonElement child : element.getAsJsonArray())
+                collectVocabulary(child, words);
+        } else if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString())
+            words.add(element.getAsString().toLowerCase(Locale.ROOT));
     }
 
     @Test

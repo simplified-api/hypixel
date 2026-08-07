@@ -3,7 +3,7 @@ package api.simplified.hypixel.response.skyblock.member;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
-import lombok.AccessLevel;
+import dev.simplified.gson.annotation.Flatten;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,13 +14,7 @@ public class Currencies {
     private int motes;
     @SerializedName("coin_purse")
     private double purse;
-    @Getter(AccessLevel.NONE)
-    private @NotNull ConcurrentMap<String, ConcurrentMap<String, Integer>> essence = Concurrent.newMap();
-
-    public @NotNull ConcurrentMap<String, Integer> getEssence() {
-        return this.essence.stream()
-            .mapValue(value -> value.get("current"))
-            .collect(Concurrent.toMap());
-    }
+    @Flatten("current")
+    private @NotNull ConcurrentMap<String, Integer> essence = Concurrent.newMap();
 
 }
