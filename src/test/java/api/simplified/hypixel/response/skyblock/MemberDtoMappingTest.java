@@ -10,6 +10,7 @@ import api.simplified.hypixel.response.skyblock.member.Toolkit;
 import api.simplified.hypixel.response.skyblock.member.WinterIsland;
 import api.simplified.hypixel.response.skyblock.member.crimson.BoardQuest;
 import api.simplified.hypixel.response.skyblock.member.crimson.CrimsonIsle;
+import api.simplified.hypixel.response.skyblock.member.crimson.Dojo;
 import api.simplified.hypixel.response.skyblock.member.crimson.Kuudra;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
@@ -39,6 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
@@ -486,6 +488,24 @@ class MemberDtoMappingTest {
         // enum adapter reading case-insensitively and writing name(), and it predates this work
         assertThat(lowercased(outTiers.keySet()), is(equalTo(lowercased(rawTiers.keySet()))));
         assertThat(out.has("unknownTiers"), is(false));
+    }
+
+    @Test
+    @DisplayName("dojo points bind to their types instead of overflowing as unmatched")
+    void mapsDojoTypes() {
+        JsonObject rawDojo = rawPristine("nether_island_player_data").getAsJsonObject("dojo");
+        CrimsonIsle crimsonIsle = decodePristine("nether_island_player_data", CrimsonIsle.class);
+
+        long rawPoints = rawDojo.keySet().stream().filter(key -> key.startsWith("dojo_points_")).count();
+
+        assertThat(rawPoints, is(not(equalTo(0L))));
+
+        // the wire spells these mob_kb, wall_jump and so on. Those names lived only in a
+        // constructor component, which the enum adapter never sees, so every entry missed
+        assertThat((long) crimsonIsle.getDojo().getPoints().size(), is(equalTo(rawPoints)));
+        assertThat(crimsonIsle.getDojo().getPoints(), hasKey(Dojo.Type.FORCE));
+        assertThat(crimsonIsle.getDojo().getUnknownPoints(), is(anEmptyMap()));
+        assertThat(crimsonIsle.getDojo().getUnknownTimes(), is(anEmptyMap()));
     }
 
     @Test

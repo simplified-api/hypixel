@@ -21,6 +21,7 @@ public class BoardQuest {
 
         UNKNOWN,
         ACTIVE,
+        @SerializedName(value = "COMPLETED", alternate = "COMPLETE")
         COMPLETED
 
     }
