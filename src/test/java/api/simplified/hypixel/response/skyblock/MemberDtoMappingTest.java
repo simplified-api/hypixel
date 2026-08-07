@@ -1284,4 +1284,31 @@ class MemberDtoMappingTest {
             .orElseThrow();
     }
 
+    @Test
+    @DisplayName("dungeon classes bind straight off player_classes")
+    void mapsDungeonClasses() {
+        JsonObject rawClasses = rawPristine("dungeons").getAsJsonObject("player_classes");
+        Dungeons dungeons = decodePristine("dungeons", Dungeons.class);
+
+        // DungeonClass has one field and the wire node already is that shape, so the funnel that
+        // reduced each value to its experience had nothing left to do
+        assertThat(dungeons.getClasses().size(), is(equalTo(rawClasses.size())));
+        assertThat(dungeons.getClasses().size(), is(equalTo(5)));
+        assertThat(dungeons.getClass(DungeonClass.Type.HEALER).getExperience(),
+            is(equalTo(rawClasses.getAsJsonObject("healer").get("experience").getAsDouble())));
+        assertThat(dungeons.getClass(DungeonClass.Type.UNKNOWN).getExperience(), is(equalTo(0.0)));
+
+        double expectedTotal = rawClasses.entrySet().stream()
+            .mapToDouble(entry -> entry.getValue().getAsJsonObject().get("experience").getAsDouble())
+            .sum();
+
+        assertThat(dungeons.getClassExperience(), is(equalTo(expectedTotal)));
+        assertThat(dungeons.getClassWeight().size(), is(equalTo(5)));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(dungeons)).getAsJsonObject();
+
+        assertThat(lowercased(out.getAsJsonObject("player_classes").keySet()),
+            is(equalTo(lowercased(rawClasses.keySet()))));
+    }
+
 }

@@ -7,7 +7,6 @@ import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.ConcurrentSet;
 import dev.simplified.collection.tuple.pair.Pair;
-import dev.simplified.gson.PostInit;
 import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.annotation.SerializedPath;
 import lombok.AccessLevel;
@@ -20,18 +19,17 @@ import java.util.Map;
 import java.util.Optional;
 
 @Getter
-public class Dungeons implements PostInit {
+public class Dungeons {
 
     private static final @NotNull String MASTER_PREFIX = "MASTER_";
     private static final @NotNull DungeonClass EMPTY_CLASS = new DungeonClass(0);
-    private static final @NotNull DungeonData EMPTY_DUNGEON = new DungeonData(0, new FloorData(), new FloorData());
+    private static final @NotNull DungeonData EMPTY_DUNGEON = new DungeonData(new FloorData(), new FloorData());
 
     @SerializedName("dungeon_types")
     @Getter(AccessLevel.NONE)
     private @NotNull ConcurrentMap<String, FloorData> dungeonMap = Concurrent.newMap();
     @SerializedName("player_classes")
-    @Getter(AccessLevel.NONE)
-    private @NotNull ConcurrentMap<DungeonClass.Type, ConcurrentMap<String, Double>> classMap = Concurrent.newMap();
+    private @NotNull ConcurrentMap<DungeonClass.Type, DungeonClass> classes = Concurrent.newMap();
     @Lenient
     @SerializedPath("dungeon_journal.unlocked_journals")
     private @NotNull ConcurrentList<Integer> unlockedJournals = Concurrent.newList();
@@ -51,35 +49,29 @@ public class Dungeons implements PostInit {
     @SerializedName("dungeon_hub_race_settings")
     private @NotNull RaceSettings raceSettings = new RaceSettings();
 
-    // PostInit
+    @Getter(AccessLevel.NONE)
+    private transient ConcurrentMap<DungeonData.Type, DungeonData> dungeons;
 
-    private transient @NotNull ConcurrentMap<DungeonData.Type, DungeonData> dungeons = Concurrent.newMap();
-    private transient @NotNull ConcurrentMap<DungeonClass.Type, DungeonClass> classes = Concurrent.newMap();
+    /**
+     * Dungeons keyed by type, each pairing the floor of that type with its master-mode counterpart
+     */
+    public @NotNull ConcurrentMap<DungeonData.Type, DungeonData> getDungeons() {
+        if (this.dungeons == null) {
+            ConcurrentMap<String, FloorData> floors = this.dungeonMap.stream()
+                .mapKey(key -> key.toUpperCase(Locale.ROOT))
+                .toMap();
 
-    @Override
-    public void postInit() {
-        // the wire spells these keys lowercase and a master-mode floor is found by prefixing a constant
-        // name, so the key space is normalised once rather than compared in two different cases
-        ConcurrentMap<String, FloorData> floors = this.dungeonMap.stream()
-            .mapKey(key -> key.toUpperCase(Locale.ROOT))
-            .toMap();
+            this.dungeons = floors.stream()
+                .filterKey(key -> !key.startsWith(MASTER_PREFIX))
+                .mapKey(DungeonData.Type::of)
+                .map((type, floorData) -> Pair.of(type, new DungeonData(
+                    floorData,
+                    floors.getOrDefault(MASTER_PREFIX + type.name(), new FloorData())
+                )))
+                .collect(Concurrent.toUnmodifiableMap());
+        }
 
-        this.dungeons = floors.stream()
-            .filterKey(key -> !key.startsWith(MASTER_PREFIX))
-            .mapKey(DungeonData.Type::of)
-            .map((type, floorData) -> Pair.of(type, new DungeonData(
-                floorData.getExperience(),
-                floorData,
-                floors.getOrDefault(MASTER_PREFIX + type.name(), new FloorData())
-            )))
-            .collect(Concurrent.toUnmodifiableMap());
-
-        this.classes = this.classMap.stream()
-            .map(entry -> Pair.of(
-                entry.getKey(),
-                new DungeonClass(entry.getValue().get("experience"))
-            ))
-            .collect(Concurrent.toUnmodifiableMap());
+        return this.dungeons;
     }
 
     public @NotNull DungeonClass getClass(@NotNull DungeonClass.Type classType) {

@@ -17,9 +17,14 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class DungeonData implements Experience, Weighted {
 
-    private final double experience;
     private final @NotNull FloorData normalMode;
     private final @NotNull FloorData masterMode;
+
+    /** {@inheritDoc} */
+    @Override
+    public double getExperience() {
+        return this.getNormalMode().getExperience();
+    }
 
     @Override
     public @NotNull ConcurrentList<Integer> getExperienceTiers() {

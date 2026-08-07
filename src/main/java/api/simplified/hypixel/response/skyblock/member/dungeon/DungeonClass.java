@@ -6,17 +6,21 @@ import api.simplified.hypixel.common.Weighted;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.util.NumberUtil;
 import dev.simplified.util.StringUtil;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 @Getter
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DungeonClass implements Experience, Weighted {
 
-    private final double experience;
+    private double experience;
 
     @Override
     public @NotNull ConcurrentList<Integer> getExperienceTiers() {
