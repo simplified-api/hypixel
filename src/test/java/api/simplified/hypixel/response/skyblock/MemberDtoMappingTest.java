@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock;
 
+import api.simplified.hypixel.response.hypixel.HypixelPlayer;
 import api.simplified.hypixel.response.skyblock.election.Election;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.Bestiary;
@@ -1185,6 +1186,63 @@ class MemberDtoMappingTest {
         // returns uppercased. Same case drift the kuudra tiers already document
         assertThat(lowercased(outCatacombs.keySet()), is(equalTo(lowercased(rawCatacombs.keySet()))));
         assertThat(outCatacombs.has("mostDamage"), is(false));
+    }
+
+    @Test
+    @DisplayName("a player's skyblock profiles bind by path and re-nest on write")
+    void mapsHypixelPlayerProfiles() {
+        JsonObject first = new JsonObject();
+        first.addProperty("profile_id", "d3b1a2c4-0000-4000-8000-000000000001");
+        first.addProperty("cute_name", "Mango");
+
+        JsonObject second = new JsonObject();
+        second.addProperty("profile_id", "d3b1a2c4-0000-4000-8000-000000000002");
+        second.addProperty("cute_name", "Papaya");
+
+        JsonObject profiles = new JsonObject();
+        profiles.add("d3b1a2c40000400080000000000000 01".replace(" ", ""), first);
+        profiles.add("d3b1a2c40000400080000000000000 02".replace(" ", ""), second);
+
+        JsonObject skyBlock = new JsonObject();
+        skyBlock.add("profiles", profiles);
+
+        JsonObject stats = new JsonObject();
+        stats.add("SkyBlock", skyBlock);
+
+        JsonArray achievements = new JsonArray();
+        achievements.add("general_wealth");
+        achievements.add(7);
+        achievements.add("skyblock_minion_lover");
+
+        JsonObject raw = new JsonObject();
+        raw.add("stats", stats);
+        raw.add("achievementsOneTime", achievements);
+
+        HypixelPlayer player = gson.fromJson(raw, HypixelPlayer.class);
+
+        // two nested classes existed only to name stats and SkyBlock on the way to profiles
+        assertThat(player.getSkyBlockProfiles().size(), is(equalTo(2)));
+        assertThat(player.getSkyBlockProfiles().getFirst().getProfileName(), is(equalTo("Mango")));
+        assertThat(player.getSkyBlockProfiles().getLast().getProfileName(), is(equalTo("Papaya")));
+
+        // the numeric entry is not an achievement name, so it filters into overflow
+        assertThat(player.getAchievementsOneTime(),
+            is(equalTo(List.of("general_wealth", "skyblock_minion_lover"))));
+
+        JsonObject out = JsonParser.parseString(gson.toJson(player)).getAsJsonObject();
+
+        assertThat(out.getAsJsonObject("stats").getAsJsonObject("SkyBlock").getAsJsonObject("profiles").keySet(),
+            is(equalTo(profiles.keySet())));
+        assertThat(out.has("skyBlockProfiles"), is(false));
+
+        // nothing is lost, but position is not preserved: a partially overflowed array puts its
+        // filtered entries back at the end rather than at the index the wire gave them. Membership
+        // round-trips, order does not, and the old hand-written filter dropped the entry outright
+        JsonArray outAchievements = out.getAsJsonArray("achievementsOneTime");
+
+        assertThat(outAchievements.size(), is(equalTo(achievements.size())));
+        assertThat(outAchievements.contains(achievements.get(1)), is(true));
+        assertThat(outAchievements.get(outAchievements.size() - 1), is(equalTo(achievements.get(1))));
     }
 
 }

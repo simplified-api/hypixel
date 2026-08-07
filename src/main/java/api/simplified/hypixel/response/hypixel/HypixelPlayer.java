@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.gson.annotation.Lenient;
+import dev.simplified.gson.annotation.SerializedPath;
 import dev.simplified.util.RegexUtil;
 import dev.simplified.util.StringUtil;
 import lib.minecraft.text.ChatColor;
@@ -39,10 +41,10 @@ public class HypixelPlayer {
     private String mostRecentGameType;
     private ConcurrentList<String> knownAliases;
     private HypixelSocial socialMedia;
-    @Getter(AccessLevel.NONE)
-    private ConcurrentList<Object> achievementsOneTime = Concurrent.newList();
-    @Getter(AccessLevel.NONE)
-    private transient ConcurrentList<String> achievementsOneTimeFixed;
+    // the list interleaves achievement names with entries of other shapes, so typing it takes the
+    // names and leaves the rest in overflow, where they round-trip
+    @Lenient
+    private ConcurrentList<String> achievementsOneTime = Concurrent.newList();
     private String currentClickEffect;
     private String currentGadget;
     @SerializedName("claimed_potato_talisman")
@@ -77,18 +79,9 @@ public class HypixelPlayer {
     private String mostRecentMonthlyPackageRank;
 
     // Stats (Only SkyBlock Currently)
-    private Stats stats;
-
-    public ConcurrentList<String> getAchievementsOneTime() {
-        if (this.achievementsOneTimeFixed == null) {
-            this.achievementsOneTimeFixed = this.achievementsOneTime.stream()
-                .filter(String.class::isInstance)
-                .map(String::valueOf)
-                .collect(Concurrent.toList());
-        }
-
-        return this.achievementsOneTimeFixed;
-    }
+    @Getter(AccessLevel.NONE)
+    @SerializedPath("stats.SkyBlock.profiles")
+    private @NotNull ConcurrentMap<String, SkyBlockProfile> skyBlockProfiles = Concurrent.newMap();
 
     public @NotNull HypixelRank getRank() {
         HypixelRank.Type type = HypixelRank.Type.NONE;
@@ -123,32 +116,20 @@ public class HypixelPlayer {
         return new HypixelRank(type, rankFormat, plusFormat);
     }
 
+    /**
+     * The player's SkyBlock profiles, keyed by island id on the wire and returned in wire order
+     */
+    public @NotNull ConcurrentList<SkyBlockProfile> getSkyBlockProfiles() {
+        return Concurrent.newUnmodifiableList(this.skyBlockProfiles.values());
+    }
+
     @Getter
-    public static class Stats {
+    public static class SkyBlockProfile {
 
-        @SerializedName("SkyBlock")
-        private SkyBlock skyBlock;
-
-        public static class SkyBlock {
-
-            private @NotNull ConcurrentMap<String, Profile> profiles = Concurrent.newMap();
-
-            public @NotNull ConcurrentList<Profile> getProfiles() {
-                return Concurrent.newUnmodifiableList(this.profiles.values());
-            }
-
-
-            @Getter
-            public static class Profile {
-
-                @SerializedName("profile_id")
-                private UUID islandId;
-                @SerializedName("cute_name")
-                private String profileName;
-
-            }
-
-        }
+        @SerializedName("profile_id")
+        private UUID islandId;
+        @SerializedName("cute_name")
+        private String profileName;
 
     }
 
