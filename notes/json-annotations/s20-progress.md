@@ -23,6 +23,7 @@ Read the pack's baseline table as history, not as current state.
 | `s20-free-retirements` | **done** | `Election`, `CrimsonIsle`/`Kuudra`; `implements PostInit` 6 to 4 |
 | `s20-holder-collapse` | **done** | 8 files, 13 fields, `Temples.java` deleted |
 | `s20-objectives-catchall` | **done** | differ 792 to 0, exit 0 |
+| `s20-existing-annotation-sweep` | **done** | 4 commits rather than 8 - commit 8 had already landed |
 
 The differ is a hard gate from here. `python scripts/json_dto_diff.py` exits 0 today; any later stage
 that raises the count above 0 has broken a binding.
@@ -79,10 +80,18 @@ the `@Lenient` the plan suggested, because the differ understands `@Capture` and
 `@Lenient` - a `@Lenient` overflow would have left those keys reported unmapped and the gate short of
 zero.
 
+**A filtered `@Capture` does re-prefix its keys on write.** Confirmed, executed, on `FloorData`'s
+`^most_damage_`. Nothing is lost - but an enum map key is written as its constant name, so the wire's
+lowercase `most_damage_healer` returns as `most_damage_HEALER`. That is the same case drift the kuudra
+tiers already pin, and it predates this work.
+
+**`@Lenient` round-trips a partially overflowed array's membership but not its order.** The filtered
+entries are appended rather than restored to their original index. Whole-array overflow
+(`dungeons.dungeon_journal.unlocked_journals`) is unaffected because there is nothing to interleave
+with. Pinned by `mapsHypixelPlayerProfiles`.
+
 ## Still open
 
 - `CommissionData.totalCompleted` - unchanged, still needs a live `/skyblock/garden` response.
-- Filtered `@Capture` re-prefixing on write - not exercised yet; gates `s20-existing-annotation-sweep`
-  commit 5.
 - `DungeonClass` binding through `UnsafeAllocator` - not exercised yet; gates
   `s20-shape-retirements`.
