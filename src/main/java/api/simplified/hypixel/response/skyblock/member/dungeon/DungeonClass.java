@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock.member.dungeon;
 
+import api.simplified.hypixel.common.EnumLookup;
 import dev.simplified.util.StringUtil;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -8,7 +9,6 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 
 @Getter
 @AllArgsConstructor
@@ -35,10 +35,7 @@ public class DungeonClass implements DungeonWeighted {
         }
 
         public static @NotNull Type of(@NotNull String name) {
-            return Arrays.stream(values())
-                .filter(type -> type.name().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(UNKNOWN);
+            return EnumLookup.of(values(), name, UNKNOWN);
         }
 
     }

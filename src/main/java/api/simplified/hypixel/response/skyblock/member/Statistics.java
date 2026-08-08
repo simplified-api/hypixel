@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock.member;
 
+import api.simplified.hypixel.common.EnumLookup;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.skyblockdata.common.Rarity;
 import dev.simplified.collection.Concurrent;
@@ -13,7 +14,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 
 @Getter
 public class Statistics {
@@ -185,10 +185,7 @@ public class Statistics {
                 YOUNG;
 
                 public static @NotNull Type of(@NotNull String name) {
-                    return Arrays.stream(values())
-                        .filter(type -> type.name().equalsIgnoreCase(name))
-                        .findFirst()
-                        .orElse(UNKNOWN);
+                    return EnumLookup.of(values(), name, UNKNOWN);
                 }
 
             }
