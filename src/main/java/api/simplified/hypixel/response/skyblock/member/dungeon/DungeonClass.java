@@ -1,10 +1,5 @@
 package api.simplified.hypixel.response.skyblock.member.dungeon;
 
-import api.simplified.hypixel.common.Experience;
-import api.simplified.hypixel.common.Weight;
-import api.simplified.hypixel.common.Weighted;
-import dev.simplified.collection.ConcurrentList;
-import dev.simplified.util.NumberUtil;
 import dev.simplified.util.StringUtil;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -18,40 +13,12 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class DungeonClass implements Experience, Weighted {
+public class DungeonClass implements DungeonWeighted {
 
     private double experience;
 
-    @Override
-    public @NotNull ConcurrentList<Integer> getExperienceTiers() {
-        return DungeonData.DEFAULT_TIERS;
-    }
 
-    @Override
-    public int getMaxLevel() {
-        return this.getExperienceTiers().size();
-    }
 
-    @Override
-    public @NotNull Weight getWeight() {
-        double rawLevel = this.getRawLevel();
-        ConcurrentList<Integer> experienceTiers = this.getExperienceTiers();
-        double maxDungeonClassExperienceRequired = experienceTiers.getLast();
-
-        if (rawLevel < this.getMaxLevel())
-            rawLevel += (this.getProgressPercentage() / 100); // Add Percentage Progress to Next Level
-
-        double base = Math.pow(rawLevel, 4.5) * 0.0000045254834; // Weight Multiplier
-        double weightValue = NumberUtil.round(base, 2);
-        double weightOverflow = 0;
-
-        if (this.getExperience() > maxDungeonClassExperienceRequired) {
-            double overflow = Math.pow((this.getExperience() - maxDungeonClassExperienceRequired) / (4 * maxDungeonClassExperienceRequired / base), 0.968);
-            weightOverflow = NumberUtil.round(overflow, 2);
-        }
-
-        return Weight.of(weightValue, weightOverflow);
-    }
 
     @RequiredArgsConstructor
     public enum Type {

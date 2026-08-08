@@ -1385,4 +1385,24 @@ class MemberDtoMappingTest {
         assertThat(member.getCollectionUnlocked(), is(sameInstance(unlocked)));
     }
 
+    @Test
+    @DisplayName("a dungeon and a dungeon class weigh the same way")
+    void weighsDungeonProgressions() {
+        Dungeons dungeons = decodePristine("dungeons", Dungeons.class);
+        DungeonData catacombs = dungeons.getDungeon(DungeonData.Type.CATACOMBS);
+        DungeonClass healer = dungeons.getClass(DungeonClass.Type.HEALER);
+
+        // captured before the two byte-identical copies of the formula were folded into one.
+        // SkyBlockMember.getTotalWeight() sums both, so a divergence would not have shown up there
+        assertThat(catacombs.getWeight().getValue(), is(equalTo(200.0)));
+        assertThat(catacombs.getWeight().getOverflow(), is(equalTo(2.03)));
+        assertThat(healer.getWeight().getValue(), is(equalTo(90.6)));
+        assertThat(healer.getWeight().getOverflow(), is(equalTo(0.0)));
+
+        // a dungeon reads the experience of its normal floor, a class reads its own
+        assertThat(catacombs.getExperience(), is(equalTo(catacombs.getNormalMode().getExperience())));
+        assertThat(catacombs.getExperienceTiers(), is(equalTo(healer.getExperienceTiers())));
+        assertThat(catacombs.getMaxLevel(), is(equalTo(50)));
+    }
+
 }
