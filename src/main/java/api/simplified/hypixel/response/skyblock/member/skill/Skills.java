@@ -1,18 +1,17 @@
 package api.simplified.hypixel.response.skyblock.member.skill;
 
-import api.simplified.hypixel.common.Weight;
+import api.simplified.hypixel.common.WeightedGroup;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import dev.simplified.collection.tuple.pair.Pair;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
 @RequiredArgsConstructor
-public class Skills {
+public class Skills implements WeightedGroup<SkillLevel> {
 
     private final @NotNull ConcurrentList<SkillLevel> skillLevels;
 
@@ -34,34 +33,10 @@ public class Skills {
             .collect(Concurrent.toList());
     }
 
-    public double getAverage() {
-        return this.getSkillLevels(false)
-            .stream()
-            .mapToDouble(SkillLevel::getLevel)
-            .average()
-            .orElse(0.0);
-    }
-
-    public double getExperience() {
-        return this.getSkillLevels(false)
-            .stream()
-            .mapToDouble(SkillLevel::getExperience)
-            .sum();
-    }
-
-    public double getProgressPercentage() {
-        return this.getSkillLevels(false)
-            .stream()
-            .mapToDouble(SkillLevel::getTotalProgressPercentage)
-            .average()
-            .orElse(0.0);
-    }
-
-    public @NotNull ConcurrentMap<SkillLevel, Weight> getWeight() {
-        return this.getSkillLevels(false)
-            .stream()
-            .map(skill -> Pair.of(skill, skill.getWeight()))
-            .collect(Concurrent.toMap());
+    /** {@inheritDoc} */
+    @Override
+    public @NotNull ConcurrentList<SkillLevel> getWeighted() {
+        return this.getSkillLevels(false);
     }
 
 }
