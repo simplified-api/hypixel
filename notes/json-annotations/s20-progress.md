@@ -27,6 +27,17 @@ Read the pack's baseline table as history, not as current state.
 | `s20-shape-retirements` | **done** | `JacobsContest`, `Dungeons`; `implements PostInit` 4 to 2 |
 | `s20-derivation-retirements` | **done** | `Bestiary`, `SkyBlockMember`; **`implements PostInit` in `response/` is 0** |
 | `s20-duplication-sweep` | **done** | 6 of 7 commits; the trophy-fish follow-up declined, see below |
+| `s20-skyblock-election` | **done** | the seventh implementor, in `skyblock` `ca66de7` |
+
+**Every stage in the plan has landed.** `PostInit` has **zero implementors in production code
+workspace-wide** - the only ones left are gson-extras' own test fixtures, which exist to cover the
+interface. The claim that `11-postinit-elimination.md` §11.4 gates its reopen condition on is now
+true, and it took a change in a second repository to make it so.
+
+The interface itself survives unimplemented, which is the pack's recommendation rather than an
+oversight: `JpaRepository` calls it manually before an upsert and those entities use field access, so
+a persisted derived column genuinely cannot be lazy. Zero implementors makes it an extension point,
+not a dependency.
 
 The differ is a hard gate from here. `python scripts/json_dto_diff.py` exits 0 today; any later stage
 that raises the count above 0 has broken a binding.
