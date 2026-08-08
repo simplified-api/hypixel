@@ -60,7 +60,7 @@ public class SkillLevel implements Experience, Weighted {
 
         double rawLevel = this.getRawLevel();
         ConcurrentList<Integer> experienceTiers = this.getExperienceTiers();
-        double maxSkillExperienceRequired = experienceTiers.get(experienceTiers.size() - 1);
+        double maxSkillExperienceRequired = experienceTiers.getLast();
 
         if (rawLevel < this.getMaxLevel())
             rawLevel += (this.getProgressPercentage() / 100); // Add Percentage Progress to Next Level

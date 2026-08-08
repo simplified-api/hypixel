@@ -51,7 +51,7 @@ public class SlayerBoss implements Experience, Weighted {
             return Weight.of(0, 0);
 
         ConcurrentList<Integer> experienceTiers = this.getExperienceTiers();
-        double maxSlayerExperienceRequired = experienceTiers.get(experienceTiers.size() - 1);
+        double maxSlayerExperienceRequired = experienceTiers.getLast();
         double base = Math.min(this.getExperience(), maxSlayerExperienceRequired) / this.getSlayer().getWeightDivider();
         double weightValue = NumberUtil.round(base, 2);
         double weightOverflow = 0;
