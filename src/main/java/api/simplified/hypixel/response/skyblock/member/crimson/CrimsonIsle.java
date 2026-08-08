@@ -1,6 +1,7 @@
 package api.simplified.hypixel.response.skyblock.member.crimson;
 
 import com.google.gson.annotations.SerializedName;
+import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -73,7 +74,7 @@ public class CrimsonIsle {
         @SerializedName("pomtair_quest")
         private @NotNull NpcQuest pomtairQuest = new NpcQuest();
         @SerializedName("suus_quest")
-        private @NotNull SuusQuest suusQuest = new SuusQuest();
+        private @NotNull NpcQuest suusQuest = new NpcQuest();
         @SerializedName("pablo_quest")
         private @NotNull PabloQuest pabloQuest = new PabloQuest();
         @SerializedName("duel_training_quest")
@@ -83,7 +84,7 @@ public class CrimsonIsle {
         @SerializedName("edelis_quest")
         private @NotNull EdelisQuest edelisQuest = new EdelisQuest();
         @SerializedName("mollim_quest")
-        private @NotNull MollimQuest mollimQuest = new MollimQuest();
+        private @NotNull NpcQuest mollimQuest = new NpcQuest();
         @SerializedName("aranya_quest")
         private @NotNull NpcQuest aranyaQuest = new NpcQuest();
         private @NotNull ConcurrentMap<String, Object> rulenor = Concurrent.newMap();
@@ -92,7 +93,7 @@ public class CrimsonIsle {
         @SerializedName("last_reset")
         private int lastReset;
         @SerializedName("chicken_quest_handed_in")
-        private long chickenQuestHandedIn;
+        private @NotNull Optional<SkyBlockDate.RealTime> chickenQuestHandedIn = Optional.empty();
         @Accessors(fluent = true)
         @SerializedName("paid_bruuh")
         private boolean hasPaidBruuh;
@@ -104,7 +105,7 @@ public class CrimsonIsle {
         @SerializedName("found_kuudra_book")
         private boolean hasFoundKuudraBook;
         @SerializedName("last_kuudra_relic")
-        private long lastKuudraRelic;
+        private @NotNull Optional<SkyBlockDate.RealTime> lastKuudraRelic = Optional.empty();
         @Accessors(fluent = true)
         @SerializedName("found_kuudra_leggings")
         private boolean hasFoundKuudraLeggings;
@@ -115,7 +116,7 @@ public class CrimsonIsle {
         @SerializedName("found_kuudra_chestplate")
         private boolean hasFoundKuudraChestplate;
         @SerializedName("last_believer_blessing")
-        private long lastBelieverBlessing;
+        private @NotNull Optional<SkyBlockDate.RealTime> lastBelieverBlessing = Optional.empty();
         @Accessors(fluent = true)
         @SerializedName("weird_sailor")
         private boolean hasMetWeirdSailor;

@@ -1,6 +1,7 @@
 package api.simplified.hypixel.response.skyblock.member.crimson;
 
 import com.google.gson.annotations.SerializedName;
+import dev.sbs.skyblockdata.date.SkyBlockDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,6 @@ public class PabloQuest {
     @SerializedName("pablo_active")
     private boolean active;
     @SerializedName("pablo_last_give")
-    private long lastGive;
+    private @NotNull Optional<SkyBlockDate.RealTime> lastGive = Optional.empty();
 
 }

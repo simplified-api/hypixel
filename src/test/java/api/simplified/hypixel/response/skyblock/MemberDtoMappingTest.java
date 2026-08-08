@@ -1405,4 +1405,28 @@ class MemberDtoMappingTest {
         assertThat(catacombs.getMaxLevel(), is(equalTo(50)));
     }
 
+    @Test
+    @DisplayName("one npc quest shape covers every npc, and keeps absent keys absent")
+    void mapsNpcQuests() {
+        JsonObject rawQuests = rawPristine("nether_island_player_data").getAsJsonObject("quests");
+        CrimsonIsle crimsonIsle = decodePristine("nether_island_player_data", CrimsonIsle.class);
+        CrimsonIsle.Quests quests = crimsonIsle.getQuests();
+
+        // pomtair and aranya already shared NpcQuest; suus and mollim had a class each for one
+        // field of difference
+        assertThat(quests.getPomtairQuest().getLastCompletion().orElseThrow().getRealTime(),
+            is(equalTo(rawQuests.getAsJsonObject("pomtair_quest").get("last_completion").getAsLong())));
+        assertThat(quests.getSuusQuest().getLastToyDrop().orElseThrow().getRealTime(),
+            is(equalTo(rawQuests.getAsJsonObject("suus_quest").get("last_toy_drop").getAsLong())));
+        assertThat(quests.getSuusQuest().getLastCompletion().orElseThrow().getRealTime(),
+            is(equalTo(rawQuests.getAsJsonObject("suus_quest").get("last_completion").getAsLong())));
+        assertThat(quests.getMollimQuest().isCompletedQuest(), is(true));
+        assertThat(quests.getMollimQuest().isTalkedToNpc(), is(true));
+
+        // mollim carries no completion timestamp at all, and the union does not invent one
+        assertThat(rawQuests.getAsJsonObject("mollim_quest").has("last_completion"), is(false));
+        assertThat(quests.getMollimQuest().getLastCompletion().isPresent(), is(false));
+        assertThat(quests.getPomtairQuest().getLastToyDrop().isPresent(), is(false));
+    }
+
 }
