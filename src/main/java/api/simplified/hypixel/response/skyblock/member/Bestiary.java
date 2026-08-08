@@ -6,7 +6,6 @@ import dev.sbs.skyblockdata.model.BestiaryFamily;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import dev.simplified.collection.tuple.pair.PairStream;
 import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.PostInit;
@@ -26,7 +25,7 @@ import java.util.stream.Stream;
 @Getter
 public class Bestiary implements PostInit {
 
-    private static final @NotNull Pattern MOB_PATTERN = Pattern.compile("^([a-z_]+)_([0-9]+)$");
+    private static final @NotNull Pattern MOB_PATTERN = Pattern.compile("^(.*)_([0-9]+)$");
     @SerializedName("migrated_stats")
     private boolean migratedStats;
     private boolean migration;
@@ -58,21 +57,18 @@ public class Bestiary implements PostInit {
 
     @Override
     public void postInit() {
-        ConcurrentList<Mob> mobs = PairStream.of(Stream.concat(this.kills.stream(), this.deaths.stream()))
+        // one mob per distinct key, so a mob carrying both a kill and a death count is not counted twice,
+        // and one matcher per key, so the groups are only read off a matcher that has matched
+        ConcurrentList<Mob> mobs = Stream.concat(this.kills.keySet().stream(), this.deaths.keySet().stream())
             .distinct()
-            .filterKey(key -> MOB_PATTERN.matcher(key).matches())
-            .collapseToSingle((key, value) -> {
-                Matcher matcher = MOB_PATTERN.matcher(key);
-                String id = matcher.group(1).toUpperCase();
-                int level = NumberUtil.tryParseInt(matcher.group(2));
-
-                return new Mob(
-                    id,
-                    level,
-                    this.kills.getOrDefault(key, 0),
-                    this.deaths.getOrDefault(key, 0)
-                );
-            })
+            .map(MOB_PATTERN::matcher)
+            .filter(Matcher::matches)
+            .map(matcher -> new Mob(
+                matcher.group(1).toUpperCase(),
+                NumberUtil.tryParseInt(matcher.group(2)),
+                this.kills.getOrDefault(matcher.group(), 0),
+                this.deaths.getOrDefault(matcher.group(), 0)
+            ))
             .collect(Concurrent.toUnmodifiableList());
 
         this.families = SkyBlockData.getRepository(BestiaryFamily.class)

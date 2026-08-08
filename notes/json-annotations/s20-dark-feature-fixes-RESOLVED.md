@@ -1,4 +1,17 @@
-# s20-dark-feature-fixes - two of the nine are blocked upstream
+# s20-dark-feature-fixes - RESOLVED
+
+> **All nine fixes are in.** The chain of upstream blockers below is closed:
+> `persistence` `d2ee7b4` stops reading an inverse association as a dependency, `collections`
+> `7699a31` keeps the view monitor out of the serialized form, and `skyblock` `623071d` loads its
+> models from the data repository and lets hibernate own the zones collection. `skyblock` passes
+> 32/32 and `hypixel` 51/51.
+>
+> The two held fixes needed no change to land. Once `SkyBlockData` could class-initialize, a
+> session-less repository lookup throws `JpaException` - an ordinary exception that
+> `PostInitTypeAdapterFactory` catches - rather than an `ExceptionInInitializerError` that escaped
+> the decode. The reason to hold them was the escape, and the escape is gone.
+>
+> The rest of this document is kept as the diagnosis.
 
 > **The cycle described below is fixed.** `persistence` `78bfa94` stops reading an inverse
 > association as a dependency; `skyblock` and `hypixel` are re-pinned to it, and `SkyBlockData` now

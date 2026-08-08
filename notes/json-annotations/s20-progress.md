@@ -19,7 +19,7 @@ Read the pack's baseline table as history, not as current state.
 
 | Stage | State | Notes |
 | --- | --- | --- |
-| `s20-dark-feature-fixes` | **7 of 9** | `AccessoryBag` and `Bestiary` held - see the blockers file |
+| `s20-dark-feature-fixes` | **done** | all nine; the two held fixes landed once the upstream chain cleared |
 | `s20-free-retirements` | **done** | `Election`, `CrimsonIsle`/`Kuudra`; `implements PostInit` 6 to 4 |
 | `s20-holder-collapse` | **done** | 8 files, 13 fields, `Temples.java` deleted |
 | `s20-objectives-catchall` | **done** | differ 792 to 0, exit 0 |

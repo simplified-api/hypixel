@@ -43,6 +43,7 @@ import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Fallback;
 import dev.simplified.gson.annotation.SerializedPath;
+import dev.simplified.persistence.exception.JpaException;
 import dev.simplified.util.Range;
 import lib.minecraft.text.ChatFormat;
 import org.junit.jupiter.api.BeforeAll;
@@ -76,6 +77,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Verifies the member DTO field mappings against the bundled API response.
@@ -1309,6 +1311,39 @@ class MemberDtoMappingTest {
 
         assertThat(lowercased(out.getAsJsonObject("player_classes").keySet()),
             is(equalTo(lowercased(rawClasses.keySet()))));
+    }
+
+    /**
+     * Pins where the bestiary hook stops in a session-less test.
+     * <p>
+     * The mob parse used to throw {@link IllegalStateException} on the very first key, because the
+     * matcher that ran {@code matches()} and the matcher the groups were read from were two different
+     * objects. That throw landed in {@code PostInitTypeAdapterFactory}'s empty catch, so
+     * {@code families} was empty for every profile ever decoded. The parse now runs to completion and
+     * the hook reaches the family repository - which this test deliberately does not stand up.
+     */
+    @Test
+    @DisplayName("bestiary parses every mob key before it reaches the family repository")
+    void bestiaryParsesEveryMobKey() {
+        Bestiary bestiary = decodePristine("bestiary", Bestiary.class);
+
+        assertThrows(JpaException.class, bestiary::postInit);
+        assertThat(bestiary.getFamilies(), is(empty()));
+    }
+
+    @Test
+    @DisplayName("the accessory bag loads the member's talisman bag before it parses it")
+    void accessoryBagLoadsItsContentsFirst() {
+        SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
+        AccessoryBag bag = member.getAccessoryBag();
+        String talismanBag = member.getInventory().getBags().getAccessories().getRawData();
+
+        assertThat(talismanBag.isEmpty(), is(false));
+
+        // initialize() read `contents` eighty lines before assigning it, so it always parsed the empty
+        // default and threw NbtException on the first statement of every member's postInit
+        assertThrows(JpaException.class, () -> bag.initialize(member));
+        assertThat(bag.getContents().getRawData(), is(equalTo(talismanBag)));
     }
 
 }

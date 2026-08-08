@@ -53,6 +53,9 @@ public class AccessoryBag {
     private transient int tuningPoints;
 
     public void initialize(@NotNull SkyBlockMember member) {
+        // Talisman Bag
+        this.contents = member.getInventory().getBags().getAccessories();
+
         // Read Accessory Bag
         this.detectedAccessories = this.getContents()
             .getNbtData()
@@ -135,7 +138,7 @@ public class AccessoryBag {
         if (member.getRift().getAccess().hasConsumedPrism())
             calculatedMagicalPower += 11;
 
-        this.contents = member.getInventory().getBags().getAccessories();
+        this.magicalPower = calculatedMagicalPower;
         this.tuningPoints = this.magicalPower / 10;
         this.logComponent = Math.pow(Math.log(1 + (0.0019 * this.magicalPower)), 1.2);
         //this.magicalPowerMultiplier = 29.97 * Math.pow(Math.log(1 + (0.0019 * this.magicalPower)), 1.2);
