@@ -3,6 +3,7 @@ package api.simplified.hypixel.response.skyblock.member.dungeon;
 import api.simplified.hypixel.common.Experience;
 import api.simplified.hypixel.common.Weight;
 import api.simplified.hypixel.common.Weighted;
+import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.util.NumberUtil;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * Progression shared by a dungeon and a dungeon class.
  * <p>
  * Both advance on the same tier table and weigh identically; only the experience they read differs.
- * The two carried byte-identical copies of this, which {@link api.simplified.hypixel.response.skyblock.SkyBlockMember#getTotalWeight()}
+ * The two carried byte-identical copies of this, which {@link SkyBlockMember#getTotalWeight()}
  * sums together - so a divergence between them would have been invisible in the total.
  */
 interface DungeonWeighted extends Experience, Weighted {
