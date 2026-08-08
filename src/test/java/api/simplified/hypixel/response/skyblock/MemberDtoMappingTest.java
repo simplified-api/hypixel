@@ -20,9 +20,9 @@ import api.simplified.hypixel.response.skyblock.member.crimson.Kuudra;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonRun;
+import api.simplified.hypixel.response.skyblock.member.dungeon.Dungeons;
 import api.simplified.hypixel.response.skyblock.member.dungeon.Floor;
 import api.simplified.hypixel.response.skyblock.member.dungeon.FloorData;
-import api.simplified.hypixel.response.skyblock.member.dungeon.Dungeons;
 import api.simplified.hypixel.response.skyblock.member.foraging.Foraging;
 import api.simplified.hypixel.response.skyblock.member.foraging.HeartOfTheForest;
 import api.simplified.hypixel.response.skyblock.member.hoppity.ChocolateFactory;
@@ -77,14 +77,16 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Verifies the member DTO field mappings against the bundled API response.
  * <p>
- * Subtrees are decoded individually because a whole {@link SkyBlockMember} runs
- * {@code postInit} against the SkyBlock model repositories, which need a live JPA
- * session this test deliberately does not stand up.
+ * Most tests decode a subtree because that is the smallest thing that carries the mapping under
+ * test. A whole {@link SkyBlockMember} decodes here too: binding no longer runs any derivation, so
+ * the SkyBlock model repositories are reached only by the accessors that need them, and only when
+ * something asks.
  */
 class MemberDtoMappingTest {
 
@@ -1333,18 +1335,54 @@ class MemberDtoMappingTest {
     }
 
     @Test
-    @DisplayName("the accessory bag loads the member's talisman bag before it parses it")
-    void accessoryBagLoadsItsContentsFirst() {
+    @DisplayName("a whole member decodes with no session, and wires the accessory bag on access")
+    void decodesWholeMember() {
         SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
-        AccessoryBag bag = member.getAccessoryBag();
         String talismanBag = member.getInventory().getBags().getAccessories().getRawData();
 
         assertThat(talismanBag.isEmpty(), is(false));
 
-        // initialize() read `contents` eighty lines before assigning it, so it always parsed the empty
-        // default and threw NbtException on the first statement of every member's postInit
-        assertThrows(JpaException.class, () -> bag.initialize(member));
-        assertThat(bag.getContents().getRawData(), is(equalTo(talismanBag)));
+        // initialize() ran at bind time and read `contents` eighty lines before assigning it, so it
+        // parsed the empty default and threw on the first statement of every member's postInit
+        assertThat(member.getAccessoryBag().getContents().getRawData(), is(equalTo(talismanBag)));
+
+        // the parse behind it is the only part that still needs a repository, and only on demand
+        assertThrows(JpaException.class, () -> member.getAccessoryBag().getDetectedAccessories());
+
+        assertThat(member.getSkills(), is(notNullValue()));
+    }
+
+    @Test
+    @DisplayName("an accessory bag decoded on its own stays empty instead of throwing")
+    void mapsStandaloneAccessoryBag() {
+        AccessoryBag bag = decodePristine("accessory_bag_storage", AccessoryBag.class);
+
+        // no member ever calls initialize here, so there is no talisman bag to parse
+        assertThat(bag.getContents().getRawData(), is(equalTo("")));
+        assertThat(bag.getDetectedAccessories(), is(empty()));
+        assertThat(bag.getAccessories(), is(empty()));
+        assertThat(bag.getMagicalPower(), is(equalTo(0)));
+    }
+
+    @Test
+    @DisplayName("collection tiers index in one pass, keep colons, and memoise")
+    void mapsCollectionUnlocked() {
+        SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
+        ConcurrentMap<String, Integer> unlocked = member.getCollectionUnlocked();
+
+        assertThat(unlocked.size(), is(equalTo(member.getCollection().size())));
+        assertThat(unlocked.size(), is(equalTo(100)));
+        assertThat(unlocked.get("WHEAT"), is(equalTo(11)));
+
+        // the id carries a colon and an underscore of its own, so splitting anywhere but the LAST
+        // underscore truncates it - INK_SACK:3 and INK_SACK are different collections
+        assertThat(unlocked.get("INK_SACK:3"), is(equalTo(9)));
+
+        // a collected item with nothing claimed is tier zero rather than absent, and the 83 entries
+        // spelled _-1 are excluded rather than read as a negative maximum
+        assertThat(unlocked.values().stream().filter(tier -> tier == 0).count(), is(equalTo(11L)));
+
+        assertThat(member.getCollectionUnlocked(), is(sameInstance(unlocked)));
     }
 
 }

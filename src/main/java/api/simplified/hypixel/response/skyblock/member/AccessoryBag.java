@@ -31,47 +31,86 @@ public class AccessoryBag {
 
     @SerializedName("bag_upgrades_purchased")
     private int bagUpgradesPurchased;
-    private transient NbtContent contents = new NbtContent();
-    private transient @NotNull ConcurrentList<AccessoryData> detectedAccessories = Concurrent.newUnmodifiableList();
-    private transient @NotNull ConcurrentList<AccessoryData> accessories = Concurrent.newUnmodifiableList();
+
+    // Member-scoped values, supplied by initialize because they live outside this node
+    private transient @NotNull NbtContent contents = new NbtContent();
+    @Getter(AccessLevel.NONE)
+    private transient boolean consumedPrism;
+    @Getter(AccessLevel.NONE)
+    private transient int abiphoneContacts;
+
+    @Getter(AccessLevel.NONE)
+    private transient ConcurrentList<AccessoryData> detectedAccessories;
+    @Getter(AccessLevel.NONE)
+    private transient ConcurrentList<AccessoryData> accessories;
 
     // Power
     @SerializedName("selected_power")
     private @NotNull Optional<String> selectedPowerId = Optional.empty();
     @SerializedName("unlocked_powers")
     private @NotNull ConcurrentList<String> unlockedPowerIds = Concurrent.newUnmodifiableList();
-    private transient @NotNull ConcurrentMap<String, Double> selectedPowerStats = Concurrent.newUnmodifiableMap();
+    @Getter(AccessLevel.NONE)
+    private transient ConcurrentMap<String, Double> selectedPowerStats;
 
     // Magical Power
     @SerializedName("highest_magical_power")
     private int highestMagicalPower;
-    private transient int magicalPower;
-    private transient double logComponent;
+    @Getter(AccessLevel.NONE)
+    private transient Integer magicalPower;
 
     // Tuning
     private @NotNull Tuning tuning = new Tuning();
-    private transient int tuningPoints;
 
-    public void initialize(@NotNull SkyBlockMember member) {
-        // Talisman Bag
-        this.contents = member.getInventory().getBags().getAccessories();
+    /**
+     * Supplies the three member-scoped values this bag cannot reach from its own node.
+     *
+     * @param contents the talisman bag item data, stored under the member's inventory
+     * @param consumedPrism whether the rift prism has been consumed
+     * @param abiphoneContacts the abiphone contact count, halved by an equipped abicase
+     * @return this bag
+     */
+    public @NotNull AccessoryBag initialize(@NotNull NbtContent contents, boolean consumedPrism, int abiphoneContacts) {
+        this.contents = contents;
+        this.consumedPrism = consumedPrism;
+        this.abiphoneContacts = abiphoneContacts;
+        return this;
+    }
 
-        // Read Accessory Bag
-        this.detectedAccessories = this.getContents()
-            .getNbtData()
-            .<CompoundTag>getListTag("i")
-            .stream()
-            .filter(CompoundTag::notEmpty)
-            .flatMap(compoundTag -> SkyBlockData.getRepository(Accessory.class)
-                .findFirst(
-                    Accessory::getId,
-                    compoundTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue()
-                )
-                .map(accessory -> Pair.of(accessory, compoundTag))
-                .stream()
-            )
-            .map(entry -> new AccessoryData(entry.getKey(), entry.getValue()))
-            .collect(Concurrent.toList());
+    /**
+     * Accessories parsed out of the talisman bag and resolved against the accessory repository,
+     * empty for a bag decoded on its own
+     */
+    public @NotNull ConcurrentList<AccessoryData> getDetectedAccessories() {
+        if (this.detectedAccessories == null) {
+            this.detectedAccessories = this.contents.getRawData().isEmpty()
+                ? Concurrent.newUnmodifiableList()
+                : this.contents
+                    .getNbtData()
+                    .<CompoundTag>getListTag("i")
+                    .stream()
+                    .filter(CompoundTag::notEmpty)
+                    .flatMap(compoundTag -> SkyBlockData.getRepository(Accessory.class)
+                        .findFirst(
+                            Accessory::getId,
+                            compoundTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue()
+                        )
+                        .map(accessory -> Pair.of(accessory, compoundTag))
+                        .stream()
+                    )
+                    .map(entry -> new AccessoryData(entry.getKey(), entry.getValue()))
+                    .collect(Concurrent.toList());
+        }
+
+        return this.detectedAccessories;
+    }
+
+    /**
+     * The detected accessories that count toward magical power, with the lower-ranked members of each
+     * family dropped
+     */
+    public @NotNull ConcurrentList<AccessoryData> getAccessories() {
+        if (this.accessories != null)
+            return this.accessories;
 
         // Store Families
         ConcurrentMap<String, ConcurrentSet<Accessory>> familyAccessoryDataMap = Concurrent.newMap();
@@ -128,42 +167,65 @@ public class AccessoryBag {
             })
             .collect(Concurrent.toList());
 
-        // Calculate Magical Power
-        int calculatedMagicalPower = this.getAccessories()
-            .stream()
-            .mapToInt(accessoryData -> this.handleMagicalPower(accessoryData, member))
-            .sum();
+        return this.accessories;
+    }
 
-        // Rift Prism
-        if (member.getRift().getAccess().hasConsumedPrism())
-            calculatedMagicalPower += 11;
+    /**
+     * Magical power granted by the counting accessories, plus the rift prism bonus
+     */
+    public int getMagicalPower() {
+        if (this.magicalPower == null) {
+            int calculated = this.getAccessories()
+                .stream()
+                .mapToInt(this::handleMagicalPower)
+                .sum();
 
-        this.magicalPower = calculatedMagicalPower;
-        this.tuningPoints = this.magicalPower / 10;
-        this.logComponent = Math.pow(Math.log(1 + (0.0019 * this.magicalPower)), 1.2);
-        //this.magicalPowerMultiplier = 29.97 * Math.pow(Math.log(1 + (0.0019 * this.magicalPower)), 1.2);
+            // Rift Prism
+            if (this.consumedPrism)
+                calculated += 11;
 
-        // Power Stats
-        ConcurrentMap<String, Double> stats = this.getSelectedPower()
-            .stream()
-            .flatMap(power -> power.getBaseValues().stream())
-            .map(entry -> Pair.of(
-                entry.getKey(),
-                SkyBlockData.getRepository(Stat.class)
-                    .findFirstOrNull(Stat::getId, entry.getKey())
-                    .getPowerCoefficient() * this.getLogComponent() * entry.getValue()
-            ))
-            .collect(Concurrent.toUnmodifiableMap());
+            this.magicalPower = calculated;
+        }
 
-        this.getSelectedPower().ifPresent(power -> power.getBonuses()
-            .forEach((statId, value) -> stats.merge(
-                statId,
-                value,
-                Double::sum
-            ))
-        );
+        return this.magicalPower;
+    }
 
-        this.selectedPowerStats = stats;
+    public int getTuningPoints() {
+        return this.getMagicalPower() / 10;
+    }
+
+    public double getLogComponent() {
+        return Math.pow(Math.log(1 + (0.0019 * this.getMagicalPower())), 1.2);
+    }
+
+    /**
+     * Stats granted by the selected power, scaled by its coefficient and this bag's magical power
+     */
+    public @NotNull ConcurrentMap<String, Double> getSelectedPowerStats() {
+        if (this.selectedPowerStats == null) {
+            ConcurrentMap<String, Double> stats = this.getSelectedPower()
+                .stream()
+                .flatMap(power -> power.getBaseValues().stream())
+                .map(entry -> Pair.of(
+                    entry.getKey(),
+                    SkyBlockData.getRepository(Stat.class)
+                        .findFirstOrNull(Stat::getId, entry.getKey())
+                        .getPowerCoefficient() * this.getLogComponent() * entry.getValue()
+                ))
+                .collect(Concurrent.toUnmodifiableMap());
+
+            this.getSelectedPower().ifPresent(power -> power.getBonuses()
+                .forEach((statId, value) -> stats.merge(
+                    statId,
+                    value,
+                    Double::sum
+                ))
+            );
+
+            this.selectedPowerStats = stats;
+        }
+
+        return this.selectedPowerStats;
     }
 
     public @NotNull Optional<Power> getSelectedPower() {
@@ -182,7 +244,7 @@ public class AccessoryBag {
             .collect(Concurrent.toUnmodifiableList());
     }
 
-    private int handleMagicalPower(@NotNull AccessoryData accessoryData, @NotNull SkyBlockMember member) {
+    private int handleMagicalPower(@NotNull AccessoryData accessoryData) {
         int magicalPower = accessoryData.getRarity().getMagicPower();
 
         // TODO: Dynamic
@@ -190,7 +252,7 @@ public class AccessoryBag {
             magicalPower *= 2;
 
         if (accessoryData.getAccessory().getId().equals("ABICASE"))
-            magicalPower += member.getCrimsonIsle().getAbiphone().getContacts().size() / 2;
+            magicalPower += this.abiphoneContacts / 2;
 
         return magicalPower;
     }

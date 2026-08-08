@@ -21,24 +21,23 @@ import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import dev.simplified.collection.tuple.pair.Pair;
-import dev.simplified.gson.PostInit;
 import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.SerializedPath;
+import dev.simplified.util.NumberUtil;
 import dev.simplified.util.mutable.MutableDouble;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
 @Getter
 @NoArgsConstructor
-public class SkyBlockMember implements PostInit {
+public class SkyBlockMember {
 
     // Profile
     @SerializedName("player_id")
@@ -59,6 +58,7 @@ public class SkyBlockMember implements PostInit {
     @SerializedName("player_data")
     private @NotNull PlayerData playerData = new PlayerData();
     private @NotNull Currencies currencies = new Currencies();
+    @Getter(AccessLevel.NONE)
     private transient Skills skills;
 
     // Combat
@@ -118,6 +118,7 @@ public class SkyBlockMember implements PostInit {
     private @NotNull Inventory inventory = new Inventory();
     @SerializedName("shared_inventory")
     private @NotNull SharedInventory sharedInventory = new SharedInventory();
+    @Getter(AccessLevel.NONE)
     @SerializedName("accessory_bag_storage")
     private @NotNull AccessoryBag accessoryBag = new AccessoryBag();
     @SerializedName("item_data")
@@ -131,7 +132,8 @@ public class SkyBlockMember implements PostInit {
 
     // Collection
     private @NotNull ConcurrentMap<String, Long> collection = Concurrent.newMap();
-    private transient @NotNull ConcurrentMap<String, Integer> collectionUnlocked = Concurrent.newMap();
+    @Getter(AccessLevel.NONE)
+    private transient ConcurrentMap<String, Integer> collectionUnlocked;
 
     // Statistics
     @SerializedName("player_stats")
@@ -144,22 +146,57 @@ public class SkyBlockMember implements PostInit {
     @Extract("objectives.tutorial")
     private @NotNull ConcurrentList<String> tutorialObjectives = Concurrent.newList();
 
-    @Override
-    public void postInit() {
-        this.accessoryBag.initialize(this);
-        this.skills = new Skills(this.getPlayerData().getSkillExperience(), this);
+    /**
+     * Accessory bag, wired with the three member-scoped values it cannot reach from its own node
+     */
+    public @NotNull AccessoryBag getAccessoryBag() {
+        return this.accessoryBag.initialize(
+            this.getInventory().getBags().getAccessories(),
+            this.getRift().getAccess().hasConsumedPrism(),
+            this.getCrimsonIsle().getAbiphone().getContacts().size()
+        );
+    }
 
-        this.collectionUnlocked = this.getCollection()
-            .stream()
-            .map((itemId, value) -> Pair.of(itemId, this.getPlayerData()
-                .getUnlockedCollectionTiers()
-                .stream()
-                .filter(tier -> tier.matches(String.format("^%s_[\\d]+$", itemId)))
-                .map(tier -> Integer.parseInt(tier.replace(String.format("%s_", itemId), "")))
-                .max(Comparator.naturalOrder())
-                .orElse(0)
-            ))
-            .collect(Concurrent.toUnmodifiableMap());
+    /**
+     * Skill levels derived from this member's skill experience
+     */
+    public @NotNull Skills getSkills() {
+        if (this.skills == null)
+            this.skills = new Skills(this.getPlayerData().getSkillExperience(), this);
+
+        return this.skills;
+    }
+
+    /**
+     * Highest unlocked collection tier per collected item id, defaulting to zero when the item is
+     * collected but no tier is claimed
+     * <p>
+     * One pass over the tier strings rather than one regex per collected item, splitting each at its
+     * last underscore - the item id may itself carry underscores and colons.
+     */
+    public @NotNull ConcurrentMap<String, Integer> getCollectionUnlocked() {
+        if (this.collectionUnlocked == null) {
+            ConcurrentMap<String, Integer> highestTiers = Concurrent.newMap();
+
+            for (String unlocked : this.getPlayerData().getUnlockedCollectionTiers()) {
+                int split = unlocked.lastIndexOf('_');
+                if (split < 0) continue;
+
+                String itemId = unlocked.substring(0, split);
+                Integer tier = NumberUtil.tryParseInt(unlocked.substring(split + 1));
+
+                // a negative tier marks a collection that is visible with nothing claimed, which is
+                // tier zero - every id carrying one also carries its positive tiers
+                if (tier == null || tier < 0 || !this.getCollection().containsKey(itemId)) continue;
+
+                highestTiers.merge(itemId, tier, Math::max);
+            }
+
+            this.getCollection().forEach((itemId, collected) -> highestTiers.putIfAbsent(itemId, 0));
+            this.collectionUnlocked = highestTiers.toUnmodifiable();
+        }
+
+        return this.collectionUnlocked;
     }
 
     public @NotNull ConcurrentList<Integer> getCraftedMinions(@NotNull String itemId) {
