@@ -2,7 +2,7 @@
 
 What has landed against `20-implementation-plan.md`, and what the open questions in its §18 and
 `README.md` §9 turned out to be once executed. Blockers live in
-`s20-dark-feature-fixes-BLOCKED.md`; this file is the ledger.
+`s20-dark-feature-fixes-RESOLVED.md`; this file is the ledger.
 
 ## State on arrival
 
@@ -25,12 +25,19 @@ Read the pack's baseline table as history, not as current state.
 | `s20-objectives-catchall` | **done** | differ 792 to 0, exit 0 |
 | `s20-existing-annotation-sweep` | **done** | 4 commits rather than 8 - commit 8 had already landed |
 | `s20-shape-retirements` | **done** | `JacobsContest`, `Dungeons`; `implements PostInit` 4 to 2 |
+| `s20-derivation-retirements` | **done** | `Bestiary`, `SkyBlockMember`; **`implements PostInit` in `response/` is 0** |
 
 The differ is a hard gate from here. `python scripts/json_dto_diff.py` exits 0 today; any later stage
 that raises the count above 0 has broken a binding.
 
-`implements PostInit` in `response/` is down to four - `Bestiary`, `Dungeons`, `JacobsContest`,
-`SkyBlockMember` - which is the count the plan predicts after this stage.
+`implements PostInit` in `response/` is **zero**, which is the pack's headline metric. The interface
+survives unimplemented, deliberately - `JpaRepository` calls it manually before an upsert and those
+entities use field access, so a persisted derived column genuinely cannot be lazy.
+
+A whole `SkyBlockMember` now decodes with no JPA session stood up, which the test class previously
+refused to attempt. Binding runs no derivation at all; the repositories are reached only by the
+accessors that need them, and only when something asks. The class javadoc that documented the old
+workaround is rewritten.
 
 The `Election` regression guard is real rather than circular: the four cycle bounds for year 278 were
 read off the hook before it was deleted and are asserted as literals
