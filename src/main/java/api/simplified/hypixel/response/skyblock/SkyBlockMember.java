@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock;
 
+import api.simplified.hypixel.common.IdTiers;
 import api.simplified.hypixel.common.Weight;
 import api.simplified.hypixel.response.skyblock.member.*;
 import api.simplified.hypixel.response.skyblock.member.attribute.AttributeShards;
@@ -24,13 +25,13 @@ import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.SerializedPath;
-import dev.simplified.util.NumberUtil;
 import dev.simplified.util.mutable.MutableDouble;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -176,23 +177,22 @@ public class SkyBlockMember {
      */
     public @NotNull ConcurrentMap<String, Integer> getCollectionUnlocked() {
         if (this.collectionUnlocked == null) {
+            ConcurrentMap<String, ConcurrentList<Integer>> unlocked = IdTiers.group(
+                this.getPlayerData().getUnlockedCollectionTiers()
+            );
             ConcurrentMap<String, Integer> highestTiers = Concurrent.newMap();
 
-            for (String unlocked : this.getPlayerData().getUnlockedCollectionTiers()) {
-                int split = unlocked.lastIndexOf('_');
-                if (split < 0) continue;
+            this.getCollection().forEach((itemId, collected) -> highestTiers.put(
+                itemId,
+                unlocked.getOrDefault(itemId, Concurrent.newList())
+                    .stream()
+                    // a negative tier marks a collection that is visible with nothing claimed, which
+                    // is tier zero - every id carrying one also carries its positive tiers
+                    .filter(tier -> tier >= 0)
+                    .max(Comparator.naturalOrder())
+                    .orElse(0)
+            ));
 
-                String itemId = unlocked.substring(0, split);
-                Integer tier = NumberUtil.tryParseInt(unlocked.substring(split + 1));
-
-                // a negative tier marks a collection that is visible with nothing claimed, which is
-                // tier zero - every id carrying one also carries its positive tiers
-                if (tier == null || tier < 0 || !this.getCollection().containsKey(itemId)) continue;
-
-                highestTiers.merge(itemId, tier, Math::max);
-            }
-
-            this.getCollection().forEach((itemId, collected) -> highestTiers.putIfAbsent(itemId, 0));
             this.collectionUnlocked = highestTiers.toUnmodifiable();
         }
 

@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock.member;
 
+import api.simplified.hypixel.common.IdTiers;
 import com.google.gson.annotations.SerializedName;
 import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
@@ -53,11 +54,8 @@ public class PlayerData {
     private @NotNull ConcurrentList<CenturyCake> centuryCakes = Concurrent.newList();
 
     public @NotNull ConcurrentList<Integer> getCraftedMinions(@NotNull String itemId) {
-        return this.getCraftedMinions()
-            .stream()
-            .filter(item -> item.matches(String.format("^%s_[\\d]+$", itemId)))
-            .map(item -> Integer.parseInt(item.replace(String.format("%s_", itemId), "")))
-            .collect(Concurrent.toList())
+        return IdTiers.group(this.getCraftedMinions())
+            .getOrDefault(itemId, Concurrent.newList())
             .sorted(Comparator.naturalOrder());
     }
 
