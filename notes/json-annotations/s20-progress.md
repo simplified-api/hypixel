@@ -26,6 +26,7 @@ Read the pack's baseline table as history, not as current state.
 | `s20-existing-annotation-sweep` | **done** | 4 commits rather than 8 - commit 8 had already landed |
 | `s20-shape-retirements` | **done** | `JacobsContest`, `Dungeons`; `implements PostInit` 4 to 2 |
 | `s20-derivation-retirements` | **done** | `Bestiary`, `SkyBlockMember`; **`implements PostInit` in `response/` is 0** |
+| `s20-duplication-sweep` | **done** | 6 of 7 commits; the trophy-fish follow-up declined, see below |
 
 The differ is a hard gate from here. `python scripts/json_dto_diff.py` exits 0 today; any later stage
 that raises the count above 0 has broken a binding.
@@ -103,6 +104,23 @@ assert and the safer form as an alternative; the safer form was taken. Dropping 
 `@RequiredArgsConstructor` generate a no-arg constructor, which then collides with
 `@NoArgsConstructor` - so the pair is `@AllArgsConstructor` + `@NoArgsConstructor(PRIVATE)`, not
 `@RequiredArgsConstructor` + `@NoArgsConstructor`.
+
+**`s20-duplication-sweep` landed six of its seven commits, and one differently than written.**
+Commits 5 and 6 merged: unioning the npc quests and typing the crimson timestamps are the same edit,
+because `Optional<RealTime>` is what keeps the union honest - a raw `long` would have invented a zero
+completion for the npc that records completion as a flag and emitted it on write.
+
+Two declines, both on the pack's own reasoning rather than against it:
+
+- **`Bestiary` keeps its own `<id>_<n>` parse.** The shared grouping returns id to numbers, but
+  `Bestiary` needs the original key back to look the mob up in `kills` and `deaths`, so routing it
+  through would mean rebuilding the key it started from. Two of the three sites adopted it.
+- **`f06-trophyfish-tier-columns` not attempted.** `20-implementation-plan.md` §11 makes it
+  conditional on verifying against a real response, and `trophy_fish` is absent from the fixture. The
+  plan's own instruction is to drop it rather than work around it.
+
+`Dungeons` is also deliberately left out of the weighted-group interface: it needs the same four
+aggregates twice over two collections, and a class implements a generic interface once.
 
 ## Still open
 
