@@ -8,9 +8,9 @@ import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Lenient;
-import dev.simplified.gson.PostInit;
 import dev.simplified.gson.annotation.SerializedPath;
 import dev.simplified.util.NumberUtil;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -23,7 +23,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Getter
-public class Bestiary implements PostInit {
+public class Bestiary {
 
     private static final @NotNull Pattern MOB_PATTERN = Pattern.compile("^(.*)_([0-9]+)$");
     @SerializedName("migrated_stats")
@@ -42,7 +42,8 @@ public class Bestiary implements PostInit {
     private @NotNull ConcurrentMap<String, Integer> kills = Concurrent.newMap();
     @Lenient
     private @NotNull ConcurrentMap<String, Integer> deaths = Concurrent.newMap();
-    private transient @NotNull ConcurrentList<Family> families = Concurrent.newList();
+    @Getter(AccessLevel.NONE)
+    private transient ConcurrentList<Family> families;
 
     public int getMilestone() {
         return this.getUnlocked() / 10;
@@ -55,31 +56,41 @@ public class Bestiary implements PostInit {
             .sum();
     }
 
-    @Override
-    public void postInit() {
-        // one mob per distinct key, so a mob carrying both a kill and a death count is not counted twice,
-        // and one matcher per key, so the groups are only read off a matcher that has matched
-        ConcurrentList<Mob> mobs = Stream.concat(this.kills.keySet().stream(), this.deaths.keySet().stream())
-            .distinct()
-            .map(MOB_PATTERN::matcher)
-            .filter(Matcher::matches)
-            .map(matcher -> new Mob(
-                matcher.group(1).toUpperCase(),
-                NumberUtil.tryParseInt(matcher.group(2)),
-                this.kills.getOrDefault(matcher.group(), 0),
-                this.deaths.getOrDefault(matcher.group(), 0)
-            ))
-            .collect(Concurrent.toUnmodifiableList());
+    /**
+     * Every bestiary family, each carrying the mobs of its own that this member has fought
+     * <p>
+     * Memoised because {@link Family#getType()} and the three accessors behind it re-query the
+     * repository per call, and {@link #getUnlocked()} walks every family. The two racers compute the
+     * same value from bound fields, so the race is benign.
+     */
+    public @NotNull ConcurrentList<Family> getFamilies() {
+        if (this.families == null) {
+            // one mob per distinct key, so a mob carrying both a kill and a death count is not counted
+            // twice, and one matcher per key, so groups are only read off a matcher that has matched
+            ConcurrentList<Mob> mobs = Stream.concat(this.kills.keySet().stream(), this.deaths.keySet().stream())
+                .distinct()
+                .map(MOB_PATTERN::matcher)
+                .filter(Matcher::matches)
+                .map(matcher -> new Mob(
+                    matcher.group(1).toUpperCase(),
+                    NumberUtil.tryParseInt(matcher.group(2)),
+                    this.kills.getOrDefault(matcher.group(), 0),
+                    this.deaths.getOrDefault(matcher.group(), 0)
+                ))
+                .collect(Concurrent.toUnmodifiableList());
 
-        this.families = SkyBlockData.getRepository(BestiaryFamily.class)
-            .stream()
-            .map(family -> new Family(
-                family.getId(),
-                mobs.stream()
-                    .filter(mob -> mob.getFamily().equals(family))
-                    .collect(Concurrent.toUnmodifiableList())
-            ))
-            .collect(Concurrent.toUnmodifiableList());
+            this.families = SkyBlockData.getRepository(BestiaryFamily.class)
+                .stream()
+                .map(family -> new Family(
+                    family.getId(),
+                    mobs.stream()
+                        .filter(mob -> mob.getFamily().equals(family))
+                        .collect(Concurrent.toUnmodifiableList())
+                ))
+                .collect(Concurrent.toUnmodifiableList());
+        }
+
+        return this.families;
     }
 
     @Getter

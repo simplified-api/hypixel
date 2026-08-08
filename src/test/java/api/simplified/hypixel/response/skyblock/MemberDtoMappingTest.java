@@ -1314,21 +1314,22 @@ class MemberDtoMappingTest {
     }
 
     /**
-     * Pins where the bestiary hook stops in a session-less test.
+     * Pins where the bestiary join stops in a session-less test.
      * <p>
      * The mob parse used to throw {@link IllegalStateException} on the very first key, because the
      * matcher that ran {@code matches()} and the matcher the groups were read from were two different
-     * objects. That throw landed in {@code PostInitTypeAdapterFactory}'s empty catch, so
-     * {@code families} was empty for every profile ever decoded. The parse now runs to completion and
-     * the hook reaches the family repository - which this test deliberately does not stand up.
+     * objects - and it ran at bind time, so the throw landed in a swallowing catch and left
+     * {@code families} empty for every profile ever decoded. It is now reached only on demand, so the
+     * parse completes and the repository is the honest boundary for a test that stands up no session.
      */
     @Test
     @DisplayName("bestiary parses every mob key before it reaches the family repository")
     void bestiaryParsesEveryMobKey() {
         Bestiary bestiary = decodePristine("bestiary", Bestiary.class);
 
-        assertThrows(JpaException.class, bestiary::postInit);
-        assertThat(bestiary.getFamilies(), is(empty()));
+        // decoding no longer touches the repository at all
+        assertThat(bestiary.getKills().isEmpty(), is(false));
+        assertThrows(JpaException.class, bestiary::getFamilies);
     }
 
     @Test
