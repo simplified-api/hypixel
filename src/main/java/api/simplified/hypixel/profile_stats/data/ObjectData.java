@@ -1,20 +1,20 @@
 package api.simplified.hypixel.profile_stats.data;
 
-import dev.sbs.skyblockdata.SkyBlockData;
-import dev.sbs.skyblockdata.common.Rarity;
-import dev.sbs.skyblockdata.model.BonusItemStat;
-import dev.sbs.skyblockdata.model.Gemstone;
-import dev.sbs.skyblockdata.model.Item;
-import dev.sbs.skyblockdata.model.Reforge;
-import dev.sbs.skyblockdata.model.Stat;
+import api.simplified.skyblock.SkyBlockData;
+import api.simplified.skyblock.common.Rarity;
+import api.simplified.skyblock.model.BonusItemStat;
+import api.simplified.skyblock.model.Gemstone;
+import api.simplified.skyblock.model.Item;
+import api.simplified.skyblock.model.Reforge;
+import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.util.StringUtil;
-import lib.minecraft.nbt.tag.Tag;
 import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.IntTag;
 import lib.minecraft.nbt.tag.StringTag;
+import lib.minecraft.nbt.tag.Tag;
 import lombok.Getter;
 
 import java.time.Instant;

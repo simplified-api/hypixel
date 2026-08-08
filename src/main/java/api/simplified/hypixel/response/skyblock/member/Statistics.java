@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.skyblock.member;
 
 import api.simplified.hypixel.common.EnumLookup;
+import api.simplified.skyblock.common.Rarity;
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.skyblockdata.common.Rarity;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Capture;

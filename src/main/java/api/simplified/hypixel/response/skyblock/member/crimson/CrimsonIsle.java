@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.skyblock.member.crimson;
 
+import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.skyblockdata.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;

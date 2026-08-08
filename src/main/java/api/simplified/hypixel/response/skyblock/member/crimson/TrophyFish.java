@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.skyblock.member.crimson;
 
-import dev.sbs.skyblockdata.SkyBlockData;
-import dev.sbs.skyblockdata.common.Rarity;
-import dev.sbs.skyblockdata.model.Zone;
+import api.simplified.skyblock.SkyBlockData;
+import api.simplified.skyblock.common.Rarity;
+import api.simplified.skyblock.model.Zone;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;

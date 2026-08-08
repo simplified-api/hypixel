@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.skyblock.member.attribute;
 
+import api.simplified.skyblock.SkyBlockData;
+import api.simplified.skyblock.model.Region;
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.skyblockdata.SkyBlockData;
-import dev.sbs.skyblockdata.model.Region;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 

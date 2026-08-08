@@ -1,6 +1,6 @@
 package api.simplified.hypixel.response.skyblock;
 
-import dev.sbs.skyblockdata.date.SkyBlockDate;
+import api.simplified.skyblock.date.SkyBlockDate;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import lombok.Getter;

@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.skyblock.member.rift;
 
+import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.skyblockdata.date.SkyBlockDate;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;

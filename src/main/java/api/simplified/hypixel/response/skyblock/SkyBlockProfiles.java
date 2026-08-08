@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.skyblock;
 
+import api.simplified.skyblock.common.Profile;
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.skyblockdata.common.Profile;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import lombok.Getter;

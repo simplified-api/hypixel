@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.skyblock.member;
 
+import api.simplified.skyblock.SkyBlockData;
+import api.simplified.skyblock.model.BestiaryFamily;
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.skyblockdata.SkyBlockData;
-import dev.sbs.skyblockdata.model.BestiaryFamily;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;

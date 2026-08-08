@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.skyblock.election;
 
-import dev.sbs.skyblockdata.date.Season;
-import dev.sbs.skyblockdata.date.SkyBlockDate;
+import api.simplified.skyblock.date.Season;
+import api.simplified.skyblock.date.SkyBlockDate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

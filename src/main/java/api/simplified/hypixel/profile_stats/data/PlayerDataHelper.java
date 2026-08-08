@@ -1,11 +1,11 @@
 package api.simplified.hypixel.profile_stats.data;
 
-import dev.sbs.skyblockdata.common.Rarity;
-import dev.sbs.skyblockdata.date.SkyBlockDate;
-import dev.sbs.skyblockdata.model.BuffEffectsModel;
-import dev.sbs.skyblockdata.model.Gemstone;
-import dev.sbs.skyblockdata.model.Reforge;
-import dev.sbs.skyblockdata.model.Stat;
+import api.simplified.skyblock.common.Rarity;
+import api.simplified.skyblock.date.SkyBlockDate;
+import api.simplified.skyblock.model.BuffEffectsModel;
+import api.simplified.skyblock.model.Gemstone;
+import api.simplified.skyblock.model.Reforge;
+import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.expression.Expression;

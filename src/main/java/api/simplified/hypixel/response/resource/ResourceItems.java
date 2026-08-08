@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.resource;
 
+import api.simplified.skyblock.date.SkyBlockDate;
+import api.simplified.skyblock.model.Item;
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.skyblockdata.date.SkyBlockDate;
-import dev.sbs.skyblockdata.model.Item;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import lombok.Getter;

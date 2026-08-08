@@ -1,10 +1,10 @@
 package api.simplified.hypixel.response.skyblock.member.pet;
 
 import api.simplified.hypixel.common.Experience;
+import api.simplified.skyblock.SkyBlockData;
+import api.simplified.skyblock.common.Rarity;
+import api.simplified.skyblock.model.Pet;
 import com.google.gson.annotations.SerializedName;
-import dev.sbs.skyblockdata.SkyBlockData;
-import dev.sbs.skyblockdata.common.Rarity;
-import dev.sbs.skyblockdata.model.Pet;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;

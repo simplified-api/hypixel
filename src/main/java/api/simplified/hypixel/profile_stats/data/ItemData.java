@@ -1,12 +1,12 @@
 package api.simplified.hypixel.profile_stats.data;
 
-import dev.sbs.skyblockdata.SkyBlockData;
-import dev.sbs.skyblockdata.model.BonusItemStat;
-import dev.sbs.skyblockdata.model.BonusReforgeStat;
-import dev.sbs.skyblockdata.model.Enchantment;
-import dev.sbs.skyblockdata.model.HotPotatoStat;
-import dev.sbs.skyblockdata.model.Item;
-import dev.sbs.skyblockdata.model.Stat;
+import api.simplified.skyblock.SkyBlockData;
+import api.simplified.skyblock.model.BonusItemStat;
+import api.simplified.skyblock.model.BonusReforgeStat;
+import api.simplified.skyblock.model.Enchantment;
+import api.simplified.skyblock.model.HotPotatoStat;
+import api.simplified.skyblock.model.Item;
+import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
