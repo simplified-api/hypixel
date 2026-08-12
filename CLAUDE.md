@@ -21,15 +21,20 @@ declaration.
 
 ## Gates
 
-`./gradlew test` is one class, `MemberDtoMappingTest`, and it is the whole gate.
+`./gradlew test` is two classes, `MemberDtoMappingTest` and `ElectionMappingTest`, and they are the
+whole gate.
 
-**A fresh clone cannot run it.** The fixture is `src/main/resources/craftedfury.json`, gitignored and
-untracked, so `@BeforeAll` throws `craftedfury.json is missing from the classpath` and every test
-fails together. It sits under `main/resources` rather than `test/resources`, so were it ever tracked
-it would ship inside the jar - which is the reason it is ignored rather than the reason it is
-misplaced.
+**A fresh clone can run only one of them.** `MemberDtoMappingTest` reads
+`src/main/resources/craftedfury.json`, gitignored and untracked, so `@BeforeAll` throws
+`craftedfury.json is missing from the classpath` and every test in it fails together. It sits under
+`main/resources` rather than `test/resources`, so were it ever tracked it would ship inside the jar -
+which is the reason it is ignored rather than the reason it is misplaced.
 
-The suite reads two members out of it: the first member of `profiles[0]` as the sparse case, the
+`ElectionMappingTest` reads `src/test/resources/elections.json`, which is **tracked**. It is an
+unauthenticated resource carrying mayors, perk text and public vote counts and no player data at all,
+so nothing argues for keeping it out, and under `test/resources` it never reaches the jar.
+
+`MemberDtoMappingTest` reads two members out of its capture: the first member of `profiles[0]` as the sparse case, the
 first of `profiles[1]` as the populated one. Many assertions are pinned to that one capture - 792
 objectives, 810 Jacob's contests, 100 collections, 29 rift counters, a `CATACOMBS` weight of
 `200.0 / 2.03`, a `HEALER` weight of `90.6`. A different fixture breaks them by design; each is a
@@ -154,6 +159,30 @@ Voting opens late summer 27 of year N and closes late spring 27 of N+1; the term
 for a full year, so `term.start == voting.end` exactly. Both are computed on demand from `year`,
 which is what lets gson bind the no-arg constructor without leaving a half-built object.
 
+A ballot is a `ConcurrentList<Candidate>` on the `Election` itself, which is where the wire puts it -
+under `mayor.election` and under `current` alike. It stays outside identity for the same reason the
+cycles do: an election is its year, and two elections of one year stay equal however their candidate
+lists differ. The whole package is three files - `Candidate` (plus its nested `Perk`), `Election`
+(plus its nested `Cycle`) and `Mayor`. A candidate is one shape whether it stands on a ballot, sits
+as minister or holds the office; `votes` is zero on the two the wire names outside any ballot.
+
+**The wire spells a candidate's perks two ways.** Every node but the sitting minister sends `perks`
+as an array; the minister sends the one perk it contributes as a lone `perk` **object**. Each
+spelling binds to its own field and `getPerks()` reads whichever arrived, so the shape the wire chose
+is the shape it reads back as. Binding both to one list with `@SerializedName(alternate = ...)` cannot
+work - nothing in `dev.simplified.gson` coerces an object into an array, so the collection adapter
+throws `Expected BEGIN_ARRAY but was BEGIN_OBJECT` and it propagates out through the `Optional`.
+
+A ballot candidate's perks each carry a `minister` flag with **exactly one true**. The sitting
+mayor's own perks carry no flag at all, because they are already in force, so `getMinisterPerk()` is
+empty there and reads the flagged entry everywhere else.
+
+`api.simplified.skyblock.date.Election` is a character-for-character duplicate of this one, minus the
+ballot, and is already on the compile classpath. Inheriting from it saves one type and about ninety
+lines, and it does bind - but that copy is a calendar type produced by walking `SkyBlockDate`, with
+no wire behind it, and inheriting would make `year` a bound field arriving from a `strictly()`-pinned
+artifact where an upstream change fails silently at the Bound layer instead of loudly at compile time.
+
 ## Debugging a mismatch
 
 1. Decide which layer it is - bound, derived, or resolved - before reading any code.
@@ -169,6 +198,7 @@ which is what lets gson bind the no-arg constructor without leaving a half-built
 - `build/`, `.gradle/` - Gradle output and daemon state.
 - `.schema/` - generated JPA schema, excluded from the IDE module by `build.gradle.kts`.
 - `craftedfury.json` - the untracked fixture. Never track it; it is another player's inventory.
+  `src/test/resources/elections.json` is the opposite case and is tracked - public resource data.
 - `notes/` - gitignored working notes on the gson-extras and json-annotations efforts. Read one when
   picking up a live effort; nothing downstream reads them, so do not cite a `notes/` path or a note's
   entry number from a tracked file - the directory resolves for nobody who clones this.
@@ -185,7 +215,10 @@ which is what lets gson bind the no-arg constructor without leaving a half-built
   having one.
 - Do not split master mode into a second dungeon. It is a `FloorData` on its own floor of the same
   `DungeonData`, and the empty `times_played` is the wire's, not a bug.
-- Do not fold the derived cycles into `Election` equality or `hashCode`.
+- Do not fold the derived cycles into `Election` equality or `hashCode`, and do not fold the ballot
+  in either - it is the election's contents rather than its name.
+- Do not give the minister its own class. It is a `Candidate` whose perk the wire spells singular,
+  and the two spellings are one field pair rather than two types.
 - Do not hand-roll a delimiter parse. `Kuudra.SearchSettings.combatLevel` is `@Split("-")` with a
   `Range` default of `0..60`; the previous `Integer.parseInt` on both halves threw at the caller on an
   absent or malformed range.

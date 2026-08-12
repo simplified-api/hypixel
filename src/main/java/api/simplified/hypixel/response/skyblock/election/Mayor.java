@@ -17,13 +17,13 @@ import java.util.Optional;
 public class Mayor extends Candidate {
 
     /**
-     * Runner-up of the election, whose minister perk runs alongside the mayor's own perks, empty
-     * when the wire reports no minister.
+     * Runner-up of the election, carrying the one perk that runs alongside the mayor's own, and
+     * empty when the wire reports no minister.
      */
-    private @NotNull Optional<VotingCandidate> minister = Optional.empty();
+    private @NotNull Optional<Candidate> minister = Optional.empty();
 
     /**
-     * Election that put this mayor in office, bound from the {@code election} node.
+     * Election that put this mayor in office, together with the ballot it was won on.
      */
     @SerializedName("election")
     private @NotNull Election electionResults = new Election();

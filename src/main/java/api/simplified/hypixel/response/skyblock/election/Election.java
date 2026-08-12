@@ -2,6 +2,8 @@ package api.simplified.hypixel.response.skyblock.election;
 
 import api.simplified.skyblock.date.Season;
 import api.simplified.skyblock.date.SkyBlockDate;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,12 +13,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 /**
- * One SkyBlock mayor election, identified by the year it runs in.
+ * One SkyBlock mayor election, identified by the year it runs in and carrying the candidates
+ * standing on its ballot.
  * <p>
  * Both windows are derived on demand from {@code year} rather than bound, which is what lets gson
  * bind the no-arg constructor without ever leaving a half-built object behind. Identity is the year
- * alone - {@link Cycle} declares no equality of its own, so folding the derived cycles in would make
- * two elections of the same year unequal.
+ * alone - {@link Cycle} declares no equality of its own and a ballot is the election's contents
+ * rather than its name, so folding either in would make two elections of the same year unequal.
  *
  * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Mayor_Election">Mayor Election</a>
  */
@@ -28,6 +31,12 @@ public class Election {
      * SkyBlock year this election runs in.
      */
     private int year;
+
+    /**
+     * Candidates standing on this election's ballot, each carrying the votes cast for it, and empty
+     * on an election named by its year alone.
+     */
+    private @NotNull ConcurrentList<Candidate> candidates = Concurrent.newList();
 
     /**
      * Constructs an election for one SkyBlock year.
@@ -76,7 +85,13 @@ public class Election {
 
     @Override
     public String toString() {
-        return String.format("Election{year=%d, voting=%s, term=%s}", this.getYear(), this.getVoting(), this.getTerm());
+        return String.format(
+            "Election{year=%d, candidates=%d, voting=%s, term=%s}",
+            this.getYear(),
+            this.getCandidates().size(),
+            this.getVoting(),
+            this.getTerm()
+        );
     }
 
     /**

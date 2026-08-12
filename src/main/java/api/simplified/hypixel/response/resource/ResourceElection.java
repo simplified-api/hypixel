@@ -35,7 +35,8 @@ public class ResourceElection {
     private @NotNull Mayor mayor = new Mayor();
 
     /**
-     * The election currently taking votes, absent while voting is closed.
+     * The election currently taking votes, together with the ballot standing in it, absent while
+     * voting is closed.
      */
     @SerializedName("current")
     private @NotNull Optional<Election> currentElection = Optional.empty();
