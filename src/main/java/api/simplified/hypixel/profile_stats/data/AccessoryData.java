@@ -1,6 +1,6 @@
 package api.simplified.hypixel.profile_stats.data;
 
-import api.simplified.skyblock.SkyBlockData;
+import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.Accessory;
 import api.simplified.skyblock.model.BonusItemStat;
@@ -17,6 +17,7 @@ import lib.minecraft.nbt.tag.ListTag;
 import lib.minecraft.nbt.tag.StringTag;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -53,24 +54,24 @@ public class AccessoryData extends ObjectData<AccessoryData.Type> {
     /**
      * Constructs a new {@code AccessoryData} and totals everything the accessory gives outright.
      *
+     * @param reference the reference tables to resolve against
      * @param accessory reference data for the accessory being read
      * @param compoundTag the accessory's NBT tag
      */
-    public AccessoryData(Accessory accessory, CompoundTag compoundTag) {
-        super(accessory.getItem(), compoundTag);
+    public AccessoryData(@NotNull ReferenceSnapshot reference, Accessory accessory, CompoundTag compoundTag) {
+        super(reference, accessory.getItem(), compoundTag);
         this.accessory = accessory;
 
         // Load Enrichment - look up stat by enrichment key from NBT
         String enrichmentKey = compoundTag.getPathOrDefault("tag.ExtraAttributes.talisman_enrichment", StringTag.EMPTY).getValue().toUpperCase();
-        this.enrichmentStat = SkyBlockData.getRepository(Stat.class)
-            .findFirst(Stat::getId, enrichmentKey);
+        this.enrichmentStat = reference.getStat(enrichmentKey);
 
         // Handle Gemstone Stats
         PlayerDataHelper.handleGemstoneBonus(this)
             .forEach((statModel, value) -> this.addBonus(this.getStats(AccessoryData.Type.GEMSTONES).get(statModel), value));
 
         // Handle Stats
-        this.getAccessory().getItem().getStats().forEach((key, value) -> SkyBlockData.getRepository(Stat.class).findFirst(Stat::getId, key)
+        this.getAccessory().getItem().getStats().forEach((key, value) -> reference.getStat(key)
             .ifPresent(statModel -> this.addBonus(this.getStats(AccessoryData.Type.STATS).get(statModel), value)));
 
         // Handle Enrichment Stats
@@ -83,7 +84,7 @@ public class AccessoryData extends ObjectData<AccessoryData.Type> {
             try {
                 byte[] nbtCakeBag = compoundTag.getPathOrDefault("tag.ExtraAttributes.new_year_cake_bag_data", ByteArrayTag.EMPTY).getValue();
                 ListTag<CompoundTag> cakeBagItems = NbtFactory.fromByteArray(nbtCakeBag).getListTag("i");
-                SkyBlockData.getRepository(Stat.class).findFirst(Stat::getId, "HEALTH")
+                reference.getStat("HEALTH")
                     .ifPresent(statModel -> this.addBonus(this.getStats(AccessoryData.Type.CAKE_BAG).get(statModel), cakeBagItems.size()));
             } catch (NbtException ignore) { }
         }

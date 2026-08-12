@@ -15,14 +15,12 @@ import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.hypixel.response.skyblock.member.pet.Pets;
-import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.*;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import dev.simplified.collection.atomic.AtomicMap;
 import dev.simplified.collection.tuple.pair.Pair;
 import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.StringTag;
@@ -113,8 +111,14 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
      * @param calculateBonusStats whether to evaluate the bonuses that depend on the flat totals
      */
     public ProfileStats(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
+        this(ReferenceSnapshot.load(), skyBlockIsland, member, calculateBonusStats);
+    }
+
+    private ProfileStats(@NotNull ReferenceSnapshot reference, @NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
+        super(reference);
+
         // --- Initialize ---
-        ConcurrentList<Stat> statModels = SkyBlockData.getRepository(Stat.class).findAll();
+        ConcurrentList<Stat> statModels = reference.getStats();
         Arrays.stream(Type.values()).forEach(type -> {
             this.stats.put(type, Concurrent.newLinkedMap());
             statModels.forEach(statModel -> this.stats.get(type).put(statModel, new Data()));
@@ -129,8 +133,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         this.expressionVariables.put("SKYBLOCK_LEVEL", (double) member.getLeveling().getLevel());
         this.expressionVariables.put("BESTIARY_MILESTONE", (double) member.getBestiary().getMilestone());
         this.expressionVariables.put("BANK", skyBlockIsland.getBanking().map(Banking::getBalance).orElse(0.0));
-        SkyBlockData.getRepository(Skill.class)
-            .findAll()
+        reference.getSkills()
             .forEach(skillModel -> this.expressionVariables.put(
                 String.format("SKILL_LEVEL_%s", skillModel.getId()),
                 (double) member.getSkills().getSkill(skillModel.getId()).getLevel()
@@ -163,7 +166,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
             ));
 
         // --- Load Damage Multiplier ---
-        this.damageMultiplier = SkyBlockData.getRepository(Skill.class)
+        this.damageMultiplier = reference.getSkills()
             .findFirst(Skill::getId, "COMBAT")
             .map(skillModel -> {
                 int skillLevel = member.getSkills()
@@ -185,22 +188,22 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
             .orElse(0.0) / 100.0;
 
         // --- Load Player Stats ---
-        this.loadSkills(member);
-        this.loadSlayers(member);
-        this.loadDungeons(member);
-        this.loadArmor(member);
-        this.loadAccessories();
-        this.loadActivePet(member);
-        this.loadActivePotions(member);
-        this.loadPetScore(member);
-        this.loadMiningCore(member);
-        this.loadCenturyCakes(member);
-        this.loadEssencePerks(member);
-        this.loadLevels(member);
-        this.loadBestiary(member);
-        this.loadBoosterCookie(member);
-        this.loadMelodyHarp(member);
-        this.loadJacobsPerks(member);
+        this.loadSkills(reference, member);
+        this.loadSlayers(reference, member);
+        this.loadDungeons(reference, member);
+        this.loadArmor(reference, member);
+        this.loadAccessories(reference);
+        this.loadActivePet(reference, member);
+        this.loadActivePotions(reference, member);
+        this.loadPetScore(reference, member);
+        this.loadMiningCore(reference, member);
+        this.loadCenturyCakes(reference, member);
+        this.loadEssencePerks(reference, member);
+        this.loadLevels(reference, member);
+        this.loadBestiary(reference, member);
+        this.loadBoosterCookie(reference, member);
+        this.loadMelodyHarp(reference, member);
+        this.loadJacobsPerks(reference, member);
 
         if (calculateBonusStats) {
             ConcurrentMap<String, Double> expressionVariables = this.getExpressionVariables();
@@ -330,8 +333,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
      */
     public ConcurrentLinkedMap<Stat, Data> getCombinedStats(boolean optimizerConstant) {
         // Initialize
-        ConcurrentLinkedMap<Stat, Data> totalStats = SkyBlockData.getRepository(Stat.class)
-            .findAll()
+        ConcurrentLinkedMap<Stat, Data> totalStats = this.reference.getStats()
             .stream()
             .map(statModel -> Pair.of(statModel, new Data()))
             .collect(Concurrent.toLinkedMap());
@@ -379,12 +381,14 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         return ProfileStats.Type.values();
     }
 
-    private void loadAccessories() {
+    private void loadAccessories(ReferenceSnapshot reference) {
+        // resolve the bag against the shared snapshot before anything reads it lazily against its own
+        this.getAccessoryBag().getAccessories(reference);
+
         // Accessory Power Stats
         this.getAccessoryBag()
             .getSelectedPowerStats()
-            .forEach((key, value) -> SkyBlockData.getRepository(Stat.class)
-                .findFirst(Stat::getId, key)
+            .forEach((key, value) -> reference.getStat(key)
                 .ifPresent(statModel -> this.addBonus(
                     this.stats.get(Type.ACCESSORY_POWER).get(statModel),
                     value
@@ -392,7 +396,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
             );
     }
 
-    private void loadActivePet(SkyBlockMember member) {
+    private void loadActivePet(ReferenceSnapshot reference, SkyBlockMember member) {
         if (this.getActivePet().isEmpty())
             return;
 
@@ -401,7 +405,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         if (activePet.getId().isEmpty())
             return;
 
-        Optional<Pet> optionalPet = SkyBlockData.getRepository(Pet.class).findFirst(Pet::getId, activePet.getId());
+        Optional<Pet> optionalPet = reference.getPet(activePet.getId());
         if (optionalPet.isEmpty())
             return;
 
@@ -424,11 +428,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         // Load Rarity Filtered Perk Stats
         petModel.getPerks(petRarity).forEach(perk -> {
             // Load Bonus Pet Perk Stats
-            SkyBlockData.getRepository(BonusPetPerkStat.class)
-                .findFirst(
-                    Pair.of(BonusPetPerkStat::getPetId, petModel.getId()),
-                    Pair.of(BonusPetPerkStat::getPerkName, perk.getName())
-                )
+            reference.getBonusPetPerkStat(petModel.getId(), perk.getName())
                 .ifPresent(this.bonusPetPerkStatModels::add);
 
             perk.getStats(petRarity).forEach(substitute -> {
@@ -451,8 +451,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         // Handle Static Pet Item Bonuses
         String heldItemId = activePet.getHeldItem().orElse("");
         if (!heldItemId.isEmpty()) {
-            SkyBlockData.getRepository(PetItem.class)
-                .findFirst(PetItem::getId, heldItemId)
+            reference.getPetItem(heldItemId)
                 .filter(PetItem::notPercentage)
                 .ifPresent(petItem -> petItem.getStats().forEach(sub ->
                     sub.getStat().ifPresent(stat -> {
@@ -484,8 +483,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
 
         // Handle Percentage Pet Item Bonuses
         if (!heldItemId.isEmpty()) {
-            SkyBlockData.getRepository(PetItem.class)
-                .findFirst(PetItem::getId, heldItemId)
+            reference.getPetItem(heldItemId)
                 .filter(PetItem::isPercentage)
                 .ifPresent(petItem -> petItem.getStats().forEach(sub ->
                     sub.getStat().ifPresent(stat -> {
@@ -497,7 +495,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         }
     }
 
-    private void loadActivePotions(SkyBlockMember member) {
+    private void loadActivePotions(ReferenceSnapshot reference, SkyBlockMember member) {
         member.getPlayerData()
             .getActivePotions()
             .stream()
@@ -506,8 +504,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                 ConcurrentMap<Stat, Double> potionStatEffects = Concurrent.newMap();
 
                 // Load Potion
-                SkyBlockData.getRepository(Potion.class)
-                    .findFirst(Potion::getId, potion.getEffect().toUpperCase())
+                reference.getPotion(potion.getEffect().toUpperCase())
                     .ifPresent(potionModel -> potionModel.getStats()
                         .stream()
                         .filter(sub -> sub.getValues().containsKey(potion.getLevel()))
@@ -523,22 +520,21 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
             });
     }
 
-    private void loadArmor(SkyBlockMember member) {
+    private void loadArmor(ReferenceSnapshot reference, SkyBlockMember member) {
         if (member.getInventory().getArmor() != null) {
-            ConcurrentList<Item> items = SkyBlockData.getRepository(Item.class).findAll();
             ConcurrentList<Pair<CompoundTag, Optional<Item>>> armorItemModels = member.getInventory().getArmor()
                 .getNbtData()
                 .<CompoundTag>getListTag("i")
                 .stream()
                 .map(itemTag -> Pair.of(
                     itemTag,
-                    items.findFirst(Item::getId, itemTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue())
+                    reference.getItem(itemTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue())
                 ))
                 .collect(Concurrent.toList())
                 .reversed();
 
-            this.bonusArmorSetModel = SkyBlockData.getRepository(BonusArmorSet.class).findFirst(
-                Pair.of(BonusArmorSet::getHelmetItem, armorItemModels.get(0).right().orElse(null)),
+            this.bonusArmorSetModel = reference.getBonusArmorSets().findFirst(
+                Pair.of(BonusArmorSet::getHelmetItem, armorItemModels.getFirst().right().orElse(null)),
                 Pair.of(BonusArmorSet::getChestplateItem, armorItemModels.get(1).right().orElse(null)),
                 Pair.of(BonusArmorSet::getLeggingsItem, armorItemModels.get(2).right().orElse(null)),
                 Pair.of(BonusArmorSet::getBootsItem, armorItemModels.get(3).right().orElse(null))
@@ -549,6 +545,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
 
                 if (armorItemModelPair.left().notEmpty() && armorItemModelPair.right().isPresent())
                     itemData = new ItemData(
+                        reference,
                         armorItemModelPair.right().get(),
                         armorItemModelPair.left()
                     );
@@ -558,37 +555,33 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         }
     }
 
-    private void loadBestiary(SkyBlockMember member) {
-        SkyBlockData.getRepository(Stat.class)
-            .findFirst(Stat::getId, "HEALTH")
+    private void loadBestiary(ReferenceSnapshot reference, SkyBlockMember member) {
+        reference.getStat("HEALTH")
             .ifPresent(healthStatModel -> this.addBase(this.stats.get(Type.BESTIARY).get(healthStatModel), member.getBestiary().getMilestone() * 2.0));
     }
 
-    private void loadBoosterCookie(SkyBlockMember member) {
+    private void loadBoosterCookie(ReferenceSnapshot reference, SkyBlockMember member) {
         if (!member.isBoosterCookieActive())
             return;
 
-        SkyBlockData.getRepository(Stat.class)
-            .findFirst(Stat::getId, "MAGIC_FIND")
+        reference.getStat("MAGIC_FIND")
             .ifPresent(magicFindStatModel -> this.addBase(this.stats.get(Type.BOOSTER_COOKIE).get(magicFindStatModel), 15));
 
-        SkyBlockData.getRepository(Stat.class)
-            .matchAll(statModel -> statModel.getId().endsWith("_WISDOM"))
+        reference.getWisdomStats()
             .forEach(wisdomStateModel -> this.addBase(this.stats.get(Type.BOOSTER_COOKIE).get(wisdomStateModel), 25));
     }
 
-    private void loadCenturyCakes(SkyBlockMember member) {
+    private void loadCenturyCakes(ReferenceSnapshot reference, SkyBlockMember member) {
         member.getPlayerData()
             .getCenturyCakes()
             .stream()
             .filter(CenturyCake::isActive)
-            .forEach(centuryCake -> SkyBlockData.getRepository(Stat.class)
-                .findFirst(Stat::getId, centuryCake.getStatId())
+            .forEach(centuryCake -> reference.getStat(centuryCake.getStatId())
                 .ifPresent(statModel -> this.addBonus(this.stats.get(Type.CENTURY_CAKES).get(statModel), centuryCake.getAmount()))
             );
     }
 
-    private void loadDungeons(SkyBlockMember member) {
+    private void loadDungeons(ReferenceSnapshot reference, SkyBlockMember member) {
         for (DungeonData.Type dungeonType : DungeonData.Type.values()) {
             if (dungeonType == DungeonData.Type.UNKNOWN) continue;
 
@@ -597,18 +590,16 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                 .getLevel();
 
             if (dungeonLevel > 0) {
-                SkyBlockData.getRepository(Stat.class)
-                    .findFirst(Stat::getId, "HEALTH")
+                reference.getStat("HEALTH")
                     .ifPresent(healthStat -> this.addBase(this.stats.get(Type.DUNGEONS).get(healthStat), dungeonLevel * 2.0));
             }
         }
     }
 
-    private void loadEssencePerks(SkyBlockMember member) {
+    private void loadEssencePerks(ReferenceSnapshot reference, SkyBlockMember member) {
         member.getPlayerData()
             .getShopPerks()
-            .forEach(entry -> SkyBlockData.getRepository(ShopPerk.class)
-                .findFirst(ShopPerk::getId, entry.getKey().toUpperCase())
+            .forEach(entry -> reference.getShopPerk(entry.getKey().toUpperCase())
                 .ifPresent(shopPerk -> shopPerk.getStats()
                     .forEach(sub -> sub.getStat()
                         .ifPresent(stat -> {
@@ -620,38 +611,36 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
             );
     }
 
-    private void loadJacobsPerks(SkyBlockMember member) {
-        SkyBlockData.getRepository(Stat.class).findFirst(Stat::getId, "FARMING_FORTUNE")
+    private void loadJacobsPerks(ReferenceSnapshot reference, SkyBlockMember member) {
+        reference.getStat("FARMING_FORTUNE")
             .ifPresent(farmingFortuneStatModel -> this.addBase(this.stats.get(Type.JACOBS_FARMING).get(farmingFortuneStatModel), member.getJacobsContest().getDoubleDrops() * 4.0));
     }
 
-    private void loadLevels(SkyBlockMember member) {
-        SkyBlockData.getRepository(Stat.class).findFirst(Stat::getId, "HEALTH")
+    private void loadLevels(ReferenceSnapshot reference, SkyBlockMember member) {
+        reference.getStat("HEALTH")
             .ifPresent(healthStatModel -> this.addBase(this.stats.get(Type.SKYBLOCK_LEVELS).get(healthStatModel), member.getLeveling().getLevel() * 5.0));
-        SkyBlockData.getRepository(Stat.class).findFirst(Stat::getId, "STRENGTH")
+        reference.getStat("STRENGTH")
             .ifPresent(strengthStatModel -> this.addBase(this.stats.get(Type.SKYBLOCK_LEVELS).get(strengthStatModel), member.getLeveling().getLevel() / 5.0));
     }
 
-    private void loadMelodyHarp(SkyBlockMember member) {
+    private void loadMelodyHarp(ReferenceSnapshot reference, SkyBlockMember member) {
         member.getForaging()
             .getMelodyHarp()
             .getSongs()
-            .forEach((songName, songData) -> SkyBlockData.getRepository(MelodySong.class)
-                .findFirst(MelodySong::getId, songName.toUpperCase())
-                .ifPresent(melodySongModel -> SkyBlockData.getRepository(Stat.class).findFirst(Stat::getId, "INTELLIGENCE")
+            .forEach((songName, songData) -> reference.getMelodySong(songName.toUpperCase())
+                .ifPresent(melodySongModel -> reference.getStat("INTELLIGENCE")
                     .ifPresent(statModel -> this.addBonus(this.stats.get(Type.MELODYS_HARP).get(statModel), melodySongModel.getIntelligenceReward()))
                 )
             );
     }
 
-    private void loadMiningCore(SkyBlockMember member) {
+    private void loadMiningCore(ReferenceSnapshot reference, SkyBlockMember member) {
         member.getSkillTree()
             .getNodes(SkillTree.Tree.MINING)
             .map(SkillTree.Skill::getEntries)
             .ifPresent(entries -> entries.stream()
                 .filter(entry -> entry.getValue().isEnabled()) // a perk switched off grants nothing
-                .forEach(entry -> SkyBlockData.getRepository(HotmPerk.class)
-                    .findFirst(HotmPerk::getId, entry.getKey().toUpperCase())
+                .forEach(entry -> reference.getHotmPerk(entry.getKey().toUpperCase())
                     .ifPresent(hotmPerk -> hotmPerk.getStats()
                         .forEach(sub -> sub.getStat()
                             .ifPresent(stat -> {
@@ -664,9 +653,8 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
             );
     }
 
-    private void loadPetScore(SkyBlockMember member) {
-        SkyBlockData.getRepository(Stat.class)
-            .findFirst(Stat::getId, "MAGIC_FIND")
+    private void loadPetScore(ReferenceSnapshot reference, SkyBlockMember member) {
+        reference.getStat("MAGIC_FIND")
             .ifPresent(magicFindStatModel -> this.addBase(this.stats.get(Type.PET_SCORE).get(magicFindStatModel), Pets.PET_SCORE
                 .stream()
                 .filter(breakpoint -> member.getPets().getPetScore() >= breakpoint)
@@ -675,9 +663,8 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
             );
     }
 
-    private void loadSkills(SkyBlockMember member) {
-        SkyBlockData.getRepository(Skill.class)
-            .stream()
+    private void loadSkills(ReferenceSnapshot reference, SkyBlockMember member) {
+        reference.getSkills()
             .forEach(skillModel -> {
                 int skillLevel = member.getSkills()
                     .getSkill(skillModel.getId())
@@ -689,18 +676,17 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                         .filter(skillLevelModel -> skillLevelModel.getLevel() <= skillLevel)
                         .map(Skill.Level::getEffects)
                         .flatMap(ConcurrentMap::stream)
-                        .forEach(entry -> SkyBlockData.getRepository(Stat.class)
-                            .findFirst(Stat::getId, entry.getKey())
+                        .forEach(entry -> reference.getStat(entry.getKey())
                             .ifPresent(statModel -> this.addBase(this.stats.get(Type.SKILLS).get(statModel), entry.getValue()))
                         );
                 }
             });
     }
 
-    private void loadSlayers(SkyBlockMember member) {
+    private void loadSlayers(ReferenceSnapshot reference, SkyBlockMember member) {
         member.getSlayers()
             .getBosses()
-            .forEach(slayerBoss -> SkyBlockData.getRepository(Slayer.class)
+            .forEach(slayerBoss -> reference.getSlayers()
                 .findFirst(Slayer::getId, slayerBoss.getId())
                 .ifPresent(slayerModel -> {
                     int slayerLevel = slayerBoss.getLevel();
@@ -711,8 +697,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                             .filter(slayerLevelModel -> slayerLevelModel.getLevel() <= slayerLevel)
                             .map(Slayer.Level::getEffects)
                             .flatMap(ConcurrentMap::stream)
-                            .forEach(entry -> SkyBlockData.getRepository(Stat.class)
-                                .findFirst(Stat::getId, entry.getKey())
+                            .forEach(entry -> reference.getStat(entry.getKey())
                                 .ifPresent(statModel -> this.addBase(this.stats.get(Type.SLAYERS).get(statModel), entry.getValue()))
                             );
                     }

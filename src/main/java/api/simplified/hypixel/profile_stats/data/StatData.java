@@ -1,12 +1,14 @@
 package api.simplified.hypixel.profile_stats.data;
 
-import api.simplified.skyblock.SkyBlockData;
+import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
+import lombok.AccessLevel;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -26,6 +28,21 @@ public abstract class StatData<T extends ObjectData.Type> {
      * Every stat this source provides, bucketed by where the value came from.
      */
     protected final ConcurrentMap<T, ConcurrentLinkedMap<Stat, Data>> stats = Concurrent.newMap();
+
+    /**
+     * The reference tables this source resolves every id against.
+     */
+    @Getter(AccessLevel.NONE)
+    protected final @NotNull ReferenceSnapshot reference;
+
+    /**
+     * Constructs a new {@code StatData} reading its reference data from one snapshot.
+     *
+     * @param reference the reference tables to resolve against
+     */
+    protected StatData(@NotNull ReferenceSnapshot reference) {
+        this.reference = reference;
+    }
 
     /**
      * Totals one stat across every bucket at once.
@@ -101,8 +118,7 @@ public abstract class StatData<T extends ObjectData.Type> {
      */
     @SafeVarargs
     public final ConcurrentLinkedMap<Stat, Data> getStatsOf(T... types) {
-        ConcurrentLinkedMap<Stat, Data> totalStats = SkyBlockData.getRepository(Stat.class)
-            .findAll()
+        ConcurrentLinkedMap<Stat, Data> totalStats = this.reference.getStats()
             .stream()
             .map(statModel -> Pair.of(statModel, new Data()))
             .collect(Concurrent.toLinkedMap());

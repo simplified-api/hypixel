@@ -1,6 +1,7 @@
 package api.simplified.hypixel.response.skyblock.member;
 
 import api.simplified.hypixel.common.NbtContent;
+import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
 import api.simplified.hypixel.profile_stats.data.AccessoryData;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.skyblock.SkyBlockData;
@@ -115,6 +116,26 @@ public class AccessoryBag {
      * empty for a bag decoded on its own.
      */
     public @NotNull ConcurrentList<AccessoryData> getDetectedAccessories() {
+        if (this.detectedAccessories != null)
+            return this.detectedAccessories;
+
+        // a bag with nothing to parse resolves nothing, so it never reaches the reference data
+        if (this.contents.getRawData().isEmpty()) {
+            this.detectedAccessories = Concurrent.newUnmodifiableList();
+            return this.detectedAccessories;
+        }
+
+        return this.getDetectedAccessories(ReferenceSnapshot.load());
+    }
+
+    /**
+     * Accessories parsed out of the talisman bag and resolved against one snapshot, so a whole bag
+     * costs the reference tables one read rather than one per accessory.
+     *
+     * @param reference the reference tables to resolve against
+     * @return the accessories the bag holds
+     */
+    public @NotNull ConcurrentList<AccessoryData> getDetectedAccessories(@NotNull ReferenceSnapshot reference) {
         if (this.detectedAccessories == null) {
             this.detectedAccessories = this.contents.getRawData().isEmpty()
                 ? Concurrent.newUnmodifiableList()
@@ -123,15 +144,13 @@ public class AccessoryBag {
                     .<CompoundTag>getListTag("i")
                     .stream()
                     .filter(CompoundTag::notEmpty)
-                    .flatMap(compoundTag -> SkyBlockData.getRepository(Accessory.class)
-                        .findFirst(
-                            Accessory::getId,
+                    .flatMap(compoundTag -> reference.getAccessory(
                             compoundTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue()
                         )
                         .map(accessory -> Pair.of(accessory, compoundTag))
                         .stream()
                     )
-                    .map(entry -> new AccessoryData(entry.getKey(), entry.getValue()))
+                    .map(entry -> new AccessoryData(reference, entry.getKey(), entry.getValue()))
                     .collect(Concurrent.toList());
         }
 
@@ -143,12 +162,27 @@ public class AccessoryBag {
      * family dropped.
      */
     public @NotNull ConcurrentList<AccessoryData> getAccessories() {
-        if (this.accessories != null)
-            return this.accessories;
+        return this.accessories != null
+            ? this.accessories
+            : this.dropOutrankedAccessories(this.getDetectedAccessories());
+    }
 
+    /**
+     * The counting accessories, resolved against one snapshot rather than one lookup per accessory.
+     *
+     * @param reference the reference tables to resolve against
+     * @return the accessories that count toward magical power
+     */
+    public @NotNull ConcurrentList<AccessoryData> getAccessories(@NotNull ReferenceSnapshot reference) {
+        return this.accessories != null
+            ? this.accessories
+            : this.dropOutrankedAccessories(this.getDetectedAccessories(reference));
+    }
+
+    private @NotNull ConcurrentList<AccessoryData> dropOutrankedAccessories(@NotNull ConcurrentList<AccessoryData> detectedAccessories) {
         // Store Families
         ConcurrentMap<String, ConcurrentSet<Accessory>> familyAccessoryDataMap = Concurrent.newMap();
-        this.getDetectedAccessories()
+        detectedAccessories
             .stream()
             .filter(accessoryData -> accessoryData.getAccessory().getFamily().isPresent())
             .forEach(accessoryData -> {
@@ -163,7 +197,7 @@ public class AccessoryBag {
 
         // Store Non-Stackable Families
         ConcurrentSet<Accessory> processedAccessories = Concurrent.newSet();
-        this.accessories = this.getDetectedAccessories()
+        this.accessories = detectedAccessories
             .stream()
             .filter(accessoryData -> {
                 if (accessoryData.getAccessory().getFamily().isPresent()) {

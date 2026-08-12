@@ -1,10 +1,9 @@
 package api.simplified.hypixel.profile_stats.data;
 
-import api.simplified.skyblock.SkyBlockData;
+import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
 import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.BonusReforgeStat;
 import api.simplified.skyblock.model.Enchantment;
-import api.simplified.skyblock.model.HotPotatoStat;
 import api.simplified.skyblock.model.Item;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
@@ -16,6 +15,7 @@ import lib.minecraft.nbt.tag.IntTag;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Objects;
@@ -63,23 +63,21 @@ public class ItemData extends ObjectData<ItemData.Type> {
     /**
      * Constructs a new {@code ItemData} and totals every unconditional modifier on the item.
      *
+     * @param reference the reference tables to resolve against
      * @param itemModel reference data for the item being read
      * @param compoundTag the item's NBT tag
      */
-    public ItemData(Item itemModel, CompoundTag compoundTag) {
-        super(itemModel, compoundTag);
+    public ItemData(@NotNull ReferenceSnapshot reference, Item itemModel, CompoundTag compoundTag) {
+        super(reference, itemModel, compoundTag);
         this.hotPotatoBooks = compoundTag.getPathOrDefault("tag.ExtraAttributes.hot_potato_count", IntTag.EMPTY).getValue();
         this.hasArtOfWar = compoundTag.containsPath("tag.ExtraAttributes.art_of_war_count");
         this.hasArtOfPeace = compoundTag.containsPath("tag.ExtraAttributes.artOfPeaceApplied");
 
         // Load Bonus Reforge Model
-        this.bonusReforgeStatModel = this.getReforge().flatMap(reforge -> SkyBlockData.getRepository(BonusReforgeStat.class)
-            .findFirst(BonusReforgeStat::getReforgeId, reforge.getId())
-        );
+        this.bonusReforgeStatModel = this.getReforge().flatMap(reforge -> reference.getBonusReforgeStat(reforge.getId()));
 
         // Save Stats
-        itemModel.getStats().forEach((key, value) -> SkyBlockData.getRepository(Stat.class)
-            .findFirst(Stat::getId, key)
+        itemModel.getStats().forEach((key, value) -> reference.getStat(key)
             .ifPresent(statModel -> this.getStats(ItemData.Type.STATS).get(statModel).addBonus(value)));
 
         // Save Reforge Stats
@@ -91,21 +89,18 @@ public class ItemData extends ObjectData<ItemData.Type> {
             .forEach((statModel, value) -> this.getStats(ItemData.Type.GEMSTONES).get(statModel).addBonus(value));
 
         // Save Hot Potato Book Stats
-        SkyBlockData.getRepository(HotPotatoStat.class)
-            .matchAll(hotPotatoStat -> hotPotatoStat.getItemTypes().contains(itemModel.getCategory().getId()))
+        reference.getHotPotatoStats(itemModel.getCategory().getId())
             .forEach(hotPotatoStat -> this.getStats(ItemData.Type.HOT_POTATOES).get(hotPotatoStat.getStat()).addBonus(this.getHotPotatoBooks() * hotPotatoStat.getValue()));
 
         // Save Art Of Peace Stats
         if (this.hasArtOfPeace()) {
-            SkyBlockData.getRepository(Stat.class)
-                .findFirst(Stat::getId, "HEALTH")
+            reference.getStat("HEALTH")
                 .ifPresent(statModel -> this.getStats(Type.SUN_TZU).get(statModel).addBonus(40.0));
         }
 
         // Save Art Of War Stats
         if (this.hasArtOfWar()) {
-            SkyBlockData.getRepository(Stat.class)
-                .findFirst(Stat::getId, "STRENGTH")
+            reference.getStat("STRENGTH")
                 .ifPresent(statModel -> this.getStats(Type.SUN_TZU).get(statModel).addBonus(5.0));
         }
 
@@ -117,8 +112,7 @@ public class ItemData extends ObjectData<ItemData.Type> {
             .entrySet()
             .stream()
             .map(entry -> Pair.of(
-                SkyBlockData.getRepository(Enchantment.class)
-                    .findFirstOrNull(Enchantment::getId, entry.getKey().toUpperCase()),
+                reference.getEnchantment(entry.getKey().toUpperCase()).orElse(null),
                 ((IntTag)entry.getValue()).getValue()
             ))
             .filter(enchantmentData -> Objects.nonNull(enchantmentData.left()))

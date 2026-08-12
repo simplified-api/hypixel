@@ -1,6 +1,6 @@
 package api.simplified.hypixel.profile_stats.data;
 
-import api.simplified.skyblock.SkyBlockData;
+import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.Gemstone;
@@ -17,6 +17,7 @@ import lib.minecraft.nbt.tag.NumericalTag;
 import lib.minecraft.nbt.tag.StringTag;
 import lib.minecraft.nbt.tag.Tag;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -90,12 +91,14 @@ public abstract class ObjectData<T extends ObjectData.Type> extends StatData<T> 
     @Getter private final Optional<Long> timestamp;
 
     /**
-     * Constructs a new {@code ObjectData} by resolving an item's tag against the repositories.
+     * Constructs a new {@code ObjectData} by resolving an item's tag against the reference data.
      *
+     * @param reference the reference tables to resolve against
      * @param itemModel reference data for the item being read
      * @param compoundTag the item's NBT tag
      */
-    protected ObjectData(Item itemModel, CompoundTag compoundTag) {
+    protected ObjectData(@NotNull ReferenceSnapshot reference, Item itemModel, CompoundTag compoundTag) {
+        super(reference);
         this.item = itemModel;
         this.compoundTag = compoundTag;
 
@@ -110,27 +113,24 @@ public abstract class ObjectData<T extends ObjectData.Type> extends StatData<T> 
 
         // Load Gemstones
         CompoundTag gemTag = compoundTag.getPathOrDefault("tag.ExtraAttributes.gems", CompoundTag.EMPTY);
-        this.gemstones = Concurrent.newUnmodifiableMap(gemTag.notEmpty() ? findGemstones(gemTag) : Concurrent.newMap());
+        this.gemstones = Concurrent.newUnmodifiableMap(gemTag.notEmpty() ? findGemstones(reference.getGemstones(), gemTag) : Concurrent.newMap());
 
         // Initialize Stats
-        ConcurrentList<Stat> statModels = SkyBlockData.getRepository(Stat.class).findAll();
+        ConcurrentList<Stat> statModels = reference.getStats();
         Arrays.stream(this.getAllTypes()).forEach(type -> {
             this.stats.put(type, Concurrent.newLinkedMap());
             statModels.forEach(statModel -> this.stats.get(type).put(statModel, new Data()));
         });
 
         // Load Bonus Item Stat Model
-        this.bonusItemStatModels = SkyBlockData.getRepository(BonusItemStat.class)
-            .findAll(BonusItemStat::getItemId, itemModel.getId())
-            .collect(Concurrent.toUnmodifiableList());
+        this.bonusItemStatModels = reference.getBonusItemStats(itemModel.getId());
 
         // Load Reforge Model
-        this.reforge = SkyBlockData.getRepository(Reforge.class)
-            .findFirst(Reforge::getId, this.getCompoundTag()
-                .getPathOrDefault("tag.ExtraAttributes.modifier", StringTag.EMPTY)
-                .getValue()
-                .toUpperCase()
-            );
+        this.reforge = reference.getReforge(this.getCompoundTag()
+            .getPathOrDefault("tag.ExtraAttributes.modifier", StringTag.EMPTY)
+            .getValue()
+            .toUpperCase()
+        );
 
         // Load Rarity
         this.rarity = Rarity.of(this.handleRarityUpgrades(
@@ -176,8 +176,7 @@ public abstract class ObjectData<T extends ObjectData.Type> extends StatData<T> 
             .map(Instant::toEpochMilli);
     }
 
-    private static ConcurrentMap<Gemstone, ConcurrentList<Gemstone.Type>> findGemstones(CompoundTag gemTag) {
-        ConcurrentList<Gemstone> gemstoneModels = SkyBlockData.getRepository(Gemstone.class).findAll();
+    private static ConcurrentMap<Gemstone, ConcurrentList<Gemstone.Type>> findGemstones(ConcurrentList<Gemstone> gemstoneModels, CompoundTag gemTag) {
         ConcurrentMap<Gemstone, ConcurrentList<Gemstone.Type>> gemstones = Concurrent.newMap();
 
         for (Map.Entry<String, Tag<?>> entry : gemTag.entrySet()) {
