@@ -5,6 +5,7 @@ import api.simplified.hypixel.response.skyblock.election.Election;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.Bestiary;
 import api.simplified.hypixel.response.skyblock.member.Currencies;
+import api.simplified.hypixel.response.skyblock.member.Experimentation;
 import api.simplified.hypixel.response.skyblock.member.GardenCore;
 import api.simplified.hypixel.response.skyblock.member.JacobsContest;
 import api.simplified.hypixel.response.skyblock.member.Loadouts;
@@ -214,6 +215,29 @@ class MemberDtoMappingTest {
         // the two explicitly named keys must not leak into the captured tool map
         assertThat(toolkit.getTools(), not(hasKey("IS_UNLOCKED")));
         assertThat(toolkit.getTools(), not(hasKey("IN_USE")));
+    }
+
+    @Test
+    @DisplayName("experimentation tables capture their per-tier attempts, claims and best scores")
+    void mapsExperimentationTables() {
+        Experimentation experimentation = this.decode(populated, "experimentation", Experimentation.class);
+        Experimentation.Table chronomatron = experimentation.getChronomatron();
+
+        // each tier arrives as its own sibling key rather than inside an object, so a capture that
+        // bound nothing would leave all three maps empty and say nothing about it
+        assertThat(chronomatron.getAttempts().get(0), is(equalTo(8)));
+        assertThat(chronomatron.getClaims().get(0), is(equalTo(8)));
+        assertThat(chronomatron.getBestScore().get(0), is(equalTo(17)));
+
+        // superpairs sends no attempts_ key at all, so that map is empty on the wire's account
+        // rather than on the capture's
+        assertThat(experimentation.getSuperpairs().getAttempts(), is(anEmptyMap()));
+        assertThat(experimentation.getSuperpairs().getClaims().get(0), is(equalTo(4)));
+
+        // claims_resets sits on the root and shares the claims_ prefix, so it must stay out of the
+        // per-tier capture that lives one level down
+        assertThat(experimentation.getResetClaims(), is(equalTo(1)));
+        assertThat(chronomatron.getClaims(), not(hasKey("resets")));
     }
 
     @Test

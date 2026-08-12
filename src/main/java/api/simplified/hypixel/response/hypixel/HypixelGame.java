@@ -40,8 +40,9 @@ public class HypixelGame {
     private boolean retired;
 
     /**
-     * Display names for the game's modes, keyed by mode name.
+     * Display names for the game's modes, keyed by the mode's own name.
      */
-    private @NotNull ConcurrentMap<String, String> modelNames = Concurrent.newMap();
+    @SerializedName("modeNames")
+    private @NotNull ConcurrentMap<String, String> modeNames = Concurrent.newMap();
 
 }
