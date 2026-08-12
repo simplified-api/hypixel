@@ -1,5 +1,4 @@
 package api.simplified.hypixel.profile_stats;
-import api.simplified.hypixel.profile_stats.data.StatData;
 import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.member.CenturyCake;

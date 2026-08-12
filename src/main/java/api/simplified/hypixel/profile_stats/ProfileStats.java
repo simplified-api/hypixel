@@ -1,8 +1,5 @@
 package api.simplified.hypixel.profile_stats;
 
-import api.simplified.hypixel.profile_stats.data.Data;
-import api.simplified.hypixel.profile_stats.data.StatData;
-import api.simplified.hypixel.profile_stats.data.StatHalf;
 import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.island.Banking;
@@ -87,34 +84,8 @@ public class ProfileStats extends StatData<StatSource> {
      */
     private Optional<BonusArmorSet> bonusArmorSetModel = Optional.empty();
 
-    /**
-     * Whether the conditional bonuses have already been evaluated.
-     */
-    private boolean bonusCalculated;
-
     @Getter(AccessLevel.NONE)
     private final StatContext context;
-
-    /**
-     * Constructs a new {@code ProfileStats} with the conditional bonuses evaluated.
-     *
-     * @param skyBlockIsland the profile the member belongs to, read for the shared bank balance
-     * @param member the member to total
-     */
-    public ProfileStats(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member) {
-        this(skyBlockIsland, member, true);
-    }
-
-    /**
-     * Constructs a new {@code ProfileStats}, optionally stopping before the conditional bonuses.
-     *
-     * @param skyBlockIsland the profile the member belongs to, read for the shared bank balance
-     * @param member the member to total
-     * @param calculateBonusStats whether to evaluate the bonuses that depend on the flat totals
-     */
-    public ProfileStats(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
-        this(ReferenceSnapshot.load(), skyBlockIsland, member, calculateBonusStats);
-    }
 
     private ProfileStats(@NotNull ReferenceSnapshot reference, @NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
         super(reference);
@@ -227,7 +198,7 @@ public class ProfileStats extends StatData<StatSource> {
      * @return the member's stats
      */
     public static @NotNull ProfileStats compute(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
-        return new ProfileStats(skyBlockIsland, member, calculateBonusStats);
+        return new ProfileStats(ReferenceSnapshot.load(), skyBlockIsland, member, calculateBonusStats);
     }
 
     /**
@@ -235,18 +206,6 @@ public class ProfileStats extends StatData<StatSource> {
      */
     public ConcurrentList<BonusPetPerkStat> getBonusPetPerkStatModels() {
         return this.context.getBonusPetPerkStats();
-    }
-
-    /**
-     * The player state a bonus expression can refer to, with the current stat totals folded in.
-     * <p>
-     * A fresh copy is built on every call, since the totals move as sources are added and a bonus
-     * has to see the values as they stand when it runs.
-     */
-    public ConcurrentMap<String, Double> getExpressionVariables() {
-        ConcurrentMap<String, Double> expressionVariables = Concurrent.newMap(this.context.getVariables());
-        this.getAllStats().forEach((statModel, statData) -> expressionVariables.put(String.format("STAT_%s", statModel.getId()), statData.getTotal()));
-        return expressionVariables;
     }
 
     /**
@@ -306,39 +265,37 @@ public class ProfileStats extends StatData<StatSource> {
     }
 
     private void loadArmor(@NotNull ReferenceSnapshot reference, @NotNull SkyBlockMember member) {
-        if (member.getInventory().getArmor() != null) {
-            ConcurrentList<Pair<CompoundTag, Optional<Item>>> armorItemModels = member.getInventory().getArmor()
-                .getNbtData()
-                .<CompoundTag>getListTag("i")
-                .stream()
-                .map(itemTag -> Pair.of(
-                    itemTag,
-                    reference.getItem(itemTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue())
-                ))
-                .collect(Concurrent.toList())
-                .reversed();
+        ConcurrentList<Pair<CompoundTag, Optional<Item>>> armorItemModels = member.getInventory().getArmor()
+            .getNbtData()
+            .<CompoundTag>getListTag("i")
+            .stream()
+            .map(itemTag -> Pair.of(
+                itemTag,
+                reference.getItem(itemTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue())
+            ))
+            .collect(Concurrent.toList())
+            .reversed();
 
-            this.bonusArmorSetModel = reference.getBonusArmorSets().findFirst(
-                Pair.of(BonusArmorSet::getHelmetItem, armorItemModels.getFirst().right().orElse(null)),
-                Pair.of(BonusArmorSet::getChestplateItem, armorItemModels.get(1).right().orElse(null)),
-                Pair.of(BonusArmorSet::getLeggingsItem, armorItemModels.get(2).right().orElse(null)),
-                Pair.of(BonusArmorSet::getBootsItem, armorItemModels.get(3).right().orElse(null))
-            );
+        this.bonusArmorSetModel = reference.getBonusArmorSets().findFirst(
+            Pair.of(BonusArmorSet::getHelmetItem, armorItemModels.getFirst().right().orElse(null)),
+            Pair.of(BonusArmorSet::getChestplateItem, armorItemModels.get(1).right().orElse(null)),
+            Pair.of(BonusArmorSet::getLeggingsItem, armorItemModels.get(2).right().orElse(null)),
+            Pair.of(BonusArmorSet::getBootsItem, armorItemModels.get(3).right().orElse(null))
+        );
 
-            armorItemModels.forEach(armorItemModelPair -> {
-                ItemStats itemStats = null;
+        armorItemModels.forEach(armorItemModelPair -> {
+            ItemStats itemStats = null;
 
-                if (armorItemModelPair.left().notEmpty() && armorItemModelPair.right().isPresent())
-                    itemStats = new ItemStats(
-                        reference,
-                        armorItemModelPair.right().get(),
-                        Optional.empty(),
-                        armorItemModelPair.left()
-                    );
+            if (armorItemModelPair.left().notEmpty() && armorItemModelPair.right().isPresent())
+                itemStats = new ItemStats(
+                    reference,
+                    armorItemModelPair.right().get(),
+                    Optional.empty(),
+                    armorItemModelPair.left()
+                );
 
-                this.armor.add(Optional.ofNullable(itemStats));
-            });
-        }
+            this.armor.add(Optional.ofNullable(itemStats));
+        });
     }
 
 }

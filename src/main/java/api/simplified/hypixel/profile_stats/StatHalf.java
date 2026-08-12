@@ -1,4 +1,4 @@
-package api.simplified.hypixel.profile_stats.data;
+package api.simplified.hypixel.profile_stats;
 
 import org.jetbrains.annotations.NotNull;
 

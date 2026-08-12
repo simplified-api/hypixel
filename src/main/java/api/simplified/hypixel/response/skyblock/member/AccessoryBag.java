@@ -264,13 +264,6 @@ public class AccessoryBag {
     }
 
     /**
-     * Tuning points the bag's magical power has earned, one for every ten.
-     */
-    public int getTuningPoints() {
-        return this.getMagicalPower() / 10;
-    }
-
-    /**
      * The diminishing curve magical power is fed through before it scales a power's stats.
      */
     public double getLogComponent() {

@@ -1,4 +1,4 @@
-package api.simplified.hypixel.profile_stats.data;
+package api.simplified.hypixel.profile_stats;
 
 import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
 import api.simplified.hypixel.profile_stats.StatOrigin;

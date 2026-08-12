@@ -1,6 +1,5 @@
 package api.simplified.hypixel.profile_stats;
 
-import api.simplified.hypixel.profile_stats.data.StatHalf;
 import api.simplified.skyblock.model.Stat;
 import org.jetbrains.annotations.NotNull;
 

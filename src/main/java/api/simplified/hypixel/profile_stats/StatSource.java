@@ -1,6 +1,5 @@
 package api.simplified.hypixel.profile_stats;
 
-import api.simplified.hypixel.profile_stats.data.StatHalf;
 import api.simplified.hypixel.response.skyblock.member.CenturyCake;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;

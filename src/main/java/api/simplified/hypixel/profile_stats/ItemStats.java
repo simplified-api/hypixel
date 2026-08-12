@@ -1,7 +1,5 @@
 package api.simplified.hypixel.profile_stats;
 
-import api.simplified.hypixel.profile_stats.data.StatData;
-import api.simplified.hypixel.profile_stats.data.StatHalf;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.Accessory;
 import api.simplified.skyblock.model.BonusItemStat;
@@ -135,7 +133,6 @@ public final class ItemStats extends StatData<ItemOrigin> {
 
     @Getter(AccessLevel.NONE) private final boolean hasArtOfWar;
     @Getter(AccessLevel.NONE) private final boolean hasArtOfPeace;
-    @Getter(AccessLevel.NONE) private boolean bonusCalculated;
 
     /**
      * Constructs a new {@code ItemStats} and totals every unconditional modifier on the instance.

@@ -1,7 +1,5 @@
 package api.simplified.hypixel.profile_stats;
 
-import api.simplified.hypixel.profile_stats.data.StatHalf;
-import api.simplified.hypixel.profile_stats.data.StatTable;
 import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.BuffEffectsModel;
