@@ -50,7 +50,7 @@ import java.util.Optional;
  * of the player is left to the bonus pass, which needs totals this cannot see.
  */
 @Getter
-public final class ItemStats extends StatData<ItemOrigin> {
+public final class ItemStack extends StatData<ItemOrigin> {
 
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("M/d/yy h:m a", Locale.US);
     private static final ZoneId HYPIXEL_TIMEZONE = ZoneId.of("America/New_York");
@@ -135,14 +135,14 @@ public final class ItemStats extends StatData<ItemOrigin> {
     @Getter(AccessLevel.NONE) private final boolean hasArtOfPeace;
 
     /**
-     * Constructs a new {@code ItemStats} and totals every unconditional modifier on the instance.
+     * Constructs a new {@code ItemStack} and totals every unconditional modifier on the instance.
      *
      * @param reference the reference tables to resolve against
      * @param itemModel reference data for the item being read
      * @param accessory reference data for the accessory, empty for anything not out of the bag
      * @param compoundTag the item's NBT tag
      */
-    public ItemStats(@NotNull ReferenceSnapshot reference, @NotNull Item itemModel, @NotNull Optional<Accessory> accessory, @NotNull CompoundTag compoundTag) {
+    public ItemStack(@NotNull ReferenceSnapshot reference, @NotNull Item itemModel, @NotNull Optional<Accessory> accessory, @NotNull CompoundTag compoundTag) {
         super(reference);
         this.item = itemModel;
         this.accessory = accessory;

@@ -165,13 +165,13 @@ class ProfileStatsCharacterisationTest {
         int knownStats = profileStats.getAllStats().size();
         int written = writtenCells(profileStats);
         int seeded = StatSource.values().length * knownStats;
-        for (Optional<ItemStats> armorPiece : profileStats.getArmor()) {
+        for (Optional<ItemStack> armorPiece : profileStats.getArmor()) {
             if (armorPiece.isPresent()) {
                 written += writtenCells(armorPiece.get());
                 seeded += ItemOrigin.values().length * knownStats;
             }
         }
-        for (ItemStats accessoryStats : profileStats.getAccessories()) {
+        for (ItemStack accessoryStats : profileStats.getAccessories()) {
             written += writtenCells(accessoryStats);
             seeded += ItemOrigin.values().length * knownStats;
         }
@@ -207,9 +207,9 @@ class ProfileStatsCharacterisationTest {
                 .get(slot)
                 .ifPresent(itemStats -> collectTable(cells, String.format("armor/%d:%s", index, itemStats.getItem().getId()), itemStats));
         }
-        ConcurrentList<ItemStats> accessories = profileStats.getAccessories();
+        ConcurrentList<ItemStack> accessories = profileStats.getAccessories();
         for (int index = 0; index < accessories.size(); index++) {
-            ItemStats accessoryStats = accessories.get(index);
+            ItemStack accessoryStats = accessories.get(index);
             collectTable(cells, String.format("accessory/%03d:%s", index, accessoryStats.getItem().getId()), accessoryStats);
         }
         return cells;

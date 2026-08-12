@@ -22,7 +22,7 @@ import java.util.Optional;
  * ship no rows, so the order is held in place by the tests rather than by the corpus.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class BonusPass {
+public final class PostProcess {
 
     /**
      * Runs the four sub-steps, in the order the totals they read require.
@@ -35,8 +35,8 @@ public final class BonusPass {
     public static void run(
         @NotNull StatContext context,
         @NotNull StatTable table,
-        @NotNull ConcurrentList<Optional<ItemStats>> armor,
-        @NotNull ConcurrentList<ItemStats> accessories
+        @NotNull ConcurrentList<Optional<ItemStack>> armor,
+        @NotNull ConcurrentList<ItemStack> accessories
     ) {
         ConcurrentMap<String, Double> variables = context.getVariables();
 
@@ -75,7 +75,7 @@ public final class BonusPass {
             });
     }
 
-    private static void applyItemBonuses(@NotNull ItemStats itemStats, @NotNull ConcurrentMap<String, Double> variables) {
+    private static void applyItemBonuses(@NotNull ItemStack itemStats, @NotNull ConcurrentMap<String, Double> variables) {
         // Handle Reforges
         itemStats.getBonusReforgeStatModel().ifPresent(bonusReforgeStat -> rewriteBucket(itemStats, ItemOrigin.REFORGES, bonusReforgeStat, variables));
 
@@ -98,7 +98,7 @@ public final class BonusPass {
             });
     }
 
-    private static void rewriteBucket(@NotNull ItemStats itemStats, @NotNull ItemOrigin bucket, @NotNull BuffEffectsModel model, @NotNull ConcurrentMap<String, Double> variables) {
+    private static void rewriteBucket(@NotNull ItemStack itemStats, @NotNull ItemOrigin bucket, @NotNull BuffEffectsModel model, @NotNull ConcurrentMap<String, Double> variables) {
         BuffEvaluator evaluator = BuffEvaluator.compile(model).bind(itemStats.getCompoundTag());
 
         // an item bonus lands on the bonus half only - the base half is what the source itself gave
@@ -108,7 +108,7 @@ public final class BonusPass {
         ));
     }
 
-    private static void applyEnchantmentMultipliers(@NotNull ItemStats itemStats, @NotNull StatTable table) {
+    private static void applyEnchantmentMultipliers(@NotNull ItemStack itemStats, @NotNull StatTable table) {
         itemStats.getEnchantments().forEach((enchantment, level) -> itemStats.getEnchantmentStats().get(enchantment)
             .stream()
             .filter(sub -> sub.getStat().isPresent())

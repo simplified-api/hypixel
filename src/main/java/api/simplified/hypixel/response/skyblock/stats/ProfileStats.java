@@ -69,7 +69,7 @@ public class ProfileStats extends StatData<StatSource> {
     /**
      * The four armour pieces, each empty when that slot is unfilled.
      */
-    private final ConcurrentList<Optional<ItemStats>> armor = Concurrent.newList();
+    private final ConcurrentList<Optional<ItemStack>> armor = Concurrent.newList();
 
     /**
      * The accessories that count toward magical power, each totalled in its own right.
@@ -77,7 +77,7 @@ public class ProfileStats extends StatData<StatSource> {
      * These belong to the result rather than to the bag, so a second compute for the same member
      * starts from unwritten tables rather than from the first one's.
      */
-    private final ConcurrentList<ItemStats> accessories = Concurrent.newList();
+    private final ConcurrentList<ItemStack> accessories = Concurrent.newList();
 
     /**
      * Set bonus the worn armour qualifies for, empty when the pieces do not form a set.
@@ -97,7 +97,7 @@ public class ProfileStats extends StatData<StatSource> {
         // neither is a source - each is a list of tables of its own - and both resolve against the
         // shared snapshot here so nothing reaches for one of its own later
         this.accessoryBag.getAccessories(reference)
-            .forEach(detectedAccessory -> this.accessories.add(new ItemStats(
+            .forEach(detectedAccessory -> this.accessories.add(new ItemStack(
                 reference,
                 detectedAccessory.getAccessory().getItem(),
                 Optional.of(detectedAccessory.getAccessory()),
@@ -172,7 +172,7 @@ public class ProfileStats extends StatData<StatSource> {
 
         // --- Bonus Pass ---
         if (calculateBonusStats)
-            BonusPass.run(this.context, this.table, this.armor, this.accessories);
+            PostProcess.run(this.context, this.table, this.armor, this.accessories);
     }
 
     /**
@@ -284,10 +284,10 @@ public class ProfileStats extends StatData<StatSource> {
         );
 
         armorItemModels.forEach(armorItemModelPair -> {
-            ItemStats itemStats = null;
+            ItemStack itemStats = null;
 
             if (armorItemModelPair.left().notEmpty() && armorItemModelPair.right().isPresent())
-                itemStats = new ItemStats(
+                itemStats = new ItemStack(
                     reference,
                     armorItemModelPair.right().get(),
                     Optional.empty(),
