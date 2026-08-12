@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
-public final class StatContext {
+final class StatContext {
 
     /**
      * The profile the member belongs to, read for the shared bank balance.

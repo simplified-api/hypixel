@@ -23,7 +23,7 @@ import java.util.Arrays;
  * Reads that a consumer sees are unaffected: {@link #toMap} seeds every known stat, so a caller may
  * still ask for one that nothing provided and read zero rather than checking first.
  */
-public final class StatTable implements StatSink {
+final class StatTable implements StatSink {
 
     private final @NotNull ConcurrentMap<StatOrigin, ConcurrentLinkedMap<Stat, Data>> entries = Concurrent.newMap();
     private final @NotNull ReferenceSnapshot reference;
@@ -199,7 +199,7 @@ public final class StatTable implements StatSink {
      * Answers what one already-written number becomes.
      */
     @FunctionalInterface
-    public interface Rewriter {
+    interface Rewriter {
 
         /**
          * Rewrites one number.

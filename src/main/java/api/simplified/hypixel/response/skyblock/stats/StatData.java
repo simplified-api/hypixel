@@ -41,7 +41,7 @@ public abstract class StatData<T extends StatOrigin> {
      * The table this source writes into, which a pass that rescales what is already there rewrites
      * through.
      */
-    public final @NotNull StatTable getTable() {
+    final @NotNull StatTable getTable() {
         return this.table;
     }
 

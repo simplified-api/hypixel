@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * finished and the number is settled.
  */
 @FunctionalInterface
-public interface StatSink {
+interface StatSink {
 
     /**
      * Adds one value to the stat of a given id.

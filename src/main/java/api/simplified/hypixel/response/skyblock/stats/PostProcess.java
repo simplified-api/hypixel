@@ -22,7 +22,7 @@ import java.util.Optional;
  * ship no rows, so the order is held in place by the tests rather than by the corpus.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class PostProcess {
+final class PostProcess {
 
     /**
      * Runs the four sub-steps, in the order the totals they read require.
