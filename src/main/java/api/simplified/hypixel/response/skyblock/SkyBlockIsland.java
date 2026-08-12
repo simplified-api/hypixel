@@ -150,7 +150,7 @@ public class SkyBlockIsland {
      * @return the member's stats on this island
      */
     public @NotNull ProfileStats getProfileStats(@NotNull SkyBlockMember member, boolean calculateBonus) {
-        return new ProfileStats(this, member, calculateBonus);
+        return ProfileStats.compute(this, member, calculateBonus);
     }
 
     /**

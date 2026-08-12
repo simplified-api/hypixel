@@ -48,6 +48,10 @@ import java.util.Optional;
  * only then are the conditional bonuses evaluated against them. Passing {@code false} for the bonus
  * pass stops after the flat sources, which is what an optimiser wants when it is about to vary the
  * gear anyway.
+ * <p>
+ * {@link #compute(SkyBlockIsland, SkyBlockMember)} is the entry point. Totalling is something a
+ * caller asks for by name, never something a decoded object does on its own - nothing on the wire
+ * holds one of these and no accessor on a decoded object builds one.
  */
 @Getter
 @SuppressWarnings("unused")
@@ -266,6 +270,32 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
 
             // TODO: Load Post Bonus Stats
         }
+    }
+
+    /**
+     * Totals one member's stats, evaluating every bonus that depends on those totals.
+     *
+     * @param skyBlockIsland the profile the member belongs to, read for the shared bank balance
+     * @param member the member to total
+     * @return the member's stats
+     */
+    public static @NotNull ProfileStats compute(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member) {
+        return compute(skyBlockIsland, member, true);
+    }
+
+    /**
+     * Totals one member's stats, optionally stopping before the bonuses that depend on those totals.
+     * <p>
+     * Every reference table this reads is resolved through a repository, so a connected session is
+     * required and the work is not cheap.
+     *
+     * @param skyBlockIsland the profile the member belongs to, read for the shared bank balance
+     * @param member the member to total
+     * @param calculateBonusStats whether to evaluate the bonuses that depend on the flat totals
+     * @return the member's stats
+     */
+    public static @NotNull ProfileStats compute(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
+        return new ProfileStats(skyBlockIsland, member, calculateBonusStats);
     }
 
     /**
