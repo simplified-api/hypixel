@@ -30,14 +30,6 @@ public class Data {
         this(0, 0);
     }
 
-    void addBase(double value) {
-        this.base += value;
-    }
-
-    void addBonus(double value) {
-        this.bonus += value;
-    }
-
     /**
      * Both halves added together.
      */

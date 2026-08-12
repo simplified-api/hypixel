@@ -3,7 +3,6 @@ package api.simplified.hypixel.profile_stats;
 import api.simplified.hypixel.profile_stats.data.AccessoryData;
 import api.simplified.hypixel.profile_stats.data.Data;
 import api.simplified.hypixel.profile_stats.data.ItemData;
-import api.simplified.hypixel.profile_stats.data.ObjectData;
 import api.simplified.hypixel.profile_stats.data.StatData;
 import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
@@ -46,6 +45,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -185,6 +185,31 @@ class ProfileStatsCharacterisationTest {
     }
 
     @Test
+    @DisplayName("the store holds only the cells something wrote")
+    void theStoreHoldsOnlyTheCellsSomethingWrote() {
+        int knownStats = profileStats.getAllStats().size();
+
+        int written = writtenCells(profileStats);
+        int seeded = ProfileStats.Type.values().length * knownStats;
+
+        for (Optional<ItemData> armorPiece : profileStats.getArmor()) {
+            if (armorPiece.isPresent()) {
+                written += writtenCells(armorPiece.get());
+                seeded += ItemData.Type.values().length * knownStats;
+            }
+        }
+
+        for (AccessoryData accessoryData : profileStats.getAccessoryBag().getAccessories()) {
+            written += writtenCells(accessoryData);
+            seeded += AccessoryData.Type.values().length * knownStats;
+        }
+
+        // the dense shape this replaces gave every bucket a value for every stat before a source ran
+        assertThat(seeded, is(greaterThan(40_000)));
+        assertThat(String.format("%d cells written against %d seeded", written, seeded), written, is(lessThan(seeded / 20)));
+    }
+
+    @Test
     @DisplayName("no buff row exists, so no total depends on the hour it is read")
     void noBuffRowExistsSoNoTotalDependsOnTheHourItIsRead() {
         // a TIME guard zeroes a running value outside its hour ranges, and it can only arrive on one of these
@@ -227,12 +252,19 @@ class ProfileStatsCharacterisationTest {
         return cells;
     }
 
-    private static <T extends Enum<T> & ObjectData.Type> void collectTable(Map<String, Double> cells, String owner, StatData<T> statData) {
+    private static void collectTable(Map<String, Double> cells, String owner, StatData<?> statData) {
         statData.getStats().forEach((bucket, statEntries) -> statEntries.forEach((statModel, data) -> {
             String path = String.format("%s/%s/%s", owner, bucket.name(), statModel.getId());
             record(cells, path + "/base", data.getBase());
             record(cells, path + "/bonus", data.getBonus());
         }));
+    }
+
+    private static int writtenCells(StatData<?> statData) {
+        return statData.getStats()
+            .stream()
+            .mapToInt(entry -> entry.getValue().size())
+            .sum();
     }
 
     private static void record(Map<String, Double> cells, String path, double value) {

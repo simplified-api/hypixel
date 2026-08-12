@@ -1,9 +1,11 @@
 package api.simplified.hypixel.profile_stats.data;
 
 import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
+import api.simplified.hypixel.profile_stats.StatOrigin;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.Accessory;
 import api.simplified.skyblock.model.BonusItemStat;
+import api.simplified.skyblock.model.BuffEffectsModel;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
@@ -68,24 +70,22 @@ public class AccessoryData extends ObjectData<AccessoryData.Type> {
 
         // Handle Gemstone Stats
         PlayerDataHelper.handleGemstoneBonus(this)
-            .forEach((statModel, value) -> this.addBonus(this.getStats(AccessoryData.Type.GEMSTONES).get(statModel), value));
+            .forEach((statModel, value) -> this.table.add(Type.GEMSTONES, statModel, StatHalf.BONUS, value));
 
         // Handle Stats
-        this.getAccessory().getItem().getStats().forEach((key, value) -> reference.getStat(key)
-            .ifPresent(statModel -> this.addBonus(this.getStats(AccessoryData.Type.STATS).get(statModel), value)));
+        this.getAccessory().getItem().getStats().forEach((key, value) -> this.table.add(Type.STATS, key, StatHalf.BONUS, value));
 
         // Handle Enrichment Stats
         this.getEnrichmentStat()
             .filter(stat -> stat.getEnrichment() > 0.0)
-            .ifPresent(stat -> this.addBonus(this.getStats(AccessoryData.Type.ENRICHMENTS).get(stat), stat.getEnrichment()));
+            .ifPresent(stat -> this.table.add(Type.ENRICHMENTS, stat, StatHalf.BONUS, stat.getEnrichment()));
 
         // New Year Cake Bag
         if ("NEW_YEAR_CAKE_BAG".equals(this.getAccessory().getItem().getId())) {
             try {
                 byte[] nbtCakeBag = compoundTag.getPathOrDefault("tag.ExtraAttributes.new_year_cake_bag_data", ByteArrayTag.EMPTY).getValue();
                 ListTag<CompoundTag> cakeBagItems = NbtFactory.fromByteArray(nbtCakeBag).getListTag("i");
-                reference.getStat("HEALTH")
-                    .ifPresent(statModel -> this.addBonus(this.getStats(AccessoryData.Type.CAKE_BAG).get(statModel), cakeBagItems.size()));
+                this.table.add(Type.CAKE_BAG, "HEALTH", StatHalf.BONUS, cakeBagItems.size());
             } catch (NbtException ignore) { }
         }
     }
@@ -140,20 +140,23 @@ public class AccessoryData extends ObjectData<AccessoryData.Type> {
                 .filter(BonusItemStat::noRequiredMobType)
                 .forEach(bonusItemStat -> {
                     // Handle Bonus Gemstone Stats
-                    if (bonusItemStat.isForGems()) {
-                        this.getStats(AccessoryData.Type.GEMSTONES)
-                            .forEach((statModel, statData) -> statData.bonus = PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), this.getCompoundTag(), expressionVariables, bonusItemStat));
-                    }
+                    if (bonusItemStat.isForGems())
+                        this.applyBonus(Type.GEMSTONES, expressionVariables, bonusItemStat);
 
                     // Handle Bonus Stats
-                    if (bonusItemStat.isForStats()) {
-                        this.getStats(AccessoryData.Type.STATS)
-                            .forEach((statModel, statData) -> statData.bonus = PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), this.getCompoundTag(), expressionVariables, bonusItemStat));
-                    }
+                    if (bonusItemStat.isForStats())
+                        this.applyBonus(Type.STATS, expressionVariables, bonusItemStat);
                 });
         }
 
         return this;
+    }
+
+    private void applyBonus(@NotNull Type bucket, ConcurrentMap<String, Double> expressionVariables, @NotNull BuffEffectsModel bonusModel) {
+        this.getStats(bucket).forEach((statModel, statData) -> StatHalf.BONUS.set(
+            statData,
+            PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), this.getCompoundTag(), expressionVariables, bonusModel)
+        ));
     }
 
     @Override
@@ -193,7 +196,7 @@ public class AccessoryData extends ObjectData<AccessoryData.Type> {
      */
     @Getter
     @RequiredArgsConstructor
-    public enum Type implements ObjectData.Type {
+    public enum Type implements StatOrigin {
 
         /**
          * Health from the New Year Cake Bag, one point for each cake stored in it.

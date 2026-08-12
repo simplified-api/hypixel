@@ -1,8 +1,10 @@
 package api.simplified.hypixel.profile_stats.data;
 
 import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
+import api.simplified.hypixel.profile_stats.StatOrigin;
 import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.BonusReforgeStat;
+import api.simplified.skyblock.model.BuffEffectsModel;
 import api.simplified.skyblock.model.Enchantment;
 import api.simplified.skyblock.model.Item;
 import api.simplified.skyblock.model.Stat;
@@ -77,32 +79,27 @@ public class ItemData extends ObjectData<ItemData.Type> {
         this.bonusReforgeStatModel = this.getReforge().flatMap(reforge -> reference.getBonusReforgeStat(reforge.getId()));
 
         // Save Stats
-        itemModel.getStats().forEach((key, value) -> reference.getStat(key)
-            .ifPresent(statModel -> this.getStats(ItemData.Type.STATS).get(statModel).addBonus(value)));
+        itemModel.getStats().forEach((key, value) -> this.table.add(Type.STATS, key, StatHalf.BONUS, value));
 
         // Save Reforge Stats
         PlayerDataHelper.handleReforgeBonus(this.getReforge(), this.getRarity())
-            .forEach((statModel, value) -> this.getStats(ItemData.Type.REFORGES).get(statModel).addBonus(value));
+            .forEach((statModel, value) -> this.table.add(Type.REFORGES, statModel, StatHalf.BONUS, value));
 
         // Save Gemstone Stats
         PlayerDataHelper.handleGemstoneBonus(this)
-            .forEach((statModel, value) -> this.getStats(ItemData.Type.GEMSTONES).get(statModel).addBonus(value));
+            .forEach((statModel, value) -> this.table.add(Type.GEMSTONES, statModel, StatHalf.BONUS, value));
 
         // Save Hot Potato Book Stats
         reference.getHotPotatoStats(itemModel.getCategory().getId())
-            .forEach(hotPotatoStat -> this.getStats(ItemData.Type.HOT_POTATOES).get(hotPotatoStat.getStat()).addBonus(this.getHotPotatoBooks() * hotPotatoStat.getValue()));
+            .forEach(hotPotatoStat -> this.table.add(Type.HOT_POTATOES, hotPotatoStat.getStat(), StatHalf.BONUS, this.getHotPotatoBooks() * hotPotatoStat.getValue()));
 
         // Save Art Of Peace Stats
-        if (this.hasArtOfPeace()) {
-            reference.getStat("HEALTH")
-                .ifPresent(statModel -> this.getStats(Type.SUN_TZU).get(statModel).addBonus(40.0));
-        }
+        if (this.hasArtOfPeace())
+            this.table.add(Type.SUN_TZU, "HEALTH", StatHalf.BONUS, 40.0);
 
         // Save Art Of War Stats
-        if (this.hasArtOfWar()) {
-            reference.getStat("STRENGTH")
-                .ifPresent(statModel -> this.getStats(Type.SUN_TZU).get(statModel).addBonus(5.0));
-        }
+        if (this.hasArtOfWar())
+            this.table.add(Type.SUN_TZU, "STRENGTH", StatHalf.BONUS, 5.0);
 
         // Save Enchantment Stats
         ConcurrentMap<Enchantment, Integer> enchantments = Concurrent.newMap();
@@ -140,7 +137,7 @@ public class ItemData extends ObjectData<ItemData.Type> {
                                 .filter(e -> level >= e.getKey())
                                 .mapToDouble(Map.Entry::getValue)
                                 .sum();
-                            this.getStats(Type.ENCHANTS).get(sub.getStat().get()).addBonus(enchantBonus);
+                            this.table.add(Type.ENCHANTS, sub.getStat().get(), StatHalf.BONUS, enchantBonus);
                         });
                 }
             });
@@ -155,9 +152,7 @@ public class ItemData extends ObjectData<ItemData.Type> {
             this.bonusCalculated = true;
 
             // Handle Reforges
-            this.getBonusReforgeStatModel().ifPresent(bonusReforgeStat -> this.getStats(ItemData.Type.REFORGES)
-                .forEach((statModel, statData) -> statData.bonus = PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), this.getCompoundTag(), expressionVariables, bonusReforgeStat))
-            );
+            this.getBonusReforgeStatModel().ifPresent(bonusReforgeStat -> this.applyBonus(Type.REFORGES, expressionVariables, bonusReforgeStat));
 
             // Handle Bonus Item Stats
             this.getBonusItemStatModels()
@@ -165,26 +160,27 @@ public class ItemData extends ObjectData<ItemData.Type> {
                 .filter(BonusItemStat::noRequiredMobType)
                 .forEach(bonusItemStat -> {
                     // Handle Bonus Gemstone Stats
-                    if (bonusItemStat.isForGems()) {
-                        this.getStats(Type.GEMSTONES)
-                            .forEach((statModel, statData) -> statData.bonus = PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), this.getCompoundTag(), expressionVariables, bonusItemStat));
-                    }
+                    if (bonusItemStat.isForGems())
+                        this.applyBonus(Type.GEMSTONES, expressionVariables, bonusItemStat);
 
                     // Handle Bonus Reforges
-                    if (bonusItemStat.isForReforges()) {
-                        this.getStats(Type.REFORGES)
-                            .forEach((statModel, statData) -> statData.bonus = PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), this.getCompoundTag(), expressionVariables, bonusItemStat));
-                    }
+                    if (bonusItemStat.isForReforges())
+                        this.applyBonus(Type.REFORGES, expressionVariables, bonusItemStat);
 
                     // Handle Bonus Stats
-                    if (bonusItemStat.isForStats()) {
-                        this.getStats(Type.STATS)
-                            .forEach((statModel, statData) -> statData.bonus = PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), this.getCompoundTag(), expressionVariables, bonusItemStat));
-                    }
+                    if (bonusItemStat.isForStats())
+                        this.applyBonus(Type.STATS, expressionVariables, bonusItemStat);
                 });
         }
 
         return this;
+    }
+
+    private void applyBonus(@NotNull Type bucket, ConcurrentMap<String, Double> expressionVariables, @NotNull BuffEffectsModel bonusModel) {
+        this.getStats(bucket).forEach((statModel, statData) -> StatHalf.BONUS.set(
+            statData,
+            PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), this.getCompoundTag(), expressionVariables, bonusModel)
+        ));
     }
 
     @Override
@@ -235,7 +231,7 @@ public class ItemData extends ObjectData<ItemData.Type> {
      */
     @Getter
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-    public enum Type implements ObjectData.Type {
+    public enum Type implements StatOrigin {
 
         /**
          * The flat bonuses from The Art of War and The Art of Peace.

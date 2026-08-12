@@ -1,12 +1,12 @@
 package api.simplified.hypixel.profile_stats.data;
 
 import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
+import api.simplified.hypixel.profile_stats.StatOrigin;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.Gemstone;
 import api.simplified.skyblock.model.Item;
 import api.simplified.skyblock.model.Reforge;
-import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -24,7 +24,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -40,7 +39,7 @@ import java.util.Optional;
  *
  * @param <T> the bucket type this item splits its stats by
  */
-public abstract class ObjectData<T extends ObjectData.Type> extends StatData<T> {
+public abstract class ObjectData<T extends StatOrigin> extends StatData<T> {
 
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("M/d/yy h:m a", Locale.US);
     private static final ZoneId HYPIXEL_TIMEZONE = ZoneId.of("America/New_York");
@@ -114,13 +113,6 @@ public abstract class ObjectData<T extends ObjectData.Type> extends StatData<T> 
         // Load Gemstones
         CompoundTag gemTag = compoundTag.getPathOrDefault("tag.ExtraAttributes.gems", CompoundTag.EMPTY);
         this.gemstones = Concurrent.newUnmodifiableMap(gemTag.notEmpty() ? findGemstones(reference.getGemstones(), gemTag) : Concurrent.newMap());
-
-        // Initialize Stats
-        ConcurrentList<Stat> statModels = reference.getStats();
-        Arrays.stream(this.getAllTypes()).forEach(type -> {
-            this.stats.put(type, Concurrent.newLinkedMap());
-            statModels.forEach(statModel -> this.stats.get(type).put(statModel, new Data()));
-        });
 
         // Load Bonus Item Stat Model
         this.bonusItemStatModels = reference.getBonusItemStats(itemModel.getId());
@@ -255,19 +247,6 @@ public abstract class ObjectData<T extends ObjectData.Type> extends StatData<T> 
     @Override
     public int hashCode() {
         return Objects.hash(this.getItem(), this.getCompoundTag(), this.getRarity(), this.getBonusItemStatModels(), this.getReforge(), this.getGemstones(), this.isRecombobulated(), this.isTierBoosted(), this.getTimestamp());
-    }
-
-    /**
-     * A bucket an item's stats can be split into.
-     */
-    public interface Type {
-
-        /**
-         * Whether this bucket's contribution is fixed for the item, so an optimiser can treat it as
-         * a constant rather than recomputing it per candidate.
-         */
-        boolean isOptimizerConstant();
-
     }
 
 }
