@@ -13,6 +13,7 @@ import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.util.StringUtil;
 import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.IntTag;
+import lib.minecraft.nbt.tag.NumericalTag;
 import lib.minecraft.nbt.tag.StringTag;
 import lib.minecraft.nbt.tag.Tag;
 import lombok.Getter;
@@ -99,16 +100,7 @@ public abstract class ObjectData<T extends ObjectData.Type> extends StatData<T> 
         this.compoundTag = compoundTag;
 
         // Load Timestamp
-        this.timestamp = Optional.ofNullable(
-                StringUtil.defaultIfEmpty(
-                    compoundTag.getPathOrDefault("tag.ExtraAttributes.timestamp", StringTag.EMPTY).getValue(),
-                    null
-                )
-            )
-            .map(timestamp -> LocalDateTime.parse(timestamp, TIMESTAMP_FORMAT))
-            .map(localDateTime -> localDateTime.atZone(HYPIXEL_TIMEZONE))
-            .map(ZonedDateTime::toInstant)
-            .map(Instant::toEpochMilli);
+        this.timestamp = readTimestamp(compoundTag.getPath("tag.ExtraAttributes.timestamp"));
 
         // Load Recombobulator
         this.recombobulated = compoundTag.getPathOrDefault("tag.ExtraAttributes.rarity_upgrades", IntTag.EMPTY).getValue() == 1;
@@ -159,6 +151,30 @@ public abstract class ObjectData<T extends ObjectData.Type> extends StatData<T> 
      * @return this item
      */
     public abstract ObjectData<T> calculateBonus(ConcurrentMap<String, Double> expressionVariables);
+
+    /**
+     * Reads when an instance was obtained out of whichever shape its tag carries.
+     * <p>
+     * The wire spells this two ways: a numeric tag is epoch milliseconds already, and a string tag is
+     * the game's own {@code M/d/yy h:m a} rendering in Hypixel's timezone. Anything else, and
+     * anything unparseable, is an item old enough to predate the stamp.
+     *
+     * @param timestampTag the tag under {@code tag.ExtraAttributes.timestamp}, null when absent
+     * @return the epoch milliseconds, empty when the tag carries no readable stamp
+     */
+    private static Optional<Long> readTimestamp(Tag<?> timestampTag) {
+        if (timestampTag instanceof NumericalTag<?> numericalTag)
+            return Optional.of(numericalTag.getValue().longValue());
+
+        if (!(timestampTag instanceof StringTag stringTag))
+            return Optional.empty();
+
+        return Optional.ofNullable(StringUtil.defaultIfEmpty(stringTag.getValue(), null))
+            .map(timestamp -> LocalDateTime.parse(timestamp, TIMESTAMP_FORMAT))
+            .map(localDateTime -> localDateTime.atZone(HYPIXEL_TIMEZONE))
+            .map(ZonedDateTime::toInstant)
+            .map(Instant::toEpochMilli);
+    }
 
     private static ConcurrentMap<Gemstone, ConcurrentList<Gemstone.Type>> findGemstones(CompoundTag gemTag) {
         ConcurrentList<Gemstone> gemstoneModels = SkyBlockData.getRepository(Gemstone.class).findAll();

@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -251,7 +252,7 @@ public class AccessoryBag {
                         .findFirstOrNull(Stat::getId, entry.getKey())
                         .getPowerCoefficient() * this.getLogComponent() * entry.getValue()
                 ))
-                .collect(Concurrent.toUnmodifiableMap());
+                .collect(Concurrent.toMap());
 
             this.getSelectedPower().ifPresent(power -> power.getBonuses()
                 .forEach((statId, value) -> stats.merge(
@@ -261,7 +262,7 @@ public class AccessoryBag {
                 ))
             );
 
-            this.selectedPowerStats = stats;
+            this.selectedPowerStats = stats.toUnmodifiable();
         }
 
         return this.selectedPowerStats;
@@ -273,7 +274,7 @@ public class AccessoryBag {
      */
     public @NotNull Optional<Power> getSelectedPower() {
         return this.getSelectedPowerId().flatMap(powerId -> SkyBlockData.getRepository(Power.class)
-            .findFirst(Power::getId, powerId)
+            .findFirst(Power::getId, powerId.toUpperCase(Locale.ROOT))
         );
     }
 
@@ -284,7 +285,7 @@ public class AccessoryBag {
         return this.getUnlockedPowerIds()
             .stream()
             .map(powerId -> SkyBlockData.getRepository(Power.class)
-                .findFirst(Power::getId, powerId)
+                .findFirst(Power::getId, powerId.toUpperCase(Locale.ROOT))
             )
             .flatMap(Optional::stream)
             .collect(Concurrent.toUnmodifiableList());

@@ -12,9 +12,12 @@ import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Key;
 import dev.simplified.util.NumberUtil;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
 
 /**
  * One slayer branch's lifetime record for a member - experience, the reward levels claimed, and the
@@ -39,12 +42,9 @@ import org.jetbrains.annotations.NotNull;
 @Getter
 public class SlayerBoss implements Experience, Weighted {
 
-    /**
-     * Branch name, lowercase. It is the key this object hung off rather than anything in its own
-     * body, so it does not survive a write.
-     */
+    @Getter(AccessLevel.NONE)
     @Key
-    private transient String id;
+    private transient @NotNull String id = "";
 
     /**
      * Experience earned against this branch.
@@ -73,6 +73,18 @@ public class SlayerBoss implements Experience, Weighted {
      */
     @Capture(filter = "^boss_attempts_tier_")
     private @NotNull ConcurrentMap<Integer, Integer> attempts = Concurrent.newMap();
+
+    /**
+     * Branch name, upper-cased to match the ids the reference data is keyed by - the wire spells it
+     * lower-case here, as it does everywhere it names a branch.
+     *
+     * <p>
+     * It is the key this object hung off rather than anything in its own body, so it does not
+     * survive a write.
+     */
+    public @NotNull String getId() {
+        return this.id.toUpperCase(Locale.ROOT);
+    }
 
     /**
      * Repository row backing this branch - its experience tiers, maximum level and weight curve.
