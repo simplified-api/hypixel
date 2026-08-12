@@ -65,5 +65,11 @@ idea {
 tasks {
     test {
         useJUnitPlatform()
+
+        // The characterisation harness reads the sibling skyblock-data checkout and, on request,
+        // rewrites its golden file. Neither reaches a forked test JVM unless it is handed over.
+        listOf("skyblock-data.root", "profile-stats.golden").forEach { key ->
+            System.getProperty(key)?.let { systemProperty(key, it) }
+        }
     }
 }
