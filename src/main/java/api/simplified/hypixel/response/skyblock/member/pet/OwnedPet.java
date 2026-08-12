@@ -101,8 +101,7 @@ public class OwnedPet implements Experience {
      * {@inheritDoc}
      * <p>
      * The table is chosen by the pet's current rarity rather than its base, so a tier boost below
-     * legendary moves the pet onto the table above. Legendary and mythic share one table, which is
-     * what keeps every rarity a pet can hold covered.
+     * legendary moves the pet onto the table above. Legendary and mythic share one table.
      */
     @Override
     public @NotNull ConcurrentList<Integer> getExperienceTiers() {

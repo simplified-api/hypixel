@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock.member.mining;
 
+import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
@@ -21,9 +22,9 @@ import java.util.Optional;
  * first-ore counters.
  *
  * <p>
- * <b>The perk tree itself is not here.</b> Perk levels and their toggles are bound from a separate
- * {@code skill_tree} node, so reaching for one through this class finds nothing. Several fields
- * below describe values that moved onto that node as well and now bind their defaults in silence.
+ * <b>The perk tree itself is not here.</b> Perk levels and their toggles, the tree's experience, the
+ * tokens sunk into it, when it was last reset and the equipped pickaxe ability are all held on the
+ * member's {@link SkillTree}, reached through {@link SkillTree.Tree#MINING}.
  *
  * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Heart_of_the_Mountain">Heart of the Mountain</a>
  */
@@ -36,16 +37,6 @@ public class HeartOfTheMountain {
     @Accessors(fluent = true)
     @SerializedName("received_free_tier")
     private boolean hasReceivedFreeTier;
-
-    /**
-     * Experience earned towards Heart of the Mountain levels, from commissions, mining events and
-     * Crystal Nucleus runs.
-     *
-     * <p>
-     * The current wire carries this on the skill tree node instead of here, so the field binds
-     * {@code 0.0} without complaint.
-     */
-    private double experience;
 
     /**
      * The Sky Mall buff rolled for the current SkyBlock day.
@@ -79,16 +70,6 @@ public class HeartOfTheMountain {
     // Time
 
     /**
-     * When the tree was last reset.
-     *
-     * <p>
-     * The current wire carries this on the skill tree node instead of here, so the field binds empty
-     * without complaint.
-     */
-    @SerializedName("last_reset")
-    private @NotNull Optional<SkyBlockDate.RealTime> lastReset = Optional.empty();
-
-    /**
      * When the member last entered the Crystal Hollows.
      *
      * <p>
@@ -107,16 +88,6 @@ public class HeartOfTheMountain {
     private int remainingTokens;
 
     /**
-     * Tokens of the Mountain sunk into perks.
-     *
-     * <p>
-     * The current wire carries this on the skill tree node instead of here, so the field binds
-     * {@code 0} without complaint.
-     */
-    @SerializedName("tokens_spent")
-    private int spentTokens;
-
-    /**
      * Whether the back-dated tier 2 token grant has been applied.
      */
     @SerializedName("retroactive_tier2_token")
@@ -128,16 +99,6 @@ public class HeartOfTheMountain {
     @Accessors(fluent = true)
     @SerializedName("hotm_migrator_tree_reset_send_message")
     private boolean hasPendingTreeResetMessage;
-
-    /**
-     * The pickaxe ability the member has equipped.
-     *
-     * <p>
-     * The current wire carries this on the skill tree node instead of here, so the field binds empty
-     * without complaint.
-     */
-    @SerializedName("selected_pickaxe_ability")
-    private Optional<String> selectedPickaxeAbility = Optional.empty();
 
     /**
      * The gemstone crystals collected in the Crystal Hollows, keyed by {@link Crystal.Type}.

@@ -9,6 +9,7 @@ import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.island.Banking;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
+import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
@@ -610,23 +611,23 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
     }
 
     private void loadMiningCore(SkyBlockMember member) {
-        // TODO(profile_stats-restore): HeartOfTheMountain.getNodes() removed.
-        // Re-enable once the new mining API exposes node/level iteration.
-        /*
-        member.getMining()
-            .getNodes()
-            .forEach((key, level) -> SkyBlockData.getRepository(HotmPerk.class)
-                .findFirst(HotmPerk::getId, key.toUpperCase())
-                .ifPresent(hotmPerk -> hotmPerk.getStats()
-                    .forEach(sub -> sub.getStat()
-                        .ifPresent(stat -> {
-                            double statValue = sub.getValues().getOrDefault(level, 0.0);
-                            this.addBonus(this.stats.get(Type.MINING_CORE).get(stat), statValue);
-                        })
+        member.getSkillTree()
+            .getNodes(SkillTree.Tree.MINING)
+            .map(SkillTree.Skill::getEntries)
+            .ifPresent(entries -> entries.stream()
+                .filter(entry -> entry.getValue().isEnabled()) // a perk switched off grants nothing
+                .forEach(entry -> SkyBlockData.getRepository(HotmPerk.class)
+                    .findFirst(HotmPerk::getId, entry.getKey().toUpperCase())
+                    .ifPresent(hotmPerk -> hotmPerk.getStats()
+                        .forEach(sub -> sub.getStat()
+                            .ifPresent(stat -> {
+                                double statValue = sub.getValues().getOrDefault(entry.getValue().getLevel(), 0.0);
+                                this.addBonus(this.stats.get(Type.MINING_CORE).get(stat), statValue);
+                            })
+                        )
                     )
                 )
             );
-        */
     }
 
     private void loadPetScore(SkyBlockMember member) {

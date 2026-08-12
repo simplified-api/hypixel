@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock.member.foraging;
 
+import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
@@ -22,59 +23,22 @@ import java.util.Optional;
  * daily tree-cutting counters.
  *
  * <p>
- * As on the mining side, the perk tree itself is bound from a separate {@code skill_tree} node and
- * is not reachable from here. Several of the fields below are not currently sent on this node at
- * all, and bind their defaults in silence.
+ * As on the mining side, the perk tree itself is held on the member's {@link SkillTree}, reached
+ * through {@link SkillTree.Tree#FORAGING} - the perk levels, the tree's experience, the whispers
+ * sunk into it and when it was last reset all sit on that node.
  *
  * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Heart_of_the_Forest">Heart of the Forest</a>
  */
 @Getter
 public class HeartOfTheForest {
 
-    /**
-     * The buff the Lottery perk rolled for the current SkyBlock day.
-     *
-     * <p>
-     * Lottery is the tier 4 perk of this tree and shares its wire key with the mining tree's Sky
-     * Mall. The key has not been seen on this node, so the field binds empty.
-     */
-    @SerializedName("current_daily_effect")
-    private Optional<String> currentLotteryEffect = Optional.empty();
-
-    /**
-     * The SkyBlock day number on which the Lottery buff last rerolled.
-     *
-     * <p>
-     * A day number rather than an epoch stamp. The key has not been seen on this node, so the field
-     * binds {@code 0}.
-     */
-    @SerializedName("current_daily_effect_last_changed")
-    private int lotteryEffectLastChanged;
-
     // Whispers
 
     /**
-     * Unspent forest whispers.
-     *
-     * <p>
-     * The key has not been seen on this node, so the field binds {@code 0}; what the wire does carry
-     * is the per-pool ledger.
-     */
-    @SerializedName("forests_whispers")
-    private int remainingForestWhispers;
-
-    /**
-     * Lifetime forest whispers spent.
-     *
-     * <p>
-     * The key has not been seen on this node, so the field binds {@code 0}; the per-pool ledger
-     * carries the spend per tier instead.
-     */
-    @SerializedName("forests_whispers_spent")
-    private int spentForestWhispers;
-
-    /**
      * The whisper ledger, keyed by the pool the wire names.
+     * <p>
+     * A pool's unspent balance is its total less what it has spent across the tiers, and nothing
+     * here derives it.
      */
     @SerializedName("whispers")
     private @NotNull ConcurrentMap<String, BiomeWhispers> biomeWhispers = Concurrent.newMap();

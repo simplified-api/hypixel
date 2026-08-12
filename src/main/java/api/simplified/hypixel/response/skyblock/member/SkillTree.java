@@ -6,9 +6,11 @@ import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Capture;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * The member's perk trees and the tokens spent in them.
@@ -75,6 +77,131 @@ public class SkillTree {
      */
     @SerializedName("last_free_trial_day")
     private int lastFreeTrialDay;
+
+    /**
+     * Reads a tree's experience.
+     *
+     * @param tree the tree to read
+     * @return the experience earned in it, or zero when the wire carries no entry
+     */
+    public long getExperience(@NotNull Tree tree) {
+        return this.getExperience().getOrDefault(tree.getPerkKey(), 0L);
+    }
+
+    /**
+     * Reads when a tree was last reset.
+     *
+     * @param tree the tree to read
+     * @return when it was last reset, empty for a tree that never has been
+     */
+    public @NotNull Optional<Instant> getLastReset(@NotNull Tree tree) {
+        return Optional.ofNullable(this.getLastReset().get(tree.getPerkKey()));
+    }
+
+    /**
+     * Reads the ability a tree has equipped.
+     *
+     * @param tree the tree to read
+     * @return the equipped ability's id, empty when none is
+     */
+    public @NotNull Optional<String> getSelectedAbility(@NotNull Tree tree) {
+        return Optional.ofNullable(this.getSelectedAbility().get(tree.getPerkKey()));
+    }
+
+    /**
+     * Reads which saved slot a tree currently has active.
+     *
+     * @param tree the tree to read
+     * @return the active slot, defaulting to the first
+     */
+    public int getSelectedSlot(@NotNull Tree tree) {
+        return this.getSelectedSlot().getOrDefault(tree.getPerkKey(), 1);
+    }
+
+    /**
+     * Reads the tokens sunk into a tree's active slot.
+     *
+     * @param tree the tree to read
+     * @return the tokens spent, or zero when the wire carries no entry
+     */
+    public int getSpentTokens(@NotNull Tree tree) {
+        return this.getSpentTokens(tree, this.getSelectedSlot(tree));
+    }
+
+    /**
+     * Reads the tokens sunk into one saved slot of a tree.
+     *
+     * @param tree the tree to read
+     * @param slot the saved slot, counting from one
+     * @return the tokens spent in that slot, or zero when the wire carries no entry
+     */
+    public int getSpentTokens(@NotNull Tree tree, int slot) {
+        return this.getSpentTokens().getOrDefault(slotKey(tree.getTokenKey(), slot), 0);
+    }
+
+    /**
+     * Reads the perks of a tree's active slot.
+     *
+     * @param tree the tree to read
+     * @return that slot's perks, empty for a slot the wire carries nothing for
+     */
+    public @NotNull Optional<Skill> getNodes(@NotNull Tree tree) {
+        return this.getNodes(tree, this.getSelectedSlot(tree));
+    }
+
+    /**
+     * Reads the perks of one saved slot of a tree.
+     *
+     * @param tree the tree to read
+     * @param slot the saved slot, counting from one
+     * @return that slot's perks, empty for a slot the wire carries nothing for
+     */
+    public @NotNull Optional<Skill> getNodes(@NotNull Tree tree, int slot) {
+        return Optional.ofNullable(this.getNodes().get(slotKey(tree.getPerkKey(), slot)));
+    }
+
+    /**
+     * Builds the key one saved slot is stored under.
+     * <p>
+     * The first slot carries the bare key and every later one carries its number as a suffix, so the
+     * base build and the saved builds sit side by side in the same map.
+     *
+     * @param base the tree's key in the map being read
+     * @param slot the saved slot, counting from one
+     * @return the key that slot is stored under
+     */
+    private static @NotNull String slotKey(@NotNull String base, int slot) {
+        return slot <= 1 ? base : String.format("%s_%d", base, slot);
+    }
+
+    /**
+     * The two perk trees, each spelled one way in most of this node and another in the token ledger.
+     */
+    @Getter
+    @RequiredArgsConstructor
+    public enum Tree {
+
+        /**
+         * The Heart of the Mountain, the mining tree.
+         */
+        MINING("mining", "mountain"),
+
+        /**
+         * The Heart of the Forest, the foraging tree.
+         */
+        FORAGING("foraging", "forest");
+
+        /**
+         * How the tree is spelled everywhere but the token ledger.
+         */
+        private final @NotNull String perkKey;
+
+        /**
+         * How the tree is spelled in the token ledger alone.
+         */
+        private final @NotNull String tokenKey;
+
+    }
 
     /**
      * The perks of one tree slot.
