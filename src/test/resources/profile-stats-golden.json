@@ -1,7 +1,7 @@
 {
   "header": {
     "fixtureSha256": "bcf889504fc60774e5303d865fe8c132467ea7e5ba26efd04efd7f674906251c",
-    "corpusCommitSha": "7f1ee68ff7cdd8c108a6cb0879cb3abd3b97ef61",
+    "corpusCommitSha": "ca348020f5d79f616a0facd35be67b6d0b341aae",
     "activeCenturyCakes": 18
   },
   "cells": {
@@ -159,9 +159,11 @@
     "profile/ACCESSORY_POWER/CRIT_DAMAGE/bonus": -113.72350897777899,
     "profile/ACCESSORY_POWER/INTELLIGENCE/bonus": 3582.2905328000384,
     "profile/ACCESSORY_POWER/STRENGTH/bonus": -113.72350897777899,
-    "profile/ACTIVE_PET/FORAGING_FORTUNE/bonus": 50.0,
+    "profile/ACTIVE_PET/FORAGING_FORTUNE/bonus": 70.0,
     "profile/ACTIVE_PET/MAGIC_FIND/bonus": 10.0,
-    "profile/ACTIVE_PET/STRENGTH/bonus": 50.0,
+    "profile/ACTIVE_PET/STRENGTH/bonus": 150.0,
+    "profile/ACTIVE_PET/SWEEP/bonus": 29.0,
+    "profile/ACTIVE_PET/WALK_SPEED/bonus": 50.0,
     "profile/BASE_STATS/CRIT_CHANCE/base": 30.0,
     "profile/BASE_STATS/CRIT_DAMAGE/base": 50.0,
     "profile/BASE_STATS/DAMAGE/base": 5.0,

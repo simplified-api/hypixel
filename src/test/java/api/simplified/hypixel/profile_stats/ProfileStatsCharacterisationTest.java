@@ -13,7 +13,7 @@ import api.simplified.skyblock.model.BonusArmorSet;
 import api.simplified.skyblock.model.BonusEnchantmentStat;
 import api.simplified.skyblock.model.BonusItemRarity;
 import api.simplified.skyblock.model.BonusItemStat;
-import api.simplified.skyblock.model.BonusPetAbilityStat;
+import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.BonusReforgeStat;
 import api.simplified.skyblock.model.Stat;
 import com.google.gson.Gson;
@@ -191,7 +191,7 @@ class ProfileStatsCharacterisationTest {
         assertThat(SkyBlockData.getRepository(BonusItemStat.class).findAll(), is(empty()));
         assertThat(SkyBlockData.getRepository(BonusReforgeStat.class).findAll(), is(empty()));
         assertThat(SkyBlockData.getRepository(BonusArmorSet.class).findAll(), is(empty()));
-        assertThat(SkyBlockData.getRepository(BonusPetAbilityStat.class).findAll(), is(empty()));
+        assertThat(SkyBlockData.getRepository(BonusPetPerkStat.class).findAll(), is(empty()));
         assertThat(SkyBlockData.getRepository(BonusEnchantmentStat.class).findAll(), is(empty()));
         assertThat(SkyBlockData.getRepository(BonusItemRarity.class).findAll(), is(empty()));
     }

@@ -78,9 +78,9 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
     private final ConcurrentList<Optional<ItemData>> armor = Concurrent.newList();
 
     /**
-     * Conditional bonuses declared for the active pet's abilities, gathered as the pet is read.
+     * Conditional bonuses declared for the active pet's perks, gathered as the pet is read.
      */
-    private final ConcurrentList<BonusPetAbilityStat> bonusPetAbilityStatModels = Concurrent.newList();
+    private final ConcurrentList<BonusPetPerkStat> bonusPetPerkStatModels = Concurrent.newList();
 
     /**
      * Set bonus the worn armour qualifies for, empty when the pieces do not form a set.
@@ -240,16 +240,16 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
 
             // --- Load Bonus Pet Item Stats ---
             ConcurrentMap<String, Double> petExpressionVariables = this.getExpressionVariables();
-            this.getBonusPetAbilityStatModels()
+            this.getBonusPetPerkStatModels()
                 .stream()
-                .filter(BonusPetAbilityStat::isPercentage)
-                .filter(BonusPetAbilityStat::noRequiredItem)
-                .filter(BonusPetAbilityStat::noRequiredMobType)
-                .forEach(bonusPetAbilityStat -> {
+                .filter(BonusPetPerkStat::isPercentage)
+                .filter(BonusPetPerkStat::noRequiredItem)
+                .filter(BonusPetPerkStat::noRequiredMobType)
+                .forEach(bonusPetPerkStat -> {
                     // Handle Stats
                     this.getStats().forEach((type, statEntries) -> statEntries.forEach((statModel, statData) -> {
-                        this.setBase(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBase(), null, petExpressionVariables, bonusPetAbilityStat));
-                        this.setBonus(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), null, petExpressionVariables, bonusPetAbilityStat));
+                        this.setBase(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBase(), null, petExpressionVariables, bonusPetPerkStat));
+                        this.setBonus(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), null, petExpressionVariables, bonusPetPerkStat));
                     }));
 
                     // Handle Armor
@@ -257,14 +257,14 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                         .stream()
                         .flatMap(Optional::stream)
                         .forEach(itemData -> itemData.getStats().forEach((type, statEntries) -> statEntries.forEach((statModel, statData) -> {
-                            this.setBase(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBase(), itemData.getCompoundTag(), petExpressionVariables, bonusPetAbilityStat));
-                            this.setBonus(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), itemData.getCompoundTag(), petExpressionVariables, bonusPetAbilityStat));
+                            this.setBase(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBase(), itemData.getCompoundTag(), petExpressionVariables, bonusPetPerkStat));
+                            this.setBonus(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), itemData.getCompoundTag(), petExpressionVariables, bonusPetPerkStat));
                         })));
 
                     // Handle Accessories
                     this.getAccessoryBag().getAccessories().forEach(accessoryData -> accessoryData.getStats().forEach((type, statEntries) -> statEntries.forEach((statModel, statData) -> {
-                        this.setBase(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBase(), accessoryData.getCompoundTag(), petExpressionVariables, bonusPetAbilityStat));
-                        this.setBonus(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), accessoryData.getCompoundTag(), petExpressionVariables, bonusPetAbilityStat));
+                        this.setBase(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBase(), accessoryData.getCompoundTag(), petExpressionVariables, bonusPetPerkStat));
+                        this.setBonus(statData, PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), accessoryData.getCompoundTag(), petExpressionVariables, bonusPetPerkStat));
                     })));
                 });
 
@@ -421,30 +421,30 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         // Save Pet Stats to Expression Variables
         this.stats.get(Type.ACTIVE_PET).forEach((statModel, statData) -> this.expressionVariables.put(String.format("STAT_PET_%s", statModel.getId()), statData.getTotal()));
 
-        // Load Rarity Filtered Ability Stats
-        petModel.getAbilities(petRarity).forEach(ability -> {
-            // Load Bonus Pet Ability Stats
-            SkyBlockData.getRepository(BonusPetAbilityStat.class)
+        // Load Rarity Filtered Perk Stats
+        petModel.getPerks(petRarity).forEach(perk -> {
+            // Load Bonus Pet Perk Stats
+            SkyBlockData.getRepository(BonusPetPerkStat.class)
                 .findFirst(
-                    Pair.of(BonusPetAbilityStat::getPetId, petModel.getId()),
-                    Pair.of(BonusPetAbilityStat::getAbilityName, ability.getName())
+                    Pair.of(BonusPetPerkStat::getPetId, petModel.getId()),
+                    Pair.of(BonusPetPerkStat::getPerkName, perk.getName())
                 )
-                .ifPresent(this.bonusPetAbilityStatModels::add);
+                .ifPresent(this.bonusPetPerkStatModels::add);
 
-            ability.getStats(petRarity).forEach(substitute -> {
+            perk.getStats(petRarity).forEach(substitute -> {
                 Pet.Substitute.Value value = substitute.getValues().get(petRarity);
-                double abilityValue = (value != null)
+                double perkValue = (value != null)
                     ? value.getBase() + (value.getScalar() * activePet.getLevel())
                     : 0.0;
 
-                // Save Ability Stat
+                // Save Perk Stat
                 substitute.getStat().ifPresent(stat ->
-                    this.addBonus(this.stats.get(Type.ACTIVE_PET).get(stat), abilityValue)
+                    this.addBonus(this.stats.get(Type.ACTIVE_PET).get(stat), perkValue)
                 );
 
-                // Store Bonus Pet Ability
+                // Store Bonus Pet Perk
                 String statKey = substitute.getStat().map(stat -> "_" + stat.getId()).orElse("");
-                this.expressionVariables.put(String.format("PET_ABILITY_%s%s", ability.getName(), statKey), abilityValue);
+                this.expressionVariables.put(String.format("PET_PERK_%s%s", perk.getName(), statKey), perkValue);
             });
         });
 
@@ -464,12 +464,12 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
 
         // Handle Static Pet Stat Bonuses
         ConcurrentMap<String, Double> petExpressionVariables = this.getExpressionVariables();
-        this.getBonusPetAbilityStatModels()
+        this.getBonusPetPerkStatModels()
             .stream()
-            .filter(BonusPetAbilityStat::notPercentage)
-            .filter(BonusPetAbilityStat::noRequiredItem)
-            .filter(BonusPetAbilityStat::noRequiredMobType)
-            .forEach(bonusPetAbilityStat -> this.stats.get(Type.ACTIVE_PET)
+            .filter(BonusPetPerkStat::notPercentage)
+            .filter(BonusPetPerkStat::noRequiredItem)
+            .filter(BonusPetPerkStat::noRequiredMobType)
+            .forEach(bonusPetPerkStat -> this.stats.get(Type.ACTIVE_PET)
                 .forEach((statModel, statData) -> this.setBonus(
                     statData,
                     PlayerDataHelper.handleBonusEffects(
@@ -477,7 +477,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                         statData.getBonus(),
                         null,
                         petExpressionVariables,
-                        bonusPetAbilityStat
+                        bonusPetPerkStat
                     ))
                 )
             );
