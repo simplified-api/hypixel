@@ -268,13 +268,13 @@ api.simplified.hypixel/
 ├── common/                        # Experience, Weight, Weighted, WeightedGroup, NbtContent,
 │                                  #   IdTiers, EnumLookup - the shared vocabulary
 ├── exception/                     # HypixelApiException + the decoded HypixelErrorResponse
-├── profile_stats/                 # ProfileStats: the stat sheet folded out of a member
 └── response/
     ├── forum/                     # RSS feed items
     ├── hypixel/                   # player, guild, counts, status, punishments
     ├── resource/                  # /resources/* definition documents
     └── skyblock/                  # profiles, islands, auctions, bazaar, fire sales
-        └── member/                # the member document - one package per subtree
+        ├── member/                # the member document - one package per subtree
+        └── stats/                 # ProfileStats: the stat sheet folded out of a member
 ```
 
 ### Decode flow

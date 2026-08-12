@@ -54,6 +54,17 @@ Three layers, and telling them apart is most of debugging this module.
 observation: derivation used to run at bind time inside a swallowing catch, so a throw left
 `Bestiary.families` empty for every profile ever decoded and nothing anywhere said so.
 
+`response/**` is the tree the wire binds into and it holds all three layers, not just the first.
+`response.skyblock.stats` is where the derived layer keeps its own machinery: nothing under it binds,
+nothing under it carries a serialization annotation, and everything under it is reached by a call a
+caller makes by name. The line between the two halves is a field:
+
+**A `stats` type appears under `response/**` as a parameter or a return type, never as a field.**
+The decoded tree holds no stat, so no key on the wire pulls the stat layer in behind it and a session
+opens only because a caller asked for one. `SkyBlockIsland.getProfileStats` and
+`AccessoryBag.getDetectedAccessories` are what that looks like from the DTO side - a method the caller
+names, on an object that decoded without one.
+
 - `SkyBlockMember.getAccessoryBag()` calls `initialize` on every call, handing the bag the three
   member-scoped values it cannot reach from its own node. An `AccessoryBag` decoded standalone is
   never initialized and reads empty rather than throwing - both paths are asserted.
@@ -62,6 +73,8 @@ observation: derivation used to run at bind time inside a swallowing catch, so a
 - `Bestiary.getFamilies()` and `AccessoryBag.getDetectedAccessories()` are the repository boundary.
   `getKills()` is not, and the parse behind the families completes with no session - only the lookup
   needs one.
+- `ProfileStats.compute` is the top of the derived layer and the heaviest thing in it. It resolves
+  every id against a repository, so it needs a session and it is not cheap.
 
 ## Serialization is not symmetric
 
@@ -196,6 +209,9 @@ empty there and reads the flagged entry everywhere else.
 
 - Do not derive at bind time. It needs a repository the decoder has no reason to have, it puts the
   throw inside a swallowing catch, and it makes the DTO tree unusable without a database session.
+- Do not put a `stats` type in a field under `response/**`. A parameter or a return type charges the
+  compute to the caller that asked for it; a field puts it behind a decode, which is how derivation
+  reached bind time the first time.
 - Do not hand-write an adapter for a shape an annotation covers. The annotations round-trip back to
   the wire layout; a hand-written adapter has to be written twice and the write half is the one
   nobody tests.

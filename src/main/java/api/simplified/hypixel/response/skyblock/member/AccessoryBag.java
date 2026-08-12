@@ -1,9 +1,9 @@
 package api.simplified.hypixel.response.skyblock.member;
 
 import api.simplified.hypixel.common.NbtContent;
-import api.simplified.hypixel.profile_stats.RarityUpgrade;
-import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
+import api.simplified.hypixel.response.skyblock.stats.RarityUpgrade;
+import api.simplified.hypixel.response.skyblock.stats.ReferenceSnapshot;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.date.SkyBlockDate;

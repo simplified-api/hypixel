@@ -1,4 +1,4 @@
-package api.simplified.hypixel.profile_stats;
+package api.simplified.hypixel.response.skyblock.stats;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import dev.simplified.util.NumberUtil;

@@ -1,4 +1,4 @@
-package api.simplified.hypixel.profile_stats;
+package api.simplified.hypixel.response.skyblock.stats;
 
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Item;
@@ -34,7 +34,7 @@ import java.util.Optional;
  * The production factory is bound to GitHub and cannot be repointed, so this builds its own
  * {@link JpaConfig} and registers it with the same process-wide manager
  * {@link SkyBlockData#getRepository(Class)} resolves against - which is what lets the whole
- * {@code profile_stats} package run unchanged with no request leaving the machine. Unauthenticated
+ * {@code stats} package run unchanged with no request leaving the machine. Unauthenticated
  * GitHub reads are capped at sixty an hour and one connect spends about forty-two of them, so a
  * suite that connects at all has to connect to disk.
  * <p>

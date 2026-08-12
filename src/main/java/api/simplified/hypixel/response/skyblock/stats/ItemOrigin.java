@@ -1,4 +1,4 @@
-package api.simplified.hypixel.profile_stats;
+package api.simplified.hypixel.response.skyblock.stats;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

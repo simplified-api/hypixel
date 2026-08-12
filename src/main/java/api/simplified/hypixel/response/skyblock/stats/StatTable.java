@@ -1,8 +1,8 @@
-package api.simplified.hypixel.profile_stats;
+package api.simplified.hypixel.response.skyblock.stats;
 
-import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
-import api.simplified.hypixel.profile_stats.StatOrigin;
-import api.simplified.hypixel.profile_stats.StatSink;
+import api.simplified.hypixel.response.skyblock.stats.ReferenceSnapshot;
+import api.simplified.hypixel.response.skyblock.stats.StatOrigin;
+import api.simplified.hypixel.response.skyblock.stats.StatSink;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;

@@ -269,7 +269,6 @@ hypixel/
 │   │   ├── common/                          # Experience, Weight, Weighted, WeightedGroup,
 │   │   │                                    #   NbtContent, IdTiers, EnumLookup
 │   │   ├── exception/                       # HypixelApiException, HypixelErrorResponse
-│   │   ├── profile_stats/                   # ProfileStats + its Data/ItemData/StatData helpers
 │   │   └── response/
 │   │       ├── forum/                       # HypixelForum (RSS)
 │   │       ├── hypixel/                     # player, guild, counts, status, punishments
@@ -278,9 +277,10 @@ hypixel/
 │   │           ├── election/                # mayors, candidates, voting cycles
 │   │           ├── garden/                  # commissions, composter
 │   │           ├── island/                  # banking, community upgrades
-│   │           └── member/                  # the member document, one package per subtree:
-│   │                                        #   attribute/ crimson/ dungeon/ foraging/
-│   │                                        #   hoppity/ mining/ pet/ rift/ skill/ slayer/
+│   │           ├── member/                  # the member document, one package per subtree:
+│   │           │                            #   attribute/ crimson/ dungeon/ foraging/
+│   │           │                            #   hoppity/ mining/ pet/ rift/ skill/ slayer/
+│   │           └── stats/                   # ProfileStats: the derived layer, totalled on demand
 │   ├── main/resources/META-INF/services/    # GsonContributor SPI registration
 │   ├── test/java/                           # member DTO mapping + round-trip suite
 │   └── test/resources/                      # craftedfury.json (profiles), elections.json
