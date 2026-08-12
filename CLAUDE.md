@@ -24,15 +24,10 @@ declaration.
 `./gradlew test` is two classes, `MemberDtoMappingTest` and `ElectionMappingTest`, and they are the
 whole gate.
 
-**A fresh clone can run only one of them.** `MemberDtoMappingTest` reads
-`src/main/resources/craftedfury.json`, gitignored and untracked, so `@BeforeAll` throws
-`craftedfury.json is missing from the classpath` and every test in it fails together. It sits under
-`main/resources` rather than `test/resources`, so were it ever tracked it would ship inside the jar -
-which is the reason it is ignored rather than the reason it is misplaced.
-
-`ElectionMappingTest` reads `src/test/resources/elections.json`, which is **tracked**. It is an
-unauthenticated resource carrying mayors, perk text and public vote counts and no player data at all,
-so nothing argues for keeping it out, and under `test/resources` it never reaches the jar.
+**A fresh clone runs both.** `MemberDtoMappingTest` reads `src/test/resources/craftedfury.json`, a
+captured `GET /skyblock/profiles` response for the maintainer's own account, and `ElectionMappingTest`
+reads `src/test/resources/elections.json`, an unauthenticated resource carrying mayors, perk text and
+public vote counts. Both are **tracked**, and under `test/resources` neither reaches the jar.
 
 `MemberDtoMappingTest` reads two members out of its capture: the first member of `profiles[0]` as the sparse case, the
 first of `profiles[1]` as the populated one. Many assertions are pinned to that one capture - 792
@@ -191,8 +186,8 @@ empty there and reads the flagged entry everywhere else.
 
 - `build/`, `.gradle/` - Gradle output and daemon state.
 - `.schema/` - generated JPA schema, excluded from the IDE module by `build.gradle.kts`.
-- `craftedfury.json` - the untracked fixture. Never track it; it is another player's inventory.
-  `src/test/resources/elections.json` is the opposite case and is tracked - public resource data.
+- `src/test/resources/craftedfury.json` - the profiles fixture, 1.6 MB over 26,940 lines. Tracked, but
+  read a slice through `scripts/json_dto_diff.py --section <node>` rather than opening it whole.
 - `notes/` - gitignored working notes on the gson-extras and json-annotations efforts. Read one when
   picking up a live effort; nothing downstream reads them, so do not cite a `notes/` path or a note's
   entry number from a tracked file - the directory resolves for nobody who clones this.

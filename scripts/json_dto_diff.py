@@ -28,7 +28,7 @@ from collections import defaultdict
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODULE = os.path.dirname(HERE)
 DEFAULT_SRC = os.path.join(MODULE, "src/main/java/api/simplified/hypixel")
-DEFAULT_JSON = os.path.join(MODULE, "src/main/resources/craftedfury.json")
+DEFAULT_JSON = os.path.join(MODULE, "src/test/resources/craftedfury.json")
 
 # Types we never descend into: JDK, NBT, and skyblock-data model classes.
 OPAQUE = {

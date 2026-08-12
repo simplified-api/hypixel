@@ -255,8 +255,7 @@ if (!client.isRateLimited())
 ./gradlew test        # JUnit 5 suite
 ```
 
-> [!CAUTION]
-> The test suite reads a real profile response from `src/main/resources/craftedfury.json`, which is **gitignored and not distributed**. A fresh clone has no fixture, so the suite fails in `@BeforeAll` with `craftedfury.json is missing from the classpath`. Drop your own `GET /skyblock/profiles` response at that path to run it - it needs at least two profiles, one sparse and one fully populated.
+Both fixtures ship with the repository, so a fresh clone runs the whole suite. `MemberDtoMappingTest` reads a captured `GET /skyblock/profiles` response from `src/test/resources/craftedfury.json` and takes two members out of it, the first of `profiles[0]` as the sparse case and the first of `profiles[1]` as the populated one; `ElectionMappingTest` reads `src/test/resources/elections.json`.
 
 ## Package Structure
 
@@ -283,7 +282,8 @@ hypixel/
 │   │                                        #   attribute/ crimson/ dungeon/ foraging/
 │   │                                        #   hoppity/ mining/ pet/ rift/ skill/ slayer/
 │   ├── main/resources/META-INF/services/    # GsonContributor SPI registration
-│   └── test/java/                           # member DTO mapping + round-trip suite
+│   ├── test/java/                           # member DTO mapping + round-trip suite
+│   └── test/resources/                      # craftedfury.json (profiles), elections.json
 ├── scripts/json_dto_diff.py                 # wire-vs-DTO coverage audit
 ├── build.gradle.kts  settings.gradle.kts  gradle/libs.versions.toml
 └── LICENSE.md  CONTRIBUTING.md  CLAUDE.md
