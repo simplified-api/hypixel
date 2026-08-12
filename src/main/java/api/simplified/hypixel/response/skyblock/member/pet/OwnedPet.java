@@ -17,35 +17,103 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * One pet a member owns, levelling on a table chosen by its rarity.
+ * <p>
+ * A pet's experience table is not fixed at decode time - it is picked from the pet's <em>current</em>
+ * rarity, so a held tier boost changes which table applies as well as what the pet is worth. Only the
+ * level cap needs a repository; everything else here is bound or derived from the fields below.
+ *
+ * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Pets">Pets</a>
+ */
 @Getter
 public class OwnedPet implements Experience {
 
+    /**
+     * Identifier the wire sends undashed, absent on a pet old enough to predate it.
+     */
     @SerializedName("uuid")
     private @NotNull Optional<UUID> identifier = Optional.empty();
+
+    /**
+     * Identifier the wire sends dashed, which is the spelling written back out.
+     */
     @SerializedName("uniqueId")
     private @NotNull UUID uniqueId;
+
+    /**
+     * The kind of pet this is, as an uppercase id.
+     */
     @SerializedName("type")
     private @NotNull String id;
+
+    /**
+     * Experience the pet has earned.
+     */
     @SerializedName("exp")
     private double experience;
+
+    /**
+     * Whether this pet is the one currently summoned.
+     */
     private boolean active;
+
+    /**
+     * Rarity the pet holds before any tier boost is counted.
+     */
     @SerializedName("tier")
     private @NotNull Rarity baseRarity = Rarity.COMMON;
+
+    /**
+     * Pet candies fed to the pet, each granting experience up to a limit.
+     */
     private int candyUsed;
+
+    /**
+     * Id of the item the pet is holding, empty when it holds none.
+     */
     private @NotNull Optional<String> heldItem = Optional.empty();
+
+    /**
+     * Identifier of the held item, empty when the pet holds none.
+     */
     @SerializedName("heldItemUuid")
     private @NotNull Optional<UUID> heldItemUniqueId = Optional.empty();
+
+    /**
+     * Whether the pet is bound to this profile and cannot be traded away.
+     */
     @SerializedName("petSoulbound")
     private boolean soulbound;
+
+    /**
+     * Id of the cosmetic skin applied to the pet, empty when it wears none.
+     */
     private @NotNull Optional<String> skin = Optional.empty();
+
+    /**
+     * Numeric entries the wire carries that no field above claims.
+     */
     @Lenient
     private @NotNull ConcurrentMap<String, Long> extra = Concurrent.newMap();
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The table is chosen by the pet's current rarity rather than its base, so a tier boost moves the
+     * pet onto the table above.
+     */
     @Override
     public @NotNull ConcurrentList<Integer> getExperienceTiers() {
         return EXPERIENCE_TIERS.get(this.getRarity());
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Read from the pet's repository row, falling back to a hundred for a pet the repository does not
+     * know.
+     */
     @Override
     public int getMaxLevel() {
         return SkyBlockData.getRepository(Pet.class)
@@ -54,33 +122,61 @@ public class OwnedPet implements Experience {
             .orElse(100);
     }
 
+    /**
+     * The pet's id rewritten for display, with underscores turned back into spaces.
+     */
     public String getPrettyName() {
         return StringUtil.capitalizeFully(this.getId().replace("_", " "));
     }
 
+    /**
+     * Rarity the pet counts as now, one above its base while a tier boost is held.
+     * <p>
+     * The boost only lifts a pet below legendary, so a pet already at legendary or above keeps its
+     * base rarity and never resolves past the rarities the experience table covers.
+     */
     public @NotNull Rarity getRarity() {
-        return Rarity.of(this.getBaseRarity().ordinal() + (this.isTierBoosted() ? 1 : 0));
+        return this.getBaseRarity().ordinal() < Rarity.LEGENDARY.ordinal()
+            ? Rarity.of(this.getBaseRarity().ordinal() + (this.isTierBoosted() ? 1 : 0))
+            : this.getBaseRarity();
     }
 
+    /**
+     * Position of the pet's current rarity in the rarity ladder.
+     */
     public int getRarityOrdinal() {
         return this.getRarity().ordinal();
     }
 
+    /**
+     * What this pet contributes toward pet score, counting from one at the lowest rarity.
+     */
     public int getScore() {
         return this.getRarity().ordinal() + 1;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * A pet is summoned at level one rather than level zero.
+     */
     @Override
     public int getStartingLevel() {
         return 1;
     }
 
+    /**
+     * Whether the pet is holding a tier boost, which raises its rarity by one.
+     */
     public boolean isTierBoosted() {
         return this.getHeldItem()
             .map(heldItem -> heldItem.equals("PET_ITEM_TIER_BOOST"))
             .orElse(false);
     }
 
+    /**
+     * Running experience total needed for each pet level, one table per rarity.
+     */
     private static final @NotNull ConcurrentMap<Rarity, ConcurrentList<Integer>> EXPERIENCE_TIERS = Concurrent.newUnmodifiableMap(
         Pair.of(Rarity.COMMON, Concurrent.newList(
             0, 100, 210, 330, 460, 605, 765, 940, 1130, 1340,

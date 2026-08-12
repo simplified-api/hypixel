@@ -6,12 +6,19 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Currently active or upcoming Fire Sales.
+ * The fire sales that are running or announced.
  */
 @Getter
 public class SkyBlockFireSaleResponse {
 
+    /**
+     * Whether the request was served.
+     */
     private boolean success;
+
+    /**
+     * The sales on offer, empty rather than null between events.
+     */
     private @NotNull ConcurrentList<SkyBlockFireSale> sales = Concurrent.newList();
 
 }

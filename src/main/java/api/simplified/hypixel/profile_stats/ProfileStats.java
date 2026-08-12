@@ -32,24 +32,79 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Every stat one member has on one profile, totalled from all sixteen sources that feed them.
+ * <p>
+ * This is the top of the derived layer and by far the heaviest thing in it. Skills, slayers,
+ * dungeons, armour, accessories, the active pet, potions, century cakes, essence perks and the rest
+ * each contribute separately, and the whole lot is resolved against the reference repositories, so a
+ * session is required and construction is not cheap.
+ * <p>
+ * Order matters here in a way it does not elsewhere. Many bonuses are expressions over stats the
+ * player already has, so the flat sources are totalled first, published as expression variables, and
+ * only then are the conditional bonuses evaluated against them. Passing {@code false} for the bonus
+ * pass stops after the flat sources, which is what an optimiser wants when it is about to vary the
+ * gear anyway.
+ */
 @Getter
 @SuppressWarnings("unused")
 public class ProfileStats extends StatData<ProfileStats.Type> {
 
+    /**
+     * Damage scaling earned from combat levels, as a fraction rather than a percentage.
+     */
     private final double damageMultiplier;
+
+    /**
+     * The member's accessory bag, already initialized with its member-scoped values.
+     */
     private final AccessoryBag accessoryBag;
+
+    /**
+     * The pet currently summoned, empty when none is.
+     */
     private final Optional<OwnedPet> activePet;
+
+    /**
+     * The four armour pieces, each empty when that slot is unfilled.
+     */
     private final ConcurrentList<Optional<ItemData>> armor = Concurrent.newList();
+
+    /**
+     * Conditional bonuses declared for the active pet's abilities, gathered as the pet is read.
+     */
     private final ConcurrentList<BonusPetAbilityStat> bonusPetAbilityStatModels = Concurrent.newList();
+
+    /**
+     * Set bonus the worn armour qualifies for, empty when the pieces do not form a set.
+     */
     private Optional<BonusArmorSet> bonusArmorSetModel = Optional.empty();
+
+    /**
+     * Whether the conditional bonuses have already been evaluated.
+     */
     private boolean bonusCalculated;
+
     @Getter(AccessLevel.NONE)
     private final ConcurrentMap<String, Double> expressionVariables = Concurrent.newMap();
 
+    /**
+     * Constructs a new {@code ProfileStats} with the conditional bonuses evaluated.
+     *
+     * @param skyBlockIsland the profile the member belongs to, read for the shared bank balance
+     * @param member the member to total
+     */
     public ProfileStats(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member) {
         this(skyBlockIsland, member, true);
     }
 
+    /**
+     * Constructs a new {@code ProfileStats}, optionally stopping before the conditional bonuses.
+     *
+     * @param skyBlockIsland the profile the member belongs to, read for the shared bank balance
+     * @param member the member to total
+     * @param calculateBonusStats whether to evaluate the bonuses that depend on the flat totals
+     */
     public ProfileStats(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
         // --- Initialize ---
         ConcurrentList<Stat> statModels = SkyBlockData.getRepository(Stat.class).findAll();
@@ -210,16 +265,36 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         }
     }
 
+    /**
+     * The player state a bonus expression can refer to, with the current stat totals folded in.
+     * <p>
+     * A fresh copy is built on every call, since the totals move as sources are added and a bonus
+     * has to see the values as they stand when it runs.
+     */
     public ConcurrentMap<String, Double> getExpressionVariables() {
         ConcurrentMap<String, Double> expressionVariables = Concurrent.newMap(this.expressionVariables);
         this.getAllStats().forEach((statModel, statData) -> expressionVariables.put(String.format("STAT_%s", statModel.getId()), statData.getTotal()));
         return expressionVariables;
     }
 
+    /**
+     * Every stat the member has, with the profile's own sources, the armour and the accessories all
+     * added together.
+     */
     public ConcurrentLinkedMap<Stat, Data> getCombinedStats() {
         return this.getCombinedStats(false);
     }
 
+    /**
+     * Totals every source, optionally keeping only the parts an optimiser can treat as fixed.
+     * <p>
+     * Restricting to the fixed parts leaves out the reforges and the accessory power, which are the
+     * two things an optimiser varies - so what remains is the constant an optimiser can compute once
+     * and add to each candidate.
+     *
+     * @param optimizerConstant whether to keep only the sources that do not vary with the gear
+     * @return a fresh table covering every known stat
+     */
     public ConcurrentLinkedMap<Stat, Data> getCombinedStats(boolean optimizerConstant) {
         // Initialize
         ConcurrentLinkedMap<Stat, Data> totalStats = SkyBlockData.getRepository(Stat.class)
@@ -609,27 +684,100 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
             );
     }
 
+    /**
+     * The sixteen sources a member's stats are split between.
+     * <p>
+     * All but the accessory power are fixed for the member, since the rest depend on progression
+     * rather than on gear. The selected power is the one an optimiser is free to change, so it alone
+     * has to be recomputed per candidate.
+     */
     @Getter
     @RequiredArgsConstructor
     public enum Type implements ObjectData.Type {
 
+        /**
+         * Stats granted by the accessory bag's selected power, scaled by its magical power.
+         */
         ACCESSORY_POWER(false),
+
+        /**
+         * Stats and ability stats from the pet currently summoned, scaled by its level.
+         */
         ACTIVE_PET(true),
+
+        /**
+         * Stats from potion effects currently running.
+         */
         ACTIVE_POTIONS(true),
+
+        /**
+         * The flat starting values every player has before anything is earned.
+         */
         BASE_STATS(true),
+
+        /**
+         * Stats from bestiary milestones.
+         */
         BESTIARY(true),
+
+        /**
+         * Stats from an active booster cookie.
+         */
         BOOSTER_COOKIE(true),
+
+        /**
+         * Stats from century cakes still in date.
+         */
         CENTURY_CAKES(true),
+
+        /**
+         * Stats from Catacombs levels and the selected dungeon class.
+         */
         DUNGEONS(true),
+
+        /**
+         * Stats from essence perks bought in the corresponding menus.
+         */
         ESSENCE(true),
+
+        /**
+         * Stats from SkyBlock levels.
+         */
         SKYBLOCK_LEVELS(true),
+
+        /**
+         * Stats from Jacob's farming perks, the permanent farming fortune upgrades.
+         */
         JACOBS_FARMING(true),
+
+        /**
+         * Stats from the songs completed on Melody's Harp.
+         */
         MELODYS_HARP(true),
+
+        /**
+         * Stats from Heart of the Mountain perks.
+         */
         MINING_CORE(true),
+
+        /**
+         * Stats from pet score, which counts the distinct pets collected by rarity.
+         */
         PET_SCORE(true),
+
+        /**
+         * Stats from skill levels.
+         */
         SKILLS(true),
+
+        /**
+         * Stats from slayer levels.
+         */
         SLAYERS(true);
 
+        /**
+         * Whether this source is fixed for the member, so an optimiser need not recompute it.
+         */
         private final boolean optimizerConstant;
 
     }

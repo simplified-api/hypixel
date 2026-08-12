@@ -9,16 +9,32 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Information regarding Collections.
+ * The published definitions of every Hypixel SkyBlock collection group and the tier ladders beneath
+ * them.
  */
 @Getter
 public class ResourceCollections {
 
+    /**
+     * Whether the wire reported the request as successful.
+     */
     private boolean success;
+
+    /**
+     * When the resource was last regenerated.
+     */
     @SerializedName("lastUpdated")
     private @NotNull SkyBlockDate.SkyBlockTime lastUpdated;
+
+    /**
+     * SkyBlock version the resource was generated against.
+     */
     @SerializedName("version")
     private @NotNull String version;
+
+    /**
+     * Every collection group, keyed by group id.
+     */
     private @NotNull ConcurrentMap<String, Collection> collections = Concurrent.newMap();
 
     // TODO: Migrate away from JpaModel

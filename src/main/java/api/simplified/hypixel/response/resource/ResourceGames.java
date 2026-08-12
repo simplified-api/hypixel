@@ -11,16 +11,31 @@ import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Information regarding Games.
+ * The published definitions of every game on the Hypixel network.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ResourceGames {
 
+    /**
+     * Whether the wire reported the request as successful.
+     */
     private boolean success;
+
+    /**
+     * Whether the resource carries the retired flag.
+     */
     private boolean retired;
+
+    /**
+     * When the resource was last regenerated.
+     */
     @SerializedName("lastUpdated")
     private @NotNull SkyBlockDate.RealTime lastUpdated;
+
+    /**
+     * Every game, keyed by the game's type name.
+     */
     private @NotNull ConcurrentMap<String, HypixelGame> games = Concurrent.newMap();
 
 }
