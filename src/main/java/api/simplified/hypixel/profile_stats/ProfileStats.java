@@ -1,7 +1,6 @@
 package api.simplified.hypixel.profile_stats;
 
 import api.simplified.hypixel.profile_stats.data.Data;
-import api.simplified.hypixel.profile_stats.data.PlayerDataHelper;
 import api.simplified.hypixel.profile_stats.data.StatData;
 import api.simplified.hypixel.profile_stats.data.StatHalf;
 import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
@@ -200,63 +199,9 @@ public class ProfileStats extends StatData<StatSource> {
         Arrays.stream(StatSource.values()).forEach(source -> source.contribute(this.context, this.table));
         this.context.publishTotals(this.table);
 
-        if (calculateBonusStats) {
-            // --- Load Bonus Accessory Item Stats ---
-            this.getAccessories().forEach(accessoryStats -> accessoryStats.calculateBonus(variables));
-
-            // --- Load Bonus Armor Stats ---
-            this.getArmor()
-                .stream()
-                .flatMap(Optional::stream)
-                .forEach(itemData -> itemData.calculateBonus(variables));
-
-            // --- Load Armor Multiplier Enchantments ---
-            this.getArmor()
-                .stream()
-                .flatMap(Optional::stream)
-                .forEach(itemData -> itemData.getEnchantments().forEach((enchantment, value) -> itemData.getEnchantmentStats().get(enchantment)
-                    .stream()
-                    .filter(sub -> sub.getStat().isPresent())
-                    .filter(sub -> sub.getType() == Stat.Type.PERCENT || sub.getType() == Stat.Type.PLUS_PERCENT)
-                    .forEach(sub -> {
-                        double enchantMultiplier = 1 + sub.getValues().entrySet().stream()
-                            .filter(e -> value >= e.getKey())
-                            .mapToDouble(Map.Entry::getValue)
-                            .sum() / 100.0;
-
-                        // Apply Multiplier - an unwritten cell is zero, so rescaling it would write a zero
-                        this.getStats().forEach((type, statEntries) -> Optional.ofNullable(statEntries.get(sub.getStat().get()))
-                            .ifPresent(statData -> {
-                                for (StatHalf half : StatHalf.values())
-                                    half.set(statData, half.read(statData) * enchantMultiplier);
-                            }));
-                    }))
-                );
-
-            // --- Load Bonus Pet Item Stats ---
-            this.context.publishTotals(this.table);
-            this.getBonusPetPerkStatModels()
-                .stream()
-                .filter(BonusPetPerkStat::isPercentage)
-                .filter(BonusPetPerkStat::noRequiredItem)
-                .filter(BonusPetPerkStat::noRequiredMobType)
-                .forEach(bonusPetPerkStat -> {
-                    // Handle Stats
-                    applyPetPercentage(this, null, variables, bonusPetPerkStat);
-
-                    // Handle Armor
-                    this.getArmor()
-                        .stream()
-                        .flatMap(Optional::stream)
-                        .forEach(itemData -> applyPetPercentage(itemData, itemData.getCompoundTag(), variables, bonusPetPerkStat));
-
-                    // Handle Accessories
-                    this.getAccessories()
-                        .forEach(accessoryStats -> applyPetPercentage(accessoryStats, accessoryStats.getCompoundTag(), variables, bonusPetPerkStat));
-                });
-
-            // TODO: Load Post Bonus Stats
-        }
+        // --- Bonus Pass ---
+        if (calculateBonusStats)
+            BonusPass.run(this.context, this.table, this.armor, this.accessories);
     }
 
     /**
@@ -358,13 +303,6 @@ public class ProfileStats extends StatData<StatSource> {
                 for (StatHalf half : StatHalf.values())
                     half.add(totalStats.get(statModel), half.read(data));
             }));
-    }
-
-    private static void applyPetPercentage(@NotNull StatData<?> statData, @Nullable CompoundTag compoundTag, @NotNull ConcurrentMap<String, Double> expressionVariables, @NotNull BonusPetPerkStat bonusPetPerkStat) {
-        statData.getStats().forEach((origin, statEntries) -> statEntries.forEach((statModel, data) -> {
-            for (StatHalf half : StatHalf.values())
-                half.set(data, PlayerDataHelper.handleBonusEffects(statModel, half.read(data), compoundTag, expressionVariables, bonusPetPerkStat));
-        }));
     }
 
     private void loadArmor(@NotNull ReferenceSnapshot reference, @NotNull SkyBlockMember member) {

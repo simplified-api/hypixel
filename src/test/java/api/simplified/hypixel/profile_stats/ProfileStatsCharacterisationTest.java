@@ -1,5 +1,4 @@
 package api.simplified.hypixel.profile_stats;
-import api.simplified.hypixel.profile_stats.data.Data;
 import api.simplified.hypixel.profile_stats.data.StatData;
 import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
@@ -11,7 +10,6 @@ import api.simplified.skyblock.model.BonusItemRarity;
 import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.BonusReforgeStat;
-import api.simplified.skyblock.model.Stat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;

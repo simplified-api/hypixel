@@ -110,6 +110,39 @@ public final class StatTable implements StatSink {
     }
 
     /**
+     * Rewrites every cell something wrote, which is what a multiplier pass does.
+     * <p>
+     * An unwritten cell is zero and stays absent - rescaling it would write a zero, and folding it
+     * through a rule that adds would invent a contribution no source made.
+     *
+     * @param rewriter given the stat, the half and the number as it stands, answers the new number
+     */
+    public void rewrite(@NotNull Rewriter rewriter) {
+        this.entries.forEach((origin, statEntries) -> statEntries.forEach((statModel, data) -> {
+            for (StatHalf half : StatHalf.values())
+                half.set(data, rewriter.rewrite(statModel, half, half.read(data)));
+        }));
+    }
+
+    /**
+     * Rewrites every written cell of one stat, across every origin that wrote it.
+     *
+     * @param target the stat to rewrite
+     * @param rewriter given the stat, the half and the number as it stands, answers the new number
+     */
+    public void rewrite(@NotNull Stat target, @NotNull Rewriter rewriter) {
+        this.entries.forEach((origin, statEntries) -> {
+            Data data = statEntries.get(target);
+
+            if (data == null)
+                return;
+
+            for (StatHalf half : StatHalf.values())
+                half.set(data, rewriter.rewrite(target, half, half.read(data)));
+        });
+    }
+
+    /**
      * Adds every cell a chosen subset of origins wrote into a reading already keyed by stat.
      *
      * @param totals the reading to add into
@@ -160,6 +193,24 @@ public final class StatTable implements StatSink {
             .stream()
             .map(statModel -> Pair.of(statModel, new Data()))
             .collect(Concurrent.toLinkedMap());
+    }
+
+    /**
+     * Answers what one already-written number becomes.
+     */
+    @FunctionalInterface
+    public interface Rewriter {
+
+        /**
+         * Rewrites one number.
+         *
+         * @param statModel the stat the number belongs to
+         * @param half which half the number is
+         * @param current the number as it stands
+         * @return the number to write back
+         */
+        double rewrite(@NotNull Stat statModel, @NotNull StatHalf half, double current);
+
     }
 
 }

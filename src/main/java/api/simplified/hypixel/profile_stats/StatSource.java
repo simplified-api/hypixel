@@ -1,6 +1,5 @@
 package api.simplified.hypixel.profile_stats;
 
-import api.simplified.hypixel.profile_stats.data.PlayerDataHelper;
 import api.simplified.hypixel.profile_stats.data.StatHalf;
 import api.simplified.hypixel.response.skyblock.member.CenturyCake;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
@@ -133,13 +132,10 @@ public enum StatSource implements StatOrigin {
                 .filter(BonusPetPerkStat::notPercentage)
                 .filter(BonusPetPerkStat::noRequiredItem)
                 .filter(BonusPetPerkStat::noRequiredMobType)
-                .forEach(bonusPetPerkStat -> bonuses.replaceAll((statModel, value) -> PlayerDataHelper.handleBonusEffects(
-                    statModel,
-                    value,
-                    null,
-                    context.getVariables(),
-                    bonusPetPerkStat
-                )));
+                .forEach(bonusPetPerkStat -> {
+                    BuffEvaluator evaluator = BuffEvaluator.compile(bonusPetPerkStat);
+                    bonuses.replaceAll((statModel, value) -> evaluator.apply(statModel, value, context.getVariables(), Operation.Pass.BONUS));
+                });
 
             // Handle Percentage Pet Item Bonuses
             if (!heldItemId.isEmpty()) {

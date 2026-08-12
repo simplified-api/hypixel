@@ -1,13 +1,11 @@
 package api.simplified.hypixel.profile_stats;
 
-import api.simplified.hypixel.profile_stats.data.PlayerDataHelper;
 import api.simplified.hypixel.profile_stats.data.StatData;
 import api.simplified.hypixel.profile_stats.data.StatHalf;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.Accessory;
 import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.BonusReforgeStat;
-import api.simplified.skyblock.model.BuffEffectsModel;
 import api.simplified.skyblock.model.Enchantment;
 import api.simplified.skyblock.model.Gemstone;
 import api.simplified.skyblock.model.Item;
@@ -51,7 +49,7 @@ import java.util.Optional;
  * <p>
  * An accessory is an item, so it is one of these too - the buckets it never fills simply stay
  * unwritten, and the ones an armour piece never fills do the same. Anything conditional on the rest
- * of the player waits for {@link #calculateBonus(ConcurrentMap)}.
+ * of the player is left to the bonus pass, which needs totals this cannot see.
  */
 @Getter
 public final class ItemStats extends StatData<ItemOrigin> {
@@ -188,11 +186,11 @@ public final class ItemStats extends StatData<ItemOrigin> {
         itemModel.getStats().forEach((key, value) -> this.table.add(ItemOrigin.STATS, key, StatHalf.BONUS, value));
 
         // Save Reforge Stats
-        PlayerDataHelper.handleReforgeBonus(this.getReforge(), this.getRarity())
+        handleReforgeBonus(this.getReforge(), this.getRarity())
             .forEach((statModel, value) -> this.table.add(ItemOrigin.REFORGES, statModel, StatHalf.BONUS, value));
 
         // Save Gemstone Stats
-        PlayerDataHelper.handleGemstoneBonus(this.getGemstones(), this.getRarity())
+        handleGemstoneBonus(this.getGemstones(), this.getRarity())
             .forEach((statModel, value) -> this.table.add(ItemOrigin.GEMSTONES, statModel, StatHalf.BONUS, value));
 
         // Save Enrichment Stats
@@ -266,45 +264,6 @@ public final class ItemStats extends StatData<ItemOrigin> {
         }
     }
 
-    /**
-     * Evaluates the conditional bonuses this item declares and folds them into its buckets.
-     * <p>
-     * The bonuses are expressions over the player's own state, so they cannot be resolved when the
-     * item is read - the variables only exist once the whole profile is known. Calling this twice
-     * does nothing the second time.
-     *
-     * @param expressionVariables the player state the bonus expressions are evaluated against
-     * @return this item
-     */
-    public @NotNull ItemStats calculateBonus(ConcurrentMap<String, Double> expressionVariables) {
-        if (!this.bonusCalculated) {
-            this.bonusCalculated = true;
-
-            // Handle Reforges
-            this.getBonusReforgeStatModel().ifPresent(bonusReforgeStat -> this.applyBonus(ItemOrigin.REFORGES, expressionVariables, bonusReforgeStat));
-
-            // Handle Bonus Item Stats
-            this.getBonusItemStatModels()
-                .stream()
-                .filter(BonusItemStat::noRequiredMobType)
-                .forEach(bonusItemStat -> {
-                    // Handle Bonus Gemstone Stats
-                    if (bonusItemStat.isForGems())
-                        this.applyBonus(ItemOrigin.GEMSTONES, expressionVariables, bonusItemStat);
-
-                    // Handle Bonus Reforges
-                    if (bonusItemStat.isForReforges())
-                        this.applyBonus(ItemOrigin.REFORGES, expressionVariables, bonusItemStat);
-
-                    // Handle Bonus Stats
-                    if (bonusItemStat.isForStats())
-                        this.applyBonus(ItemOrigin.STATS, expressionVariables, bonusItemStat);
-                });
-        }
-
-        return this;
-    }
-
     @Override
     protected ItemOrigin[] getAllTypes() {
         return ItemOrigin.values();
@@ -324,11 +283,46 @@ public final class ItemStats extends StatData<ItemOrigin> {
         return this.hasArtOfWar;
     }
 
-    private void applyBonus(@NotNull ItemOrigin bucket, ConcurrentMap<String, Double> expressionVariables, @NotNull BuffEffectsModel bonusModel) {
-        this.getStats(bucket).forEach((statModel, statData) -> StatHalf.BONUS.set(
-            statData,
-            PlayerDataHelper.handleBonusEffects(statModel, statData.getBonus(), this.getCompoundTag(), expressionVariables, bonusModel)
-        ));
+    /**
+     * Totals what a set of slotted gemstones give, at the rarity of what they are slotted into.
+     * <p>
+     * A gemstone's value depends on both its quality and the rarity of what it is slotted into, so
+     * the same gemstone is worth more in a legendary item than in a rare one.
+     *
+     * @param gemstones the quality of each slotted gemstone, keyed by the gemstone
+     * @param rarity the rarity the gemstones are scaled against
+     * @return the value each stat gains, keyed by the stat
+     */
+    private static ConcurrentMap<Stat, Double> handleGemstoneBonus(@NotNull ConcurrentMap<Gemstone, ConcurrentList<Gemstone.Type>> gemstones, @NotNull Rarity rarity) {
+        ConcurrentMap<Stat, Double> gemstoneAdjusted = Concurrent.newMap();
+
+        gemstones.forEach((gemstone, gemstoneTypes) -> gemstoneTypes.forEach(gemstoneType -> {
+            double value = gemstone.getValues()
+                .getOrDefault(gemstoneType, Concurrent.newMap())
+                .getOrDefault(rarity, 0.0);
+
+            if (value > 0.0)
+                gemstoneAdjusted.put(gemstone.getStat(), value + gemstoneAdjusted.getOrDefault(gemstone.getStat(), 0.0));
+        }));
+
+        return gemstoneAdjusted;
+    }
+
+    /**
+     * Totals what a reforge gives at a given rarity.
+     *
+     * @param optionalReforge the applied reforge, empty when none is
+     * @param rarity the rarity the reforge is scaled against
+     * @return the value each stat gains, empty when no reforge is applied
+     */
+    private static ConcurrentMap<Stat, Double> handleReforgeBonus(@NotNull Optional<Reforge> optionalReforge, @NotNull Rarity rarity) {
+        ConcurrentMap<Stat, Double> reforgeBonuses = Concurrent.newMap();
+
+        optionalReforge.ifPresent(reforge -> reforge.getStats(rarity)
+            .forEach(substitute -> substitute.getStat()
+                .ifPresent(stat -> reforgeBonuses.put(stat, substitute.getValues().get(rarity) + reforgeBonuses.getOrDefault(stat, 0.0)))));
+
+        return reforgeBonuses;
     }
 
     /**
