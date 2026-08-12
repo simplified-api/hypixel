@@ -6,13 +6,26 @@ import dev.simplified.collection.ConcurrentMap;
 import lombok.Getter;
 
 /**
- * List of products along with their sell summary, buy summary, and quick status
+ * A snapshot of every product traded on the Bazaar, each with both sides of its order book.
+ *
+ * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Bazaar">Bazaar</a>
  */
 @Getter
 public class SkyBlockBazaar {
 
+    /**
+     * Whether the request was served.
+     */
     private boolean success;
+
+    /**
+     * When Hypixel last rebuilt the snapshot.
+     */
     private SkyBlockDate.RealTime lastUpdated;
+
+    /**
+     * Every tradeable product keyed by its item id.
+     */
     private final ConcurrentMap<String, SkyBlockProduct> products = Concurrent.newMap();
 
 }

@@ -7,14 +7,22 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Recent News and Announcements focused on SkyBlock.
+ * The recent news and announcements written for SkyBlock.
  * <p>
- * This does not include Patch Notes or other announcements.
+ * This is the in-game announcements board rather than the forum at large, so patch notes and
+ * network-wide announcements do not appear here.
  */
 @Getter
 public class SkyBlockNews {
 
+    /**
+     * Whether the request was served.
+     */
     private boolean success;
+
+    /**
+     * The entries on the board, newest first.
+     */
     @SerializedName("items")
     private @NotNull ConcurrentList<SkyBlockArticle> articles = Concurrent.newList();
 

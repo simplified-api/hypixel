@@ -8,6 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * The four aggregates a group of weighted progressions reports over its members.
+ * <p>
+ * Only the progressions the group chooses to expose are folded, which is not always every one it
+ * holds - a cosmetic skill counts toward a member's levels without counting toward their weight.
  *
  * @param <T> the progression type being folded
  */
@@ -19,9 +22,7 @@ public interface WeightedGroup<T extends Experience & Weighted> {
     @NotNull ConcurrentList<T> getWeighted();
 
     /**
-     * Mean level across the members.
-     *
-     * @return the average level, or zero when there are none
+     * Mean level across the members, zero when there are none.
      */
     default double getAverage() {
         return this.getWeighted()
@@ -33,8 +34,6 @@ public interface WeightedGroup<T extends Experience & Weighted> {
 
     /**
      * Total experience across the members.
-     *
-     * @return the summed experience
      */
     default double getExperience() {
         return this.getWeighted()
@@ -44,9 +43,7 @@ public interface WeightedGroup<T extends Experience & Weighted> {
     }
 
     /**
-     * Mean progress toward the next level across the members.
-     *
-     * @return the average progress percentage, or zero when there are none
+     * Mean lifetime progress across the members, zero when there are none.
      */
     default double getProgressPercentage() {
         return this.getWeighted()
@@ -57,9 +54,7 @@ public interface WeightedGroup<T extends Experience & Weighted> {
     }
 
     /**
-     * Weight of each member, keyed by the member.
-     *
-     * @return the per-member weight
+     * Weight of each member, keyed by the member itself.
      */
     default @NotNull ConcurrentMap<T, Weight> getWeight() {
         return this.getWeighted()

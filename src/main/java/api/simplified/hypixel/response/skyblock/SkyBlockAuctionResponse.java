@@ -8,13 +8,21 @@ import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Auction(s) specific to an ID, Player, or Island.
+ * The listings a single auction lookup returned, whether it was made by auction id, by player or by
+ * profile.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SkyBlockAuctionResponse {
 
+    /**
+     * Whether the request was served.
+     */
     private boolean success;
+
+    /**
+     * The listings that matched, empty rather than null when the lookup found none.
+     */
     private @NotNull ConcurrentList<SkyBlockAuction> auctions = Concurrent.newList();
 
 }

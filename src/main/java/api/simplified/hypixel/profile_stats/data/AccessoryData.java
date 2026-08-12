@@ -21,14 +21,41 @@ import lombok.RequiredArgsConstructor;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * One accessory out of a member's bag, with everything it contributes already totalled.
+ * <p>
+ * Only what is fixed about the accessory is read here - its own stats, its gemstones, its enrichment
+ * and the New Year Cake Bag's per-cake health. Anything conditional on the rest of the player waits
+ * for {@link #calculateBonus(ConcurrentMap)}.
+ *
+ * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Accessories">Accessories</a>
+ */
 @Getter
 public class AccessoryData extends ObjectData<AccessoryData.Type> {
 
     private static final ConcurrentList<Integer> PULSE_CHARGES = Concurrent.newList(150_000, 1_000_000, 5_000_000);
+
+    /**
+     * Reference data for the accessory this instance is of.
+     */
     private final Accessory accessory;
+
+    /**
+     * Whether the conditional bonuses have already been evaluated.
+     */
     private boolean bonusCalculated;
+
+    /**
+     * Stat the accessory has been enriched toward, empty when it carries no enrichment.
+     */
     private final Optional<Stat> enrichmentStat;
 
+    /**
+     * Constructs a new {@code AccessoryData} and totals everything the accessory gives outright.
+     *
+     * @param accessory reference data for the accessory being read
+     * @param compoundTag the accessory's NBT tag
+     */
     public AccessoryData(Accessory accessory, CompoundTag compoundTag) {
         super(accessory.getItem(), compoundTag);
         this.accessory = accessory;
@@ -150,19 +177,46 @@ public class AccessoryData extends ObjectData<AccessoryData.Type> {
         return 31 * super.hashCode() + Objects.hash(this.getAccessory(), this.isBonusCalculated());
     }
 
+    /**
+     * Whether the accessory is rare enough to be enriched but carries no enrichment.
+     */
     public final boolean isMissingEnrichment() {
         return this.getRarity().isEnrichable() && this.getEnrichmentStat().isEmpty();
     }
 
+    /**
+     * The four sources an accessory's stats are split between.
+     * <p>
+     * All four are fixed for a given accessory, so an optimiser can total them once and reuse the
+     * result across every candidate loadout.
+     */
     @Getter
     @RequiredArgsConstructor
     public enum Type implements ObjectData.Type {
 
+        /**
+         * Health from the New Year Cake Bag, one point for each cake stored in it.
+         */
         CAKE_BAG(true),
+
+        /**
+         * Stats from the gemstones slotted into the accessory.
+         */
         GEMSTONES(true),
+
+        /**
+         * Stats the accessory provides in its own right.
+         */
         STATS(true),
+
+        /**
+         * The single stat an accessory enrichment adds.
+         */
         ENRICHMENTS(true);
 
+        /**
+         * Whether this source is fixed for the accessory, so an optimiser need not recompute it.
+         */
         private final boolean optimizerConstant;
 
     }

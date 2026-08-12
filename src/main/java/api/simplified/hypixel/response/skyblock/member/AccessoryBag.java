@@ -26,9 +26,25 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 import java.util.function.Function;
 
+/**
+ * A member's accessory bag, the selected power tuned over it, and everything the two contribute.
+ * <p>
+ * Three of the values this needs are not in its own wire node - the talisman bag's contents, whether
+ * the rift prism has been consumed, and how many abiphone contacts the member holds. They arrive
+ * through {@link #initialize(NbtContent, boolean, int)}, so a bag decoded on its own is never wired
+ * and reads empty rather than throwing.
+ * <p>
+ * {@link #getDetectedAccessories()} is the repository boundary and needs a session; the magical power
+ * and power stats derived from it need one too.
+ *
+ * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Accessory_Bag">Accessory Bag</a>
+ */
 @Getter
 public class AccessoryBag {
 
+    /**
+     * Slot upgrades bought for the bag, each widening how many accessories it holds.
+     */
     @SerializedName("bag_upgrades_purchased")
     private int bagUpgradesPurchased;
 
@@ -45,20 +61,37 @@ public class AccessoryBag {
     private transient ConcurrentList<AccessoryData> accessories;
 
     // Power
+
+    /**
+     * Id of the power the member has selected, empty when none is.
+     */
     @SerializedName("selected_power")
     private @NotNull Optional<String> selectedPowerId = Optional.empty();
+
+    /**
+     * Ids of every power the member has unlocked and may select between.
+     */
     @SerializedName("unlocked_powers")
     private @NotNull ConcurrentList<String> unlockedPowerIds = Concurrent.newUnmodifiableList();
+
     @Getter(AccessLevel.NONE)
     private transient ConcurrentMap<String, Double> selectedPowerStats;
 
     // Magical Power
+
+    /**
+     * The most magical power the member has ever held, which the game keeps as its own record.
+     */
     @SerializedName("highest_magical_power")
     private int highestMagicalPower;
     @Getter(AccessLevel.NONE)
     private transient Integer magicalPower;
 
     // Tuning
+
+    /**
+     * Tuning points the member has spent across the bag's slots.
+     */
     private @NotNull Tuning tuning = new Tuning();
 
     /**
@@ -78,7 +111,7 @@ public class AccessoryBag {
 
     /**
      * Accessories parsed out of the talisman bag and resolved against the accessory repository,
-     * empty for a bag decoded on its own
+     * empty for a bag decoded on its own.
      */
     public @NotNull ConcurrentList<AccessoryData> getDetectedAccessories() {
         if (this.detectedAccessories == null) {
@@ -106,7 +139,7 @@ public class AccessoryBag {
 
     /**
      * The detected accessories that count toward magical power, with the lower-ranked members of each
-     * family dropped
+     * family dropped.
      */
     public @NotNull ConcurrentList<AccessoryData> getAccessories() {
         if (this.accessories != null)
@@ -171,7 +204,7 @@ public class AccessoryBag {
     }
 
     /**
-     * Magical power granted by the counting accessories, plus the rift prism bonus
+     * Magical power granted by the counting accessories, plus the rift prism bonus.
      */
     public int getMagicalPower() {
         if (this.magicalPower == null) {
@@ -190,16 +223,22 @@ public class AccessoryBag {
         return this.magicalPower;
     }
 
+    /**
+     * Tuning points the bag's magical power has earned, one for every ten.
+     */
     public int getTuningPoints() {
         return this.getMagicalPower() / 10;
     }
 
+    /**
+     * The diminishing curve magical power is fed through before it scales a power's stats.
+     */
     public double getLogComponent() {
         return Math.pow(Math.log(1 + (0.0019 * this.getMagicalPower())), 1.2);
     }
 
     /**
-     * Stats granted by the selected power, scaled by its coefficient and this bag's magical power
+     * Stats granted by the selected power, scaled by its coefficient and this bag's magical power.
      */
     public @NotNull ConcurrentMap<String, Double> getSelectedPowerStats() {
         if (this.selectedPowerStats == null) {
@@ -228,12 +267,19 @@ public class AccessoryBag {
         return this.selectedPowerStats;
     }
 
+    /**
+     * The selected power resolved against the power repository, empty when none is selected or the
+     * repository does not know it.
+     */
     public @NotNull Optional<Power> getSelectedPower() {
         return this.getSelectedPowerId().flatMap(powerId -> SkyBlockData.getRepository(Power.class)
             .findFirst(Power::getId, powerId)
         );
     }
 
+    /**
+     * The unlocked powers resolved against the power repository, dropping any id it does not know.
+     */
     public @NotNull ConcurrentList<Power> getUnlockedPowers() {
         return this.getUnlockedPowerIds()
             .stream()
@@ -257,32 +303,70 @@ public class AccessoryBag {
         return magicalPower;
     }
 
+    /**
+     * How a member has spent their tuning points, slot by slot.
+     *
+     * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Maxwell">Maxwell</a>
+     */
     @Getter
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Tuning {
 
+        /**
+         * The highest tuning slot the member has unlocked.
+         */
         @SerializedName("highest_unlocked_slot")
         private int highestUnlockedSlot;
+
+        /**
+         * Whether the first tuning point refund has been claimed.
+         */
         @SerializedName("refund_1")
         @Accessors(fluent = true)
         private boolean hasClaimedRefund;
+
+        /**
+         * Whether the second tuning point refund has been claimed.
+         */
         @SerializedName("refund_2")
         @Accessors(fluent = true)
         private boolean hasClaimedSecondRefund;
 
+        /**
+         * Each tuning slot the member has spent into, keyed by slot number.
+         * <p>
+         * The wire spells these as sibling {@code slot_<n>} keys rather than as one object, so every
+         * key matching that prefix is folded in here and the number becomes the key.
+         */
         @Capture(filter = "^slot_")
         private @NotNull ConcurrentMap<Integer, Slot> slots = Concurrent.newMap();
 
+        /**
+         * Reads one tuning slot.
+         *
+         * @param slot the slot number to read
+         * @return that slot, empty when nothing has been spent into it
+         */
         public @NotNull Optional<Slot> getSlot(int slot) {
             return Optional.ofNullable(this.getSlots().get(slot));
         }
 
+        /**
+         * One tuning slot and the stats the member has tuned into it.
+         */
         @Getter
         @NoArgsConstructor(access = AccessLevel.PRIVATE)
         public static class Slot {
 
+            /**
+             * When the slot was bought, empty for a slot that came free.
+             */
             @SerializedName("purchase_ts")
             private @NotNull Optional<SkyBlockDate.RealTime> purchased = Optional.empty();
+
+            /**
+             * Points tuned into each stat, keyed by the stat id the wire names.
+             */
             @Capture
             private @NotNull ConcurrentMap<String, Integer> stats = Concurrent.newMap();
 

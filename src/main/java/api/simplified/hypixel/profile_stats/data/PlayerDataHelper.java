@@ -23,10 +23,36 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Evaluation of the stat bonuses that reference data declares as expressions rather than as numbers.
+ * <p>
+ * A great many SkyBlock bonuses are conditional - they scale on a stat the player already has, on a
+ * value stored in the item's own tag, or on the time of day. Reference data therefore stores them as
+ * expression strings keyed by a prefixed stat id, and nothing can be resolved until both the player's
+ * variables and the item's tag are in hand. That is what this does.
+ * <p>
+ * The key prefixes carry the operation: {@code ADD_} and {@code MULTIPLY_} combine with the running
+ * total, {@code COPY_} scales it, {@code SET_} replaces it, and {@code ALL} in place of a stat id
+ * applies the bonus to every stat. A value may embed {@code nbt_<path>} to read a number straight
+ * out of the item's tag, and {@code CURRENT_VALUE} to refer to the running total.
+ */
 public class PlayerDataHelper {
 
     private static final Pattern nbtVariablePattern = Pattern.compile(".*?(nbt_([a-zA-Z0-9_\\-.]+)).*?");
 
+    /**
+     * Applies the buffs that have to run after every other source has been totalled.
+     * <p>
+     * Only the {@code COPY_} form does anything here, since a bonus that scales the finished total
+     * cannot be evaluated while that total is still being assembled.
+     *
+     * @param statModel the stat being totalled
+     * @param currentTotal the value every other source has already produced
+     * @param compoundTag the item's tag, read for any {@code nbt_} reference, may be null
+     * @param variables the player state the expressions are evaluated against
+     * @param bonusEffectsModels the reference data declaring the buffs
+     * @return the adjusted total
+     */
     public static double handlePostBonusEffects(Stat statModel, double currentTotal, CompoundTag compoundTag, Map<String, Double> variables, BuffEffectsModel... bonusEffectsModels) {
         MutableDouble value = new MutableDouble(currentTotal);
 
@@ -73,6 +99,20 @@ public class PlayerDataHelper {
         return value.get();
     }
 
+    /**
+     * Applies the buffs a source declares, folding each into the running total.
+     * <p>
+     * A {@code TIME} key is a list of hour ranges the buff holds within; falling outside every one of
+     * them zeroes the value rather than skipping it. A multiplying buff is ignored for a stat that
+     * cannot be multiplied.
+     *
+     * @param statModel the stat being totalled
+     * @param currentTotal the value accumulated so far
+     * @param compoundTag the item's tag, read for any {@code nbt_} reference, may be null
+     * @param variables the player state the expressions are evaluated against
+     * @param bonusEffectsModels the reference data declaring the buffs
+     * @return the adjusted total
+     */
     @SuppressWarnings("unchecked")
     public static double handleBonusEffects(
         Stat statModel,
@@ -155,6 +195,15 @@ public class PlayerDataHelper {
         return insideConstraint;
     }
 
+    /**
+     * Totals what an object's slotted gemstones give, at the object's own rarity.
+     * <p>
+     * A gemstone's value depends on both its quality and the rarity of what it is slotted into, so
+     * the same gemstone is worth more in a legendary item than in a rare one.
+     *
+     * @param objectData the item or accessory to read
+     * @return the value each stat gains, keyed by the stat
+     */
     public static ConcurrentMap<Stat, Double> handleGemstoneBonus(ObjectData<?> objectData) {
         ConcurrentMap<Stat, Double> gemstoneAdjusted = Concurrent.newMap();
 
@@ -171,6 +220,13 @@ public class PlayerDataHelper {
         return gemstoneAdjusted;
     }
 
+    /**
+     * Totals what a reforge gives at a given rarity.
+     *
+     * @param optionalReforge the applied reforge, empty when none is
+     * @param rarity the rarity the reforge is scaled against
+     * @return the value each stat gains, empty when no reforge is applied
+     */
     public static ConcurrentMap<Stat, Double> handleReforgeBonus(@NotNull Optional<Reforge> optionalReforge, @NotNull Rarity rarity) {
         ConcurrentMap<Stat, Double> reforgeBonuses = Concurrent.newMap();
 

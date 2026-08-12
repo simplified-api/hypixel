@@ -7,11 +7,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
+/**
+ * The candidate holding the mayor's office, with its perks running for the whole term.
+ *
+ * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Mayor_Election">Mayor Election</a>
+ */
 @Getter
 @NoArgsConstructor
 public class Mayor extends Candidate {
 
-    private @NotNull Optional<VotingCandidate> minister = Optional.empty();
+    /**
+     * Runner-up of the election, carrying the one perk that runs alongside the mayor's own, and
+     * empty when the wire reports no minister.
+     */
+    private @NotNull Optional<Candidate> minister = Optional.empty();
+
+    /**
+     * Election that put this mayor in office, together with the ballot it was won on.
+     */
     @SerializedName("election")
     private @NotNull Election electionResults = new Election();
 

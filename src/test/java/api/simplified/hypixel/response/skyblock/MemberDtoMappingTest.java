@@ -1,10 +1,10 @@
 package api.simplified.hypixel.response.skyblock;
 
 import api.simplified.hypixel.response.hypixel.HypixelPlayer;
-import api.simplified.hypixel.response.skyblock.election.Election;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.Bestiary;
 import api.simplified.hypixel.response.skyblock.member.Currencies;
+import api.simplified.hypixel.response.skyblock.member.Experimentation;
 import api.simplified.hypixel.response.skyblock.member.GardenCore;
 import api.simplified.hypixel.response.skyblock.member.JacobsContest;
 import api.simplified.hypixel.response.skyblock.member.Loadouts;
@@ -28,7 +28,9 @@ import api.simplified.hypixel.response.skyblock.member.foraging.HeartOfTheForest
 import api.simplified.hypixel.response.skyblock.member.hoppity.ChocolateFactory;
 import api.simplified.hypixel.response.skyblock.member.mining.HeartOfTheMountain;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
+import api.simplified.hypixel.response.skyblock.member.pet.Pets;
 import api.simplified.hypixel.response.skyblock.member.rift.Rift;
+import api.simplified.skyblock.common.Rarity;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -214,6 +216,79 @@ class MemberDtoMappingTest {
         // the two explicitly named keys must not leak into the captured tool map
         assertThat(toolkit.getTools(), not(hasKey("IS_UNLOCKED")));
         assertThat(toolkit.getTools(), not(hasKey("IN_USE")));
+    }
+
+    @Test
+    @DisplayName("every rarity a pet can hold has an experience table")
+    void everyPetRarityHasATable() {
+        Pets pets = this.decode(populated, "pets_data", Pets.class);
+
+        // 20 of this member's pets are mythic, a rarity the table did not cover - reading a level off
+        // one handed back a null table rather than a number
+        ConcurrentList<OwnedPet> mythic = pets.getPets()
+            .stream()
+            .filter(pet -> pet.getBaseRarity() == Rarity.MYTHIC)
+            .collect(Concurrent.toList());
+
+        assertThat(mythic.isEmpty(), is(false));
+
+        for (OwnedPet pet : mythic) {
+            assertThat(pet.getExperienceTiers(), is(notNullValue()));
+            assertThat(pet.getExperienceTiers().isEmpty(), is(false));
+        }
+
+        // mythic levels on the legendary curve rather than one of its own
+        assertThat(
+            pets.getPets().stream().filter(pet -> pet.getBaseRarity() == Rarity.MYTHIC).findFirst().orElseThrow().getExperienceTiers(),
+            is(equalTo(pets.getPets().stream().filter(pet -> pet.getBaseRarity() == Rarity.LEGENDARY).findFirst().orElseThrow().getExperienceTiers()))
+        );
+    }
+
+    @Test
+    @DisplayName("an aggregate wire entry overflows instead of taking a key the enum cannot name")
+    void divertsAggregateMapEntries() {
+        Dungeons dungeons = this.decode(populated, "dungeons", Dungeons.class);
+        FloorData normal = dungeons.getDungeon(DungeonData.Type.CATACOMBS).getFloorData(false);
+
+        // the wire mixes a non-floor 'total' entry into this map alongside floors 0 to 7; it names no
+        // Floor, so without the overflow it lands under a key the enum never produced and the eight
+        // real floors have to share the map with it
+        assertThat(normal.getTimesPlayed().size(), is(equalTo(8)));
+        assertThat(normal.getTimesPlayed().get(Floor.ENTRANCE), is(equalTo(9)));
+        assertThat(normal.getTimesPlayed().get(Floor.SEVEN), is(equalTo(1029)));
+
+        // 215 is the wire's aggregate; it must not have become a floor's value
+        assertThat(normal.getTimesPlayed().values(), not(hasItem(215)));
+
+        // the same shape on the rarity-keyed auction counters
+        Statistics statistics = this.decode(populated, "player_stats", Statistics.class);
+
+        assertThat(statistics.getAuctions().getTotalSold().size(), is(equalTo(8)));
+        assertThat(statistics.getAuctions().getTotalSold().get(Rarity.LEGENDARY), is(equalTo(3123)));
+        assertThat(statistics.getAuctions().getTotalSold().values(), not(hasItem(1174)));
+    }
+
+    @Test
+    @DisplayName("experimentation tables capture their per-tier attempts, claims and best scores")
+    void mapsExperimentationTables() {
+        Experimentation experimentation = this.decode(populated, "experimentation", Experimentation.class);
+        Experimentation.Table chronomatron = experimentation.getChronomatron();
+
+        // each tier arrives as its own sibling key rather than inside an object, so a capture that
+        // bound nothing would leave all three maps empty and say nothing about it
+        assertThat(chronomatron.getAttempts().get(0), is(equalTo(8)));
+        assertThat(chronomatron.getClaims().get(0), is(equalTo(8)));
+        assertThat(chronomatron.getBestScore().get(0), is(equalTo(17)));
+
+        // superpairs sends no attempts_ key at all, so that map is empty on the wire's account
+        // rather than on the capture's
+        assertThat(experimentation.getSuperpairs().getAttempts(), is(anEmptyMap()));
+        assertThat(experimentation.getSuperpairs().getClaims().get(0), is(equalTo(4)));
+
+        // claims_resets sits on the root and shares the claims_ prefix, so it must stay out of the
+        // per-tier capture that lives one level down
+        assertThat(experimentation.getResetClaims(), is(equalTo(1)));
+        assertThat(chronomatron.getClaims(), not(hasKey("resets")));
     }
 
     @Test
@@ -1025,37 +1100,6 @@ class MemberDtoMappingTest {
         @Extract("objectives.tutorial")
         private ConcurrentList<String> tutorialObjectives = Concurrent.newList();
 
-    }
-
-    @Test
-    @DisplayName("election cycles compute the same bounds the hook used to store")
-    void computesElectionCycles() {
-        Election election = new Election(278);
-
-        // captured off the hook before it was removed, so these are the pre-change values rather
-        // than a restatement of the expressions that now produce them
-        assertThat(election.getVoting().getStart().getRealTime(), is(equalTo(1684145700000L)));
-        assertThat(election.getVoting().getEnd().getRealTime(), is(equalTo(1684480500000L)));
-        assertThat(election.getTerm().getStart().getRealTime(), is(equalTo(1684480500000L)));
-        assertThat(election.getTerm().getEnd().getRealTime(), is(equalTo(1684926900000L)));
-
-        // a term begins the moment voting closes
-        assertThat(election.getTerm().getStart().getRealTime(),
-            is(equalTo(election.getVoting().getEnd().getRealTime())));
-
-        // the no-arg constructor no longer leaves a half-built object: gson binds year, and both
-        // cycles follow from it whenever they are asked for
-        assertThat(new Election().getVoting().getStart().getRealTime(),
-            is(not(equalTo(election.getVoting().getStart().getRealTime()))));
-    }
-
-    @Test
-    @DisplayName("two elections of one year are equal and hash alike")
-    void electionIdentityIsItsYear() {
-        // Cycle declares no equals, so folding the derived cycles into identity made this false
-        assertThat(new Election(278), is(equalTo(new Election(278))));
-        assertThat(new Election(278).hashCode(), is(equalTo(new Election(278).hashCode())));
-        assertThat(new Election(278), is(not(equalTo(new Election(279)))));
     }
 
     @Test

@@ -10,16 +10,24 @@ import dev.simplified.util.NumberUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Progression shared by a dungeon and a dungeon class.
+ * The progression a dungeon and a dungeon class share.
  * <p>
- * Both advance on the same tier table and weigh identically; only the experience they read differs.
- * The two carried byte-identical copies of this, which {@link SkyBlockMember#getTotalWeight()}
- * sums together - so a divergence between them would have been invisible in the total.
+ * Both climb the same fifty-step experience table and both turn their level into weight the same
+ * way, so the only thing that differs between them is which experience total they read. Holding one
+ * copy of the formula is what keeps the two from drifting apart, since
+ * {@link SkyBlockMember#getTotalWeight()} sums the dungeon weight and the class weights into a
+ * single number that would not show the difference.
+ *
+ * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Dungeoneering">Dungeoneering</a>
  */
 interface DungeonWeighted extends Experience, Weighted {
 
     /**
-     * Experience required to reach each level.
+     * The fifty running experience totals needed to reach each level, {@code 50} for level one up to
+     * {@code 569_559_640} for level fifty.
+     * <p>
+     * Their sum, not the level-fifty threshold, is what lifetime progress is measured against, so
+     * those percentages come out small.
      */
     @NotNull ConcurrentList<Integer> DEFAULT_TIERS = Concurrent.newUnmodifiableList(
         50, 125, 235, 395, 625, 955, 1_425, 2_095, 3_045, 4_385,
@@ -41,7 +49,13 @@ interface DungeonWeighted extends Experience, Weighted {
         return this.getExperienceTiers().size();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The level is raised to a power and scaled, with the fractional progress towards the next level
+     * folded into the base while still below the maximum. Experience past the level-fifty threshold
+     * is scored separately as overflow rather than being added to the value.
+     */
     @Override
     default @NotNull Weight getWeight() {
         double rawLevel = this.getRawLevel();

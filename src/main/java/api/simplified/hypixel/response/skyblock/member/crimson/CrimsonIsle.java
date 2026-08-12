@@ -16,37 +16,101 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
+/**
+ * A member's whole state on the Crimson Isle - the faction they swore to, the reputation they hold, the
+ * Kuudra clears and Dojo scores they have, their Abiphone and their faction quests.
+ * <p>
+ * The wire node is {@code nether_island_player_data}, the name the island shipped under before it was
+ * reworked; prose calls it the Crimson Isle throughout. Every field defaults non-null, because a
+ * missing subtree is a player's API privacy setting rather than an error.
+ *
+ * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Crimson_Isle">Crimson Isle</a>
+ */
 @Getter
 public class CrimsonIsle {
 
+    /**
+     * The member's Abiphone, its contacts and its call log.
+     */
     private @NotNull Abiphone abiphone = new Abiphone();
+
+    /**
+     * The member's Heavy Pearl collection from The Matriarch.
+     */
     private @NotNull Matriarch matriarch = new Matriarch();
+
+    /**
+     * The minibosses the member most recently killed, one id per entry. It is a history rather than a
+     * set, so the same id can appear more than once.
+     */
     @SerializedName("last_minibosses_killed")
     private @NotNull ConcurrentList<String> lastMinibossesKilled = Concurrent.newList();
 
     // Factions
+
+    /**
+     * The faction the member currently serves, which can be swapped at any time.
+     */
     @SerializedName("selected_faction")
     private @NotNull Faction selectedFaction = Faction.NONE;
+
+    /**
+     * The member's standing with the Mages. Reputation is per faction and its thresholds are what gate
+     * the Kuudra tiers; the field name is singular where the wire key is plural.
+     */
     @SerializedName("mages_reputation")
     private int mageReputation;
+
+    /**
+     * The member's standing with the Barbarians.
+     */
     @SerializedName("barbarians_reputation")
     private int barbarianReputation;
+
+    /**
+     * The best Barbarian standing the member has ever reached. There is no Mage counterpart bound here.
+     */
     @SerializedName("barbarians_reputation_highest")
     private int highestBarbarianReputation;
 
     // Kuudra
+
+    /**
+     * The member's whole Kuudra record. The wire key names only the completions, but the highest waves
+     * are siblings inside the same node and bind here too.
+     */
     @SerializedName("kuudra_completed_tiers")
     private @NotNull Kuudra kuudra = new Kuudra();
+
+    /**
+     * The filters the member last set while browsing Kuudra party finder groups, from a nested wire
+     * node. It shares its {@link SerializedPath} prefix with the group builder, which makes the pair a
+     * find-or-create - the first field written builds the object and the second has to reuse it, or the
+     * last write wins and one of the two vanishes.
+     */
     @SerializedPath("kuudra_party_finder.search_settings")
     private @NotNull Kuudra.SearchSettings partyFinderSearch = new Kuudra.SearchSettings();
+
+    /**
+     * The Kuudra group the member last advertised, from the same nested wire node as the search
+     * filters.
+     */
     @SerializedPath("kuudra_party_finder.group_builder")
     private @NotNull Kuudra.GroupBuilder partyFinderGroupBuilder = new Kuudra.GroupBuilder();
 
     // Dojo
+
+    /**
+     * The member's per-test Dojo points and times.
+     */
     @SerializedName("dojo")
     private @NotNull Dojo dojo = new Dojo();
 
     // Quests
+
+    /**
+     * The faction quest board and every one-off NPC quest.
+     */
     private @NotNull Quests quests = new Quests();
 
     @Getter

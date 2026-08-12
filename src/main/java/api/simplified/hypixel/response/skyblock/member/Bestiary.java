@@ -22,33 +22,104 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+/**
+ * A member's kill and death tally against every mob they have fought.
+ *
+ * <p>
+ * Mobs group into families, a family levels on its cumulative kills against a bracketed tier ladder,
+ * and every ten family levels is one milestone. Only the tallies are bound - the mobs, the families,
+ * the levels and the milestone are all derived from them.
+ *
+ * <p>
+ * {@link #getFamilies()} is the repository boundary and needs a session. The tallies are not; the
+ * parse that turns {@link #kills} and {@link #deaths} into mobs completes with nothing open.
+ *
+ * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Bestiary">Bestiary</a>
+ */
 @Getter
 public class Bestiary {
 
+    /**
+     * Splits a tally key into a mob id and the level it was kept against, at the last underscore
+     * before the digits - {@code master_lost_adventurer_131} is level 131 of
+     * {@code MASTER_LOST_ADVENTURER}, not level 1 of anything.
+     */
     private static final @NotNull Pattern MOB_PATTERN = Pattern.compile("^(.*)_([0-9]+)$");
+
+    /**
+     * Hypixel-side bookkeeping flag for a data migration.
+     */
     @SerializedName("migrated_stats")
     private boolean migratedStats;
+
+    /**
+     * A second Hypixel-side bookkeeping flag for a data migration.
+     */
     private boolean migration;
+
+    /**
+     * The mob most recently killed, its id and level together. It is lifted out of the kill tally
+     * rather than bound from a root key of its own, because its value is a string sitting in an
+     * otherwise numeric map.
+     */
     @Extract("kills.last_killed_mob")
     private @NotNull Optional<String> lastKilledMob = Optional.empty();
+
+    /**
+     * Highest milestone whose reward has been taken, read out of the wire's {@code milestone} node.
+     */
     @SerializedPath("milestone.last_claimed_milestone")
     private int lastClaimedMilestone;
+
+    /**
+     * Menu toggle for showing the kill cap, read out of the wire's {@code miscellaneous} node.
+     */
     @SerializedPath("miscellaneous.max_kills_visible")
     private boolean maxKillsVisible;
+
+    /**
+     * Whether milestone chat notifications are switched on, read out of the wire's
+     * {@code miscellaneous} node.
+     */
     @Accessors(fluent = true)
     @SerializedPath("miscellaneous.milestones_notifications")
     private boolean hasNotificationsEnabled;
+
+    /**
+     * Kills per mob, keyed {@code <mob>_<level>}. Entries whose value is not a number fall into
+     * overflow rather than failing the decode.
+     */
     @Lenient
     private @NotNull ConcurrentMap<String, Integer> kills = Concurrent.newMap();
+
+    /**
+     * Deaths per mob, keyed the same way as the kills and just as forgiving of an entry it cannot
+     * bind.
+     */
     @Lenient
     private @NotNull ConcurrentMap<String, Integer> deaths = Concurrent.newMap();
+
     @Getter(AccessLevel.NONE)
     private transient ConcurrentList<Family> families;
 
+    /**
+     * Milestones earned, one for every ten family levels.
+     *
+     * <p>
+     * Derived by integer division over every family, so it walks the whole repository and needs a
+     * session. It is recomputed rather than read, and need not agree with the milestone the wire
+     * reports as claimed.
+     */
     public int getMilestone() {
         return this.getUnlocked() / 10;
     }
 
+    /**
+     * Sum of every family's level.
+     *
+     * <p>
+     * Derived, and resolved through the families, so it needs a session.
+     */
     public int getUnlocked() {
         return this.getFamilies()
             .stream()
@@ -57,7 +128,13 @@ public class Bestiary {
     }
 
     /**
-     * Every bestiary family, each carrying the mobs of its own that this member has fought
+     * Every bestiary family, each carrying the mobs of its own that this member has fought.
+     *
+     * <p>
+     * Two steps in order: the distinct keys of the kill and death tallies are parsed into mobs,
+     * which opens nothing, and those mobs are then joined onto the family repository, which needs a
+     * session.
+     *
      * <p>
      * Memoised because {@link Family#getType()} and the three accessors behind it re-query the
      * repository per call, and {@link #getUnlocked()} walks every family. The two racers compute the
@@ -93,26 +170,57 @@ public class Bestiary {
         return this.families;
     }
 
+    /**
+     * One bestiary family and the mobs of it this member has a tally against.
+     *
+     * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Bestiary">Bestiary</a>
+     */
     @Getter
     @RequiredArgsConstructor
     public static class Family {
 
+        /**
+         * Repository id of the family.
+         */
         private final @NotNull String familyId;
+
+        /**
+         * Mobs of this family the member has recorded a kill or a death against.
+         */
         private final @NotNull ConcurrentList<Mob> mobs;
 
+        /**
+         * Repository row backing this family - its tier thresholds, bracket and maximum tier.
+         *
+         * <p>
+         * Resolved, so it needs a session, and every accessor below it goes back through this one.
+         */
         public @NotNull BestiaryFamily getType() {
             return SkyBlockData.getRepository(BestiaryFamily.class)
                 .findFirstOrNull(BestiaryFamily::getId, this.getFamilyId());
         }
 
+        /**
+         * Cumulative kill thresholds the family levels against, one per tier.
+         */
         public @NotNull ConcurrentList<Integer> getTiers() {
             return this.getType().getTiers();
         }
 
+        /**
+         * Bracket the repository groups this family under.
+         */
         public int getBracket() {
             return this.getType().getBracket();
         }
 
+        /**
+         * The first tier index whose threshold still exceeds this family's total kills, held down to
+         * the family's maximum tier.
+         *
+         * <p>
+         * Derived from the kill tally and resolved against the repository, so it needs a session.
+         */
         public int getLevel() {
             return Math.min(
                 this.getMaxTier(),
@@ -127,21 +235,50 @@ public class Bestiary {
             );
         }
 
+        /**
+         * Highest tier the family defines.
+         */
         public int getMaxTier() {
             return this.getType().getMaxTier();
         }
 
     }
 
+    /**
+     * One mob at one level, with the member's kills and deaths against it.
+     *
+     * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Bestiary">Bestiary</a>
+     */
     @Getter
     @RequiredArgsConstructor
     public static class Mob {
 
+        /**
+         * Mob id, uppercased as the tally key was parsed.
+         */
         private final @NotNull String id;
+
+        /**
+         * Level of the mob the tally was kept against.
+         */
         private final int level;
+
+        /**
+         * Times the member has killed this mob at this level.
+         */
         private final int kills;
+
+        /**
+         * Times this mob has killed the member at this level.
+         */
         private final int deaths;
 
+        /**
+         * Family whose own mob list names this mob at this level.
+         *
+         * <p>
+         * Resolved by scanning the repository rather than by a keyed lookup, so it needs a session.
+         */
         public @NotNull BestiaryFamily getFamily() {
             return SkyBlockData.getRepository(BestiaryFamily.class)
                 .matchFirstOrNull(family -> family.getMobs().contains(String.format("%s_%s", this.getId(), this.getLevel())));
