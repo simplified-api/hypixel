@@ -88,6 +88,29 @@ final class LocalSkyBlockData {
     }
 
     /**
+     * Models this build declares that the checkout's manifest carries no file for.
+     * <p>
+     * Every source is read during the connect, so one uncovered model fails the whole thing. It
+     * means the reference models and the corpus are of different vintages - normally a
+     * {@code skyblock} pin behind the corpus - which no amount of local setup fixes.
+     *
+     * @param root the checkout root
+     * @return the uncovered model names, empty when the two agree
+     */
+    static @NotNull ConcurrentList<String> uncoveredModels(@NotNull Path root) {
+        ConcurrentList<String> covered = readManifest(root).getFiles()
+            .stream()
+            .map(ManifestIndex.Entry::getModelClass)
+            .collect(Concurrent.toList());
+
+        return RepositoryFactory.resolveModels(Item.class)
+            .stream()
+            .map(Class::getName)
+            .filter(name -> !covered.contains(name))
+            .collect(Concurrent.toList());
+    }
+
+    /**
      * Opens a session reading every reference table out of the checkout.
      *
      * @param root the checkout root
