@@ -177,12 +177,6 @@ A ballot candidate's perks each carry a `minister` flag with **exactly one true*
 mayor's own perks carry no flag at all, because they are already in force, so `getMinisterPerk()` is
 empty there and reads the flagged entry everywhere else.
 
-`api.simplified.skyblock.date.Election` is a character-for-character duplicate of this one, minus the
-ballot, and is already on the compile classpath. Inheriting from it saves one type and about ninety
-lines, and it does bind - but that copy is a calendar type produced by walking `SkyBlockDate`, with
-no wire behind it, and inheriting would make `year` a bound field arriving from a `strictly()`-pinned
-artifact where an upstream change fails silently at the Bound layer instead of loudly at compile time.
-
 ## Debugging a mismatch
 
 1. Decide which layer it is - bound, derived, or resolved - before reading any code.
