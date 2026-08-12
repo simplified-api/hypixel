@@ -182,7 +182,7 @@ class MemberDtoMappingTest {
 
         assertThat(populatedBag.getTuning().getSlots(), hasKey(0));
         assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats(), hasKey("critical_damage"));
-        assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats().get("critical_damage"), is(equalTo(211)));
+        assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats().get("critical_damage"), is(equalTo(213)));
         assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats(), not(hasKey("purchase_ts")));
         assertThat(sparseBag.getTuning().hasClaimedSecondRefund(), is(true));
         assertThat(sparseBag.getTuning().getSlot(1).orElseThrow().getPurchased().isPresent(), is(true));
@@ -196,7 +196,7 @@ class MemberDtoMappingTest {
         assertThat(loadouts.getArmorSets(), hasKey(1));
         assertThat(loadouts.getArmorSets().get(1).getBoots().getRawData().isEmpty(), is(false));
         assertThat(loadouts.getEquipmentSets().get(1).getNecklace().getRawData().isEmpty(), is(false));
-        assertThat(loadouts.getEquippedArmorSet().orElseThrow(), is(equalTo(10)));
+        assertThat(loadouts.getEquippedArmorSet().orElseThrow(), is(equalTo(4)));
         assertThat(loadouts.getLoadout(1).orElseThrow().getName(), is(equalTo("Dungeons LCM")));
         assertThat(loadouts.getLoadout(1).orElseThrow().getPowerStone().orElseThrow(), is(equalTo("silky")));
     }
@@ -264,8 +264,8 @@ class MemberDtoMappingTest {
         Statistics statistics = this.decode(populated, "player_stats", Statistics.class);
 
         assertThat(statistics.getAuctions().getTotalSold().size(), is(equalTo(8)));
-        assertThat(statistics.getAuctions().getTotalSold().get(Rarity.LEGENDARY), is(equalTo(3123)));
-        assertThat(statistics.getAuctions().getTotalSold().values(), not(hasItem(1174)));
+        assertThat(statistics.getAuctions().getTotalSold().get(Rarity.LEGENDARY), is(equalTo(3130)));
+        assertThat(statistics.getAuctions().getTotalSold().values(), not(hasItem(1184)));
     }
 
     @Test
@@ -329,7 +329,7 @@ class MemberDtoMappingTest {
     void mapsSkillTree() {
         SkillTree skillTree = this.decode(populated, "skill_tree", SkillTree.class);
 
-        assertThat(skillTree.getLastFreeTrialDay(), is(equalTo(66)));
+        assertThat(skillTree.getLastFreeTrialDay(), is(equalTo(69)));
         assertThat(skillTree.getSelectedSlot(), hasKey("foraging"));
     }
 
@@ -338,11 +338,11 @@ class MemberDtoMappingTest {
     void mapsStatistics() {
         Statistics statistics = this.decode(populated, "player_stats", Statistics.class);
 
-        assertThat(statistics.getUniqueShards(), is(equalTo(96)));
-        assertThat(statistics.getCombatShardHunts(), is(equalTo(2926)));
-        assertThat(statistics.getSaltShardHunts(), is(equalTo(302)));
-        assertThat(statistics.getItemsFished().getOutstanding(), is(equalTo(2)));
-        assertThat(statistics.getItemsFished().getTrophyFrog(), is(equalTo(263)));
+        assertThat(statistics.getUniqueShards(), is(equalTo(116)));
+        assertThat(statistics.getCombatShardHunts(), is(equalTo(4117)));
+        assertThat(statistics.getSaltShardHunts(), is(equalTo(350)));
+        assertThat(statistics.getItemsFished().getOutstanding(), is(equalTo(6)));
+        assertThat(statistics.getItemsFished().getTrophyFrog(), is(equalTo(1422)));
         assertThat(statistics.getEndIsland().getDragonFight().getEnderCrystalsDestroyed(), is(equalTo(168)));
         assertThat(statistics.getEndIsland().getDragonFight().getAmountSummoned().isEmpty(), is(false));
     }
@@ -559,11 +559,11 @@ class MemberDtoMappingTest {
         // both halves are typed and neither is lost
         assertThat((long) crimsonIsle.getQuests().getQuestRewards().size(), is(equalTo(expectedCounts)));
         assertThat((long) crimsonIsle.getQuests().getQuestItems().size(), is(equalTo(expectedItems)));
-        assertThat(crimsonIsle.getQuests().getQuestRewards(), hasKey("KADA_LEAD"));
-        assertThat(crimsonIsle.getQuests().getQuestItems(), hasKey("crimson_isle_kill_barbarian_duke_x_c"));
+        assertThat(crimsonIsle.getQuests().getQuestRewards(), hasKey("GAZING_PEARL"));
+        assertThat(crimsonIsle.getQuests().getQuestItems(), hasKey("crimson_isle_kill_mage_outlaw_b"));
         // selection without stripping - the quest id IS the key
-        assertThat(crimsonIsle.getQuests().getQuestItems().get("crimson_isle_kill_barbarian_duke_x_c"),
-            is(equalTo("KADA_LEAD")));
+        assertThat(crimsonIsle.getQuests().getQuestItems().get("crimson_isle_kill_mage_outlaw_b"),
+            is(equalTo("GAZING_PEARL")));
 
         JsonObject out = JsonParser.parseString(gson.toJson(crimsonIsle)).getAsJsonObject();
         JsonObject outRewards = out.getAsJsonObject("quests").getAsJsonObject("quest_rewards");

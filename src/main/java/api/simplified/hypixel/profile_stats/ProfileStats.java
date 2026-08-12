@@ -9,6 +9,7 @@ import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.island.Banking;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
+import api.simplified.hypixel.response.skyblock.member.CenturyCake;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
@@ -550,8 +551,11 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         member.getPlayerData()
             .getCenturyCakes()
             .stream()
-            .filter(centuryCake -> centuryCake.getExpiresAt().getRealTime() > System.currentTimeMillis())
-            .forEach(centuryCake -> this.addBonus(this.stats.get(Type.CENTURY_CAKES).get(centuryCake.getStat()), centuryCake.getAmount()));
+            .filter(CenturyCake::isActive)
+            .forEach(centuryCake -> SkyBlockData.getRepository(Stat.class)
+                .findFirst(Stat::getId, centuryCake.getStatId())
+                .ifPresent(statModel -> this.addBonus(this.stats.get(Type.CENTURY_CAKES).get(statModel), centuryCake.getAmount()))
+            );
     }
 
     private void loadDungeons(SkyBlockMember member) {
