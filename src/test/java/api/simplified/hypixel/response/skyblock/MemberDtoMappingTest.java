@@ -29,6 +29,7 @@ import api.simplified.hypixel.response.skyblock.member.foraging.HeartOfTheForest
 import api.simplified.hypixel.response.skyblock.member.hoppity.ChocolateFactory;
 import api.simplified.hypixel.response.skyblock.member.mining.HeartOfTheMountain;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
+import api.simplified.hypixel.response.skyblock.member.pet.Pets;
 import api.simplified.hypixel.response.skyblock.member.rift.Rift;
 import api.simplified.skyblock.common.Rarity;
 import com.google.gson.Gson;
@@ -216,6 +217,32 @@ class MemberDtoMappingTest {
         // the two explicitly named keys must not leak into the captured tool map
         assertThat(toolkit.getTools(), not(hasKey("IS_UNLOCKED")));
         assertThat(toolkit.getTools(), not(hasKey("IN_USE")));
+    }
+
+    @Test
+    @DisplayName("every rarity a pet can hold has an experience table")
+    void everyPetRarityHasATable() {
+        Pets pets = this.decode(populated, "pets_data", Pets.class);
+
+        // 20 of this member's pets are mythic, a rarity the table did not cover - reading a level off
+        // one handed back a null table rather than a number
+        ConcurrentList<OwnedPet> mythic = pets.getPets()
+            .stream()
+            .filter(pet -> pet.getBaseRarity() == Rarity.MYTHIC)
+            .collect(Concurrent.toList());
+
+        assertThat(mythic.isEmpty(), is(false));
+
+        for (OwnedPet pet : mythic) {
+            assertThat(pet.getExperienceTiers(), is(notNullValue()));
+            assertThat(pet.getExperienceTiers().isEmpty(), is(false));
+        }
+
+        // mythic levels on the legendary curve rather than one of its own
+        assertThat(
+            pets.getPets().stream().filter(pet -> pet.getBaseRarity() == Rarity.MYTHIC).findFirst().orElseThrow().getExperienceTiers(),
+            is(equalTo(pets.getPets().stream().filter(pet -> pet.getBaseRarity() == Rarity.LEGENDARY).findFirst().orElseThrow().getExperienceTiers()))
+        );
     }
 
     @Test

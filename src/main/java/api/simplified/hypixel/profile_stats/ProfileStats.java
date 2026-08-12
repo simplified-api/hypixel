@@ -12,6 +12,7 @@ import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
+import api.simplified.hypixel.response.skyblock.member.pet.Pets;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.*;
@@ -631,7 +632,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
     private void loadPetScore(SkyBlockMember member) {
         SkyBlockData.getRepository(Stat.class)
             .findFirst(Stat::getId, "MAGIC_FIND")
-            .ifPresent(magicFindStatModel -> this.addBase(this.stats.get(Type.PET_SCORE).get(magicFindStatModel), Pet.PET_SCORE
+            .ifPresent(magicFindStatModel -> this.addBase(this.stats.get(Type.PET_SCORE).get(magicFindStatModel), Pets.PET_SCORE
                 .stream()
                 .filter(breakpoint -> member.getPets().getPetScore() >= breakpoint)
                 .collect(Concurrent.toList())

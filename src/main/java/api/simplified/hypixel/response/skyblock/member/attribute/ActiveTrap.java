@@ -7,6 +7,7 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -82,14 +83,13 @@ public class ActiveTrap {
 
     /**
      * The island the trap sits on, resolved by matching the wire's {@code mode} against the
-     * {@link Region} repository.
+     * {@link Region} repository, empty for a mode no region carries.
      *
      * <p>
-     * The lookup needs a session, and it hands back null for a mode no region matches rather than
-     * failing, so the declared return type is not a guarantee.
+     * The lookup needs a session.
      */
-    public @NotNull Region getRegion() {
+    public @NotNull Optional<Region> getRegion() {
         return SkyBlockData.getRepository(Region.class)
-            .findFirstOrNull(Region::getMode, this.getRemoteId());
+            .findFirst(Region::getMode, this.getRemoteId());
     }
 }

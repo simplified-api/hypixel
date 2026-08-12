@@ -25,10 +25,15 @@ import java.util.Optional;
 public class Pets {
 
     /**
-     * The thirteen pet score milestones, ascending, each of which grants the member a further point
-     * of magic find once the score reaches it.
+     * The unique pet counts that award each pet score milestone, in ascending order.
+     * <p>
+     * Reaching one grants a further point of magic find, so the count of milestones passed is the
+     * bonus and the milestone's own value is not.
      */
-    private final static @NotNull ConcurrentList<Integer> magicFindPetScore = Concurrent.newList(10, 25, 50, 75, 100, 130, 175, 225, 275, 325, 375, 450, 500);
+    public static final @NotNull ConcurrentList<Integer> PET_SCORE = Concurrent.newList(
+        10, 25, 50, 75, 100, 130, 175,
+        225, 275, 325, 375, 450, 500
+    );
 
     /**
      * Every pet the member owns, summoned or not.
@@ -77,9 +82,12 @@ public class Pets {
 
     /**
      * The highest pet score milestone the member's pet score has reached, or zero below the first one.
+     * <p>
+     * This is the milestone's own value rather than how many have been passed - the magic find the
+     * milestones grant is one point per milestone reached, which is counted separately.
      */
     public int getMilestone() {
-        return magicFindPetScore.matchAll(breakpoint -> breakpoint <= this.getPetScore())
+        return PET_SCORE.matchAll(breakpoint -> breakpoint <= this.getPetScore())
             .reduce((m1, m2) -> m2)
             .orElse(0);
     }
