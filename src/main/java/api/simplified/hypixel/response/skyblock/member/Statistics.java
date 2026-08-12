@@ -305,7 +305,8 @@ public class Statistics {
      * Counters for the member's buying and selling on the auction house.
      * <p>
      * The two totals are keyed by item rarity, and the wire adds an aggregate {@code total} entry
-     * that names no rarity - it binds under a null key rather than being dropped.
+     * that names no rarity - each map takes it into overflow rather than binding it, so what a
+     * caller walks is rarities and nothing else.
      */
     public static class Auctions {
 
@@ -314,12 +315,14 @@ public class Statistics {
         /**
          * Items bought, keyed by the item rarity.
          */
+        @Lenient
         @SerializedName("total_bought")
         private @NotNull ConcurrentMap<Rarity, Integer> totalBought = Concurrent.newMap();
 
         /**
          * Items sold, keyed by the item rarity.
          */
+        @Lenient
         @SerializedName("total_sold")
         private @NotNull ConcurrentMap<Rarity, Integer> totalSold = Concurrent.newMap();
 

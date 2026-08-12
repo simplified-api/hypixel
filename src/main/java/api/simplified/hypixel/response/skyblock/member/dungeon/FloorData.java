@@ -24,9 +24,9 @@ import java.util.UUID;
  * <b>Every one of those maps except the best runs carries one extra wire entry that is not a
  * floor</b> - {@code total} on the counters and {@code best} on the records. It is neither the sum
  * nor the maximum of the per-floor entries and cannot be recomputed from them, so it is best treated
- * as an upstream number of its own. {@link Floor} names no constant for either spelling, so on every
- * map but the completions - whose overflow catches it - that entry binds under a null key, and a
- * caller walking one of these maps has to expect it.
+ * as an upstream number of its own. {@link Floor} names no constant for either spelling, so each of
+ * those maps takes the entry into overflow rather than binding it: what a caller walks is floors and
+ * nothing else, and the entry is restored verbatim on write.
  *
  * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Catacombs">Catacombs</a>
  */
@@ -59,6 +59,7 @@ public class FloorData {
     /**
      * Runs entered on each floor, cleared or not.
      */
+    @Lenient
     @SerializedName("times_played")
     private @NotNull ConcurrentMap<Floor, Integer> timesPlayed = Concurrent.newMap();
 
@@ -79,12 +80,14 @@ public class FloorData {
      * ranged damage for Archer, damage tanked and dealt for Tank, healing for Healer - nine per
      * class, with higher floors demanding more of each.
      */
+    @Lenient
     @SerializedName("milestone_completions")
     private @NotNull ConcurrentMap<Floor, Integer> milestoneCompletions = Concurrent.newMap();
 
     /**
      * Highest Dungeon Score reached on each floor, 300 and above being an S+.
      */
+    @Lenient
     @SerializedName("best_score")
     private @NotNull ConcurrentMap<Floor, Integer> bestScore = Concurrent.newMap();
 
@@ -92,24 +95,28 @@ public class FloorData {
      * Times The Watcher was killed on each floor - he is the boss of the Entrance and the Blood Room
      * mini-boss on every other floor.
      */
+    @Lenient
     @SerializedName("watcher_kills")
     private @NotNull ConcurrentMap<Floor, Integer> watcherKills = Concurrent.newMap();
 
     /**
      * Lifetime mobs killed on each floor.
      */
+    @Lenient
     @SerializedName("mobs_killed")
     private @NotNull ConcurrentMap<Floor, Integer> mobsKilled = Concurrent.newMap();
 
     /**
      * Most mobs killed in a single run on each floor.
      */
+    @Lenient
     @SerializedName("most_mobs_killed")
     private @NotNull ConcurrentMap<Floor, Integer> mostMobsKilled = Concurrent.newMap();
 
     /**
      * Most health healed to allies in a single run on each floor.
      */
+    @Lenient
     @SerializedName("most_healing")
     private @NotNull ConcurrentMap<Floor, Double> mostHealing = Concurrent.newMap();
 
@@ -130,12 +137,14 @@ public class FloorData {
     /**
      * Fastest clear of each floor, in milliseconds.
      */
+    @Lenient
     @SerializedName("fastest_time")
     private @NotNull ConcurrentMap<Floor, Integer> fastestTime = Concurrent.newMap();
 
     /**
      * Fastest clear of each floor that scored S, 270 and above, in milliseconds.
      */
+    @Lenient
     @SerializedName("fastest_time_s")
     private @NotNull ConcurrentMap<Floor, Integer> fastestSTierTime = Concurrent.newMap();
 
@@ -145,6 +154,7 @@ public class FloorData {
      * It can be slower than the S record on the same floor - the two are separate records rather
      * than nested thresholds.
      */
+    @Lenient
     @SerializedName("fastest_time_s_plus")
     private @NotNull ConcurrentMap<Floor, Integer> fastestSPlusTierTime = Concurrent.newMap();
 

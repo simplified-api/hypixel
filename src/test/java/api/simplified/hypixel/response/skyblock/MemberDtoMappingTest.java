@@ -30,6 +30,7 @@ import api.simplified.hypixel.response.skyblock.member.hoppity.ChocolateFactory;
 import api.simplified.hypixel.response.skyblock.member.mining.HeartOfTheMountain;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.hypixel.response.skyblock.member.rift.Rift;
+import api.simplified.skyblock.common.Rarity;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -215,6 +216,30 @@ class MemberDtoMappingTest {
         // the two explicitly named keys must not leak into the captured tool map
         assertThat(toolkit.getTools(), not(hasKey("IS_UNLOCKED")));
         assertThat(toolkit.getTools(), not(hasKey("IN_USE")));
+    }
+
+    @Test
+    @DisplayName("an aggregate wire entry overflows instead of taking a key the enum cannot name")
+    void divertsAggregateMapEntries() {
+        Dungeons dungeons = this.decode(populated, "dungeons", Dungeons.class);
+        FloorData normal = dungeons.getDungeon(DungeonData.Type.CATACOMBS).getFloorData(false);
+
+        // the wire mixes a non-floor 'total' entry into this map alongside floors 0 to 7; it names no
+        // Floor, so without the overflow it lands under a key the enum never produced and the eight
+        // real floors have to share the map with it
+        assertThat(normal.getTimesPlayed().size(), is(equalTo(8)));
+        assertThat(normal.getTimesPlayed().get(Floor.ENTRANCE), is(equalTo(9)));
+        assertThat(normal.getTimesPlayed().get(Floor.SEVEN), is(equalTo(1029)));
+
+        // 215 is the wire's aggregate; it must not have become a floor's value
+        assertThat(normal.getTimesPlayed().values(), not(hasItem(215)));
+
+        // the same shape on the rarity-keyed auction counters
+        Statistics statistics = this.decode(populated, "player_stats", Statistics.class);
+
+        assertThat(statistics.getAuctions().getTotalSold().size(), is(equalTo(8)));
+        assertThat(statistics.getAuctions().getTotalSold().get(Rarity.LEGENDARY), is(equalTo(3123)));
+        assertThat(statistics.getAuctions().getTotalSold().values(), not(hasItem(1174)));
     }
 
     @Test
