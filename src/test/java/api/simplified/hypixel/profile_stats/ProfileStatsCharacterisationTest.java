@@ -190,7 +190,7 @@ class ProfileStatsCharacterisationTest {
         int knownStats = profileStats.getAllStats().size();
 
         int written = writtenCells(profileStats);
-        int seeded = ProfileStats.Type.values().length * knownStats;
+        int seeded = StatSource.values().length * knownStats;
 
         for (Optional<ItemData> armorPiece : profileStats.getArmor()) {
             if (armorPiece.isPresent()) {

@@ -9,14 +9,14 @@ import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.island.Banking;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
-import api.simplified.hypixel.response.skyblock.member.CenturyCake;
-import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
-import api.simplified.hypixel.response.skyblock.member.pet.Pets;
-import api.simplified.skyblock.common.Rarity;
-import api.simplified.skyblock.model.*;
+import api.simplified.skyblock.model.BonusArmorSet;
+import api.simplified.skyblock.model.BonusPetPerkStat;
+import api.simplified.skyblock.model.Item;
+import api.simplified.skyblock.model.Skill;
+import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentList;
@@ -26,7 +26,6 @@ import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.StringTag;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,8 @@ import java.util.Optional;
  * player already has, so the flat sources are totalled first, published as expression variables, and
  * only then are the conditional bonuses evaluated against them. Passing {@code false} for the bonus
  * pass stops after the flat sources, which is what an optimiser wants when it is about to vary the
- * gear anyway.
+ * gear anyway. Within the flat pass order decides nothing, because a {@link StatSource} writes
+ * through a sink it cannot read back.
  * <p>
  * {@link #compute(SkyBlockIsland, SkyBlockMember)} is the entry point. Totalling is something a
  * caller asks for by name, never something a decoded object does on its own - nothing on the wire
@@ -54,7 +54,7 @@ import java.util.Optional;
  */
 @Getter
 @SuppressWarnings("unused")
-public class ProfileStats extends StatData<ProfileStats.Type> {
+public class ProfileStats extends StatData<StatSource> {
 
     /**
      * Damage scaling earned from combat levels, as a fraction rather than a percentage.
@@ -77,11 +77,6 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
     private final ConcurrentList<Optional<ItemData>> armor = Concurrent.newList();
 
     /**
-     * Conditional bonuses declared for the active pet's perks, gathered as the pet is read.
-     */
-    private final ConcurrentList<BonusPetPerkStat> bonusPetPerkStatModels = Concurrent.newList();
-
-    /**
      * Set bonus the worn armour qualifies for, empty when the pieces do not form a set.
      */
     private Optional<BonusArmorSet> bonusArmorSetModel = Optional.empty();
@@ -92,7 +87,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
     private boolean bonusCalculated;
 
     @Getter(AccessLevel.NONE)
-    private final ConcurrentMap<String, Double> expressionVariables = Concurrent.newMap();
+    private final StatContext context;
 
     /**
      * Constructs a new {@code ProfileStats} with the conditional bonuses evaluated.
@@ -117,27 +112,32 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
 
     private ProfileStats(@NotNull ReferenceSnapshot reference, @NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
         super(reference);
-
-        // --- Initialize ---
-        reference.getStats().forEach(statModel -> this.table.add(Type.BASE_STATS, statModel, StatHalf.BASE, statModel.getBase()));
         this.activePet = member.getPets().getActivePet();
         this.accessoryBag = member.getAccessoryBag();
+        this.context = new StatContext(skyBlockIsland, member, this.accessoryBag, reference);
+
+        // --- Resolve Gear ---
+        // neither is a source - each is a list of tables of its own - and both resolve against the
+        // shared snapshot here so nothing reaches for one of its own later
+        this.accessoryBag.getAccessories(reference);
+        this.loadArmor(reference, member);
 
         // --- Populate Default Expression Variables ---
-        this.getActivePet().ifPresent(activePet -> this.expressionVariables.put("PET_LEVEL", (double) activePet.getLevel()));
-        this.expressionVariables.put("SKILL_AVERAGE", member.getSkills().getAverage());
-        this.expressionVariables.put("SKYBLOCK_LEVEL", (double) member.getLeveling().getLevel());
-        this.expressionVariables.put("BESTIARY_MILESTONE", (double) member.getBestiary().getMilestone());
-        this.expressionVariables.put("BANK", skyBlockIsland.getBanking().map(Banking::getBalance).orElse(0.0));
+        ConcurrentMap<String, Double> variables = this.context.getVariables();
+        this.getActivePet().ifPresent(activePet -> variables.put("PET_LEVEL", (double) activePet.getLevel()));
+        variables.put("SKILL_AVERAGE", member.getSkills().getAverage());
+        variables.put("SKYBLOCK_LEVEL", (double) member.getLeveling().getLevel());
+        variables.put("BESTIARY_MILESTONE", (double) member.getBestiary().getMilestone());
+        variables.put("BANK", skyBlockIsland.getBanking().map(Banking::getBalance).orElse(0.0));
         reference.getSkills()
-            .forEach(skillModel -> this.expressionVariables.put(
+            .forEach(skillModel -> variables.put(
                 String.format("SKILL_LEVEL_%s", skillModel.getId()),
                 (double) member.getSkills().getSkill(skillModel.getId()).getLevel()
             ));
 
         for (DungeonData.Type dungeonType : DungeonData.Type.values()) {
             if (dungeonType == DungeonData.Type.UNKNOWN) continue;
-            this.expressionVariables.put(
+            variables.put(
                 String.format("DUNGEON_LEVEL_%s", dungeonType.name()),
                 (double) member.getDungeons()
                     .getDungeon(dungeonType)
@@ -147,7 +147,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
 
         for (DungeonClass.Type classType : DungeonClass.Type.values()) {
             if (classType == DungeonClass.Type.UNKNOWN) continue;
-            this.expressionVariables.put(
+            variables.put(
                 String.format("DUNGEON_CLASS_LEVEL_%s", classType.name()),
                 (double) member.getDungeons()
                     .getClass(classType)
@@ -156,7 +156,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
         }
 
         member.getCollection()
-            .forEach((itemId, collected) -> this.expressionVariables.put(
+            .forEach((itemId, collected) -> variables.put(
                 String.format("COLLECTION_%s", itemId),
                 (double) collected
             ));
@@ -183,35 +183,19 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
             })
             .orElse(0.0) / 100.0;
 
-        // --- Load Player Stats ---
-        this.loadSkills(reference, member);
-        this.loadSlayers(reference, member);
-        this.loadDungeons(reference, member);
-        this.loadArmor(reference, member);
-        this.loadAccessories(reference);
-        this.loadActivePet(reference, member);
-        this.loadActivePotions(reference, member);
-        this.loadPetScore(reference, member);
-        this.loadMiningCore(reference, member);
-        this.loadCenturyCakes(reference, member);
-        this.loadEssencePerks(reference, member);
-        this.loadLevels(reference, member);
-        this.loadBestiary(reference, member);
-        this.loadBoosterCookie(reference, member);
-        this.loadMelodyHarp(reference, member);
-        this.loadJacobsPerks(reference, member);
+        // --- Flat Pass ---
+        Arrays.stream(StatSource.values()).forEach(source -> source.contribute(this.context, this.table));
+        this.context.publishTotals(this.table);
 
         if (calculateBonusStats) {
-            ConcurrentMap<String, Double> expressionVariables = this.getExpressionVariables();
             // --- Load Bonus Accessory Item Stats ---
-            this.getAccessoryBag().getAccessories().forEach(accessoryData -> accessoryData.calculateBonus(expressionVariables));
+            this.getAccessoryBag().getAccessories().forEach(accessoryData -> accessoryData.calculateBonus(variables));
 
             // --- Load Bonus Armor Stats ---
             this.getArmor()
                 .stream()
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .forEach(itemData -> itemData.calculateBonus(expressionVariables));
+                .flatMap(Optional::stream)
+                .forEach(itemData -> itemData.calculateBonus(variables));
 
             // --- Load Armor Multiplier Enchantments ---
             this.getArmor()
@@ -237,7 +221,7 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                 );
 
             // --- Load Bonus Pet Item Stats ---
-            ConcurrentMap<String, Double> petExpressionVariables = this.getExpressionVariables();
+            this.context.publishTotals(this.table);
             this.getBonusPetPerkStatModels()
                 .stream()
                 .filter(BonusPetPerkStat::isPercentage)
@@ -245,18 +229,18 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                 .filter(BonusPetPerkStat::noRequiredMobType)
                 .forEach(bonusPetPerkStat -> {
                     // Handle Stats
-                    applyPetPercentage(this, null, petExpressionVariables, bonusPetPerkStat);
+                    applyPetPercentage(this, null, variables, bonusPetPerkStat);
 
                     // Handle Armor
                     this.getArmor()
                         .stream()
                         .flatMap(Optional::stream)
-                        .forEach(itemData -> applyPetPercentage(itemData, itemData.getCompoundTag(), petExpressionVariables, bonusPetPerkStat));
+                        .forEach(itemData -> applyPetPercentage(itemData, itemData.getCompoundTag(), variables, bonusPetPerkStat));
 
                     // Handle Accessories
                     this.getAccessoryBag()
                         .getAccessories()
-                        .forEach(accessoryData -> applyPetPercentage(accessoryData, accessoryData.getCompoundTag(), petExpressionVariables, bonusPetPerkStat));
+                        .forEach(accessoryData -> applyPetPercentage(accessoryData, accessoryData.getCompoundTag(), variables, bonusPetPerkStat));
                 });
 
             // TODO: Load Post Bonus Stats
@@ -290,13 +274,20 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
     }
 
     /**
+     * Conditional bonuses declared for the active pet's perks, gathered as the pet is read.
+     */
+    public ConcurrentList<BonusPetPerkStat> getBonusPetPerkStatModels() {
+        return this.context.getBonusPetPerkStats();
+    }
+
+    /**
      * The player state a bonus expression can refer to, with the current stat totals folded in.
      * <p>
      * A fresh copy is built on every call, since the totals move as sources are added and a bonus
      * has to see the values as they stand when it runs.
      */
     public ConcurrentMap<String, Double> getExpressionVariables() {
-        ConcurrentMap<String, Double> expressionVariables = Concurrent.newMap(this.expressionVariables);
+        ConcurrentMap<String, Double> expressionVariables = Concurrent.newMap(this.context.getVariables());
         this.getAllStats().forEach((statModel, statData) -> expressionVariables.put(String.format("STAT_%s", statModel.getId()), statData.getTotal()));
         return expressionVariables;
     }
@@ -344,8 +335,8 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
     }
 
     @Override
-    protected Type[] getAllTypes() {
-        return ProfileStats.Type.values();
+    protected StatSource[] getAllTypes() {
+        return StatSource.values();
     }
 
     private static void collectInto(@NotNull ConcurrentLinkedMap<Stat, Data> totalStats, @NotNull StatData<?> statData, boolean optimizerConstant) {
@@ -363,140 +354,6 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
             for (StatHalf half : StatHalf.values())
                 half.set(data, PlayerDataHelper.handleBonusEffects(statModel, half.read(data), compoundTag, expressionVariables, bonusPetPerkStat));
         }));
-    }
-
-    private void loadAccessories(ReferenceSnapshot reference) {
-        // resolve the bag against the shared snapshot before anything reads it lazily against its own
-        this.getAccessoryBag().getAccessories(reference);
-
-        // Accessory Power Stats
-        this.getAccessoryBag()
-            .getSelectedPowerStats()
-            .forEach((key, value) -> this.table.add(Type.ACCESSORY_POWER, key, StatHalf.BONUS, value));
-    }
-
-    private void loadActivePet(ReferenceSnapshot reference, SkyBlockMember member) {
-        if (this.getActivePet().isEmpty())
-            return;
-
-        OwnedPet activePet = this.getActivePet().get();
-
-        if (activePet.getId().isEmpty())
-            return;
-
-        Optional<Pet> optionalPet = reference.getPet(activePet.getId());
-        if (optionalPet.isEmpty())
-            return;
-
-        Pet petModel = optionalPet.get();
-        Rarity petRarity = activePet.getRarity();
-
-        // Load Rarity Filtered Pet Stats
-        petModel.getStats(petRarity)
-            .forEach(substitute -> substitute.getStat()
-                .ifPresent(stat -> {
-                    Pet.Substitute.Value value = substitute.getValues().get(petRarity);
-                    if (value != null)
-                        this.table.add(Type.ACTIVE_PET, stat, StatHalf.BONUS, value.getBase() + (value.getScalar() * activePet.getLevel()));
-                })
-            );
-
-        // Save Pet Stats to Expression Variables
-        this.getStats(Type.ACTIVE_PET).forEach((statModel, statData) -> this.expressionVariables.put(String.format("STAT_PET_%s", statModel.getId()), statData.getTotal()));
-
-        // Load Rarity Filtered Perk Stats
-        petModel.getPerks(petRarity).forEach(perk -> {
-            // Load Bonus Pet Perk Stats
-            reference.getBonusPetPerkStat(petModel.getId(), perk.getName())
-                .ifPresent(this.bonusPetPerkStatModels::add);
-
-            perk.getStats(petRarity).forEach(substitute -> {
-                Pet.Substitute.Value value = substitute.getValues().get(petRarity);
-                double perkValue = (value != null)
-                    ? value.getBase() + (value.getScalar() * activePet.getLevel())
-                    : 0.0;
-
-                // Save Perk Stat
-                substitute.getStat().ifPresent(stat ->
-                    this.table.add(Type.ACTIVE_PET, stat, StatHalf.BONUS, perkValue)
-                );
-
-                // Store Bonus Pet Perk
-                String statKey = substitute.getStat().map(stat -> "_" + stat.getId()).orElse("");
-                this.expressionVariables.put(String.format("PET_PERK_%s%s", perk.getName(), statKey), perkValue);
-            });
-        });
-
-        // Handle Static Pet Item Bonuses
-        String heldItemId = activePet.getHeldItem().orElse("");
-        if (!heldItemId.isEmpty()) {
-            reference.getPetItem(heldItemId)
-                .filter(PetItem::notPercentage)
-                .ifPresent(petItem -> petItem.getStats().forEach(sub ->
-                    sub.getStat().ifPresent(stat -> {
-                        double statValue = sub.getValues().getOrDefault(1, 0.0);
-                        this.table.add(Type.ACTIVE_PET, stat, StatHalf.BONUS, statValue);
-                    })
-                ));
-        }
-
-        // Handle Static Pet Stat Bonuses
-        ConcurrentMap<String, Double> petExpressionVariables = this.getExpressionVariables();
-        this.getBonusPetPerkStatModels()
-            .stream()
-            .filter(BonusPetPerkStat::notPercentage)
-            .filter(BonusPetPerkStat::noRequiredItem)
-            .filter(BonusPetPerkStat::noRequiredMobType)
-            .forEach(bonusPetPerkStat -> this.getStats(Type.ACTIVE_PET)
-                .forEach((statModel, statData) -> StatHalf.BONUS.set(
-                    statData,
-                    PlayerDataHelper.handleBonusEffects(
-                        statModel,
-                        statData.getBonus(),
-                        null,
-                        petExpressionVariables,
-                        bonusPetPerkStat
-                    ))
-                )
-            );
-
-        // Handle Percentage Pet Item Bonuses
-        if (!heldItemId.isEmpty()) {
-            reference.getPetItem(heldItemId)
-                .filter(PetItem::isPercentage)
-                .ifPresent(petItem -> petItem.getStats().forEach(sub ->
-                    sub.getStat().ifPresent(stat -> {
-                        double statMultiplier = 1 + (sub.getValues().getOrDefault(1, 0.0) / 100.0);
-                        Data statData = this.table.getCell(Type.ACTIVE_PET, stat);
-                        StatHalf.BONUS.set(statData, statData.getBonus() * statMultiplier);
-                    })
-                ));
-        }
-    }
-
-    private void loadActivePotions(ReferenceSnapshot reference, SkyBlockMember member) {
-        member.getPlayerData()
-            .getActivePotions()
-            .stream()
-            .filter(potion -> !member.getPlayerData().getDisabledPotions().contains(potion.getEffect()))
-            .forEach(potion -> {
-                ConcurrentMap<Stat, Double> potionStatEffects = Concurrent.newMap();
-
-                // Load Potion
-                reference.getPotion(potion.getEffect().toUpperCase())
-                    .ifPresent(potionModel -> potionModel.getStats()
-                        .stream()
-                        .filter(sub -> sub.getValues().containsKey(potion.getLevel()))
-                        .forEach(sub -> sub.getStat().ifPresent(stat ->
-                            potionStatEffects.put(stat, sub.getValues().get(potion.getLevel()) + potionStatEffects.getOrDefault(stat, 0.0))
-                        ))
-                    );
-
-                // Brew modifiers skipped for now (brew model migration pending)
-
-                // Save Active Potions
-                potionStatEffects.forEach((statModel, value) -> this.table.add(Type.ACTIVE_POTIONS, statModel, StatHalf.BONUS, value));
-            });
     }
 
     private void loadArmor(ReferenceSnapshot reference, SkyBlockMember member) {
@@ -532,237 +389,6 @@ public class ProfileStats extends StatData<ProfileStats.Type> {
                 this.armor.add(Optional.ofNullable(itemData));
             });
         }
-    }
-
-    private void loadBestiary(ReferenceSnapshot reference, SkyBlockMember member) {
-        this.table.add(Type.BESTIARY, "HEALTH", StatHalf.BASE, member.getBestiary().getMilestone() * 2.0);
-    }
-
-    private void loadBoosterCookie(ReferenceSnapshot reference, SkyBlockMember member) {
-        if (!member.isBoosterCookieActive())
-            return;
-
-        this.table.add(Type.BOOSTER_COOKIE, "MAGIC_FIND", StatHalf.BASE, 15);
-
-        reference.getWisdomStats()
-            .forEach(wisdomStateModel -> this.table.add(Type.BOOSTER_COOKIE, wisdomStateModel, StatHalf.BASE, 25));
-    }
-
-    private void loadCenturyCakes(ReferenceSnapshot reference, SkyBlockMember member) {
-        member.getPlayerData()
-            .getCenturyCakes()
-            .stream()
-            .filter(CenturyCake::isActive)
-            .forEach(centuryCake -> this.table.add(Type.CENTURY_CAKES, centuryCake.getStatId(), StatHalf.BONUS, centuryCake.getAmount()));
-    }
-
-    private void loadDungeons(ReferenceSnapshot reference, SkyBlockMember member) {
-        for (DungeonData.Type dungeonType : DungeonData.Type.values()) {
-            if (dungeonType == DungeonData.Type.UNKNOWN) continue;
-
-            int dungeonLevel = member.getDungeons()
-                .getDungeon(dungeonType)
-                .getLevel();
-
-            if (dungeonLevel > 0)
-                this.table.add(Type.DUNGEONS, "HEALTH", StatHalf.BASE, dungeonLevel * 2.0);
-        }
-    }
-
-    private void loadEssencePerks(ReferenceSnapshot reference, SkyBlockMember member) {
-        member.getPlayerData()
-            .getShopPerks()
-            .forEach(entry -> reference.getShopPerk(entry.getKey().toUpperCase())
-                .ifPresent(shopPerk -> shopPerk.getStats()
-                    .forEach(sub -> sub.getStat()
-                        .ifPresent(stat -> {
-                            double levelValue = sub.getValues().getOrDefault(entry.getValue(), 0.0);
-                            this.table.add(Type.ESSENCE, stat, StatHalf.BONUS, levelValue);
-                        })
-                    )
-                )
-            );
-    }
-
-    private void loadJacobsPerks(ReferenceSnapshot reference, SkyBlockMember member) {
-        this.table.add(Type.JACOBS_FARMING, "FARMING_FORTUNE", StatHalf.BASE, member.getJacobsContest().getDoubleDrops() * 4.0);
-    }
-
-    private void loadLevels(ReferenceSnapshot reference, SkyBlockMember member) {
-        this.table.add(Type.SKYBLOCK_LEVELS, "HEALTH", StatHalf.BASE, member.getLeveling().getLevel() * 5.0);
-        this.table.add(Type.SKYBLOCK_LEVELS, "STRENGTH", StatHalf.BASE, member.getLeveling().getLevel() / 5.0);
-    }
-
-    private void loadMelodyHarp(ReferenceSnapshot reference, SkyBlockMember member) {
-        member.getForaging()
-            .getMelodyHarp()
-            .getSongs()
-            .forEach((songName, songData) -> reference.getMelodySong(songName.toUpperCase())
-                .ifPresent(melodySongModel -> this.table.add(Type.MELODYS_HARP, "INTELLIGENCE", StatHalf.BONUS, melodySongModel.getIntelligenceReward()))
-            );
-    }
-
-    private void loadMiningCore(ReferenceSnapshot reference, SkyBlockMember member) {
-        member.getSkillTree()
-            .getNodes(SkillTree.Tree.MINING)
-            .map(SkillTree.Skill::getEntries)
-            .ifPresent(entries -> entries.stream()
-                .filter(entry -> entry.getValue().isEnabled()) // a perk switched off grants nothing
-                .forEach(entry -> reference.getHotmPerk(entry.getKey().toUpperCase())
-                    .ifPresent(hotmPerk -> hotmPerk.getStats()
-                        .forEach(sub -> sub.getStat()
-                            .ifPresent(stat -> {
-                                double statValue = sub.getValues().getOrDefault(entry.getValue().getLevel(), 0.0);
-                                this.table.add(Type.MINING_CORE, stat, StatHalf.BONUS, statValue);
-                            })
-                        )
-                    )
-                )
-            );
-    }
-
-    private void loadPetScore(ReferenceSnapshot reference, SkyBlockMember member) {
-        this.table.add(Type.PET_SCORE, "MAGIC_FIND", StatHalf.BASE, Pets.PET_SCORE
-            .stream()
-            .filter(breakpoint -> member.getPets().getPetScore() >= breakpoint)
-            .collect(Concurrent.toList())
-            .size());
-    }
-
-    private void loadSkills(ReferenceSnapshot reference, SkyBlockMember member) {
-        reference.getSkills()
-            .forEach(skillModel -> {
-                int skillLevel = member.getSkills()
-                    .getSkill(skillModel.getId())
-                    .getLevel();
-
-                if (skillLevel > 0) {
-                    skillModel.getLevels()
-                        .stream()
-                        .filter(skillLevelModel -> skillLevelModel.getLevel() <= skillLevel)
-                        .map(Skill.Level::getEffects)
-                        .flatMap(ConcurrentMap::stream)
-                        .forEach(entry -> this.table.add(Type.SKILLS, entry.getKey(), StatHalf.BASE, entry.getValue()));
-                }
-            });
-    }
-
-    private void loadSlayers(ReferenceSnapshot reference, SkyBlockMember member) {
-        member.getSlayers()
-            .getBosses()
-            .forEach(slayerBoss -> reference.getSlayers()
-                .findFirst(Slayer::getId, slayerBoss.getId())
-                .ifPresent(slayerModel -> {
-                    int slayerLevel = slayerBoss.getLevel();
-
-                    if (slayerLevel > 0) {
-                        slayerModel.getLevels()
-                            .stream()
-                            .filter(slayerLevelModel -> slayerLevelModel.getLevel() <= slayerLevel)
-                            .map(Slayer.Level::getEffects)
-                            .flatMap(ConcurrentMap::stream)
-                            .forEach(entry -> this.table.add(Type.SLAYERS, entry.getKey(), StatHalf.BASE, entry.getValue()));
-                    }
-                })
-            );
-    }
-
-    /**
-     * The sixteen sources a member's stats are split between.
-     * <p>
-     * All but the accessory power are fixed for the member, since the rest depend on progression
-     * rather than on gear. The selected power is the one an optimiser is free to change, so it alone
-     * has to be recomputed per candidate.
-     */
-    @Getter
-    @RequiredArgsConstructor
-    public enum Type implements StatOrigin {
-
-        /**
-         * Stats granted by the accessory bag's selected power, scaled by its magical power.
-         */
-        ACCESSORY_POWER(false),
-
-        /**
-         * Stats and ability stats from the pet currently summoned, scaled by its level.
-         */
-        ACTIVE_PET(true),
-
-        /**
-         * Stats from potion effects currently running.
-         */
-        ACTIVE_POTIONS(true),
-
-        /**
-         * The flat starting values every player has before anything is earned.
-         */
-        BASE_STATS(true),
-
-        /**
-         * Stats from bestiary milestones.
-         */
-        BESTIARY(true),
-
-        /**
-         * Stats from an active booster cookie.
-         */
-        BOOSTER_COOKIE(true),
-
-        /**
-         * Stats from century cakes still in date.
-         */
-        CENTURY_CAKES(true),
-
-        /**
-         * Stats from Catacombs levels and the selected dungeon class.
-         */
-        DUNGEONS(true),
-
-        /**
-         * Stats from essence perks bought in the corresponding menus.
-         */
-        ESSENCE(true),
-
-        /**
-         * Stats from SkyBlock levels.
-         */
-        SKYBLOCK_LEVELS(true),
-
-        /**
-         * Stats from Jacob's farming perks, the permanent farming fortune upgrades.
-         */
-        JACOBS_FARMING(true),
-
-        /**
-         * Stats from the songs completed on Melody's Harp.
-         */
-        MELODYS_HARP(true),
-
-        /**
-         * Stats from Heart of the Mountain perks.
-         */
-        MINING_CORE(true),
-
-        /**
-         * Stats from pet score, which counts the distinct pets collected by rarity.
-         */
-        PET_SCORE(true),
-
-        /**
-         * Stats from skill levels.
-         */
-        SKILLS(true),
-
-        /**
-         * Stats from slayer levels.
-         */
-        SLAYERS(true);
-
-        /**
-         * Whether this source is fixed for the member, so an optimiser need not recompute it.
-         */
-        private final boolean optimizerConstant;
-
     }
 
 }

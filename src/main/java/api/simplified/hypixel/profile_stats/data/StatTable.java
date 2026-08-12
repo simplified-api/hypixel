@@ -2,6 +2,7 @@ package api.simplified.hypixel.profile_stats.data;
 
 import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
 import api.simplified.hypixel.profile_stats.StatOrigin;
+import api.simplified.hypixel.profile_stats.StatSink;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;
@@ -22,7 +23,7 @@ import java.util.Arrays;
  * Reads that a consumer sees are unaffected: {@link #toMap} seeds every known stat, so a caller may
  * still ask for one that nothing provided and read zero rather than checking first.
  */
-public final class StatTable {
+public final class StatTable implements StatSink {
 
     private final @NotNull ConcurrentMap<StatOrigin, ConcurrentLinkedMap<Stat, Data>> entries = Concurrent.newMap();
     private final @NotNull ReferenceSnapshot reference;
@@ -50,6 +51,7 @@ public final class StatTable {
      * @param value the amount to add
      * @return this table
      */
+    @Override
     public @NotNull StatTable add(@NotNull StatOrigin origin, @NotNull Stat statModel, @NotNull StatHalf half, double value) {
         half.add(this.getCell(origin, statModel), value);
         return this;
@@ -64,6 +66,7 @@ public final class StatTable {
      * @param value the amount to add
      * @return this table
      */
+    @Override
     public @NotNull StatTable add(@NotNull StatOrigin origin, @NotNull String statId, @NotNull StatHalf half, double value) {
         return this.reference.getStat(statId)
             .map(statModel -> this.add(origin, statModel, half, value))
@@ -130,14 +133,33 @@ public final class StatTable {
      * @return a fresh table covering every known stat
      */
     public @NotNull ConcurrentLinkedMap<Stat, Data> toMap(@NotNull StatOrigin... origins) {
-        ConcurrentLinkedMap<Stat, Data> totals = this.reference.getStats()
+        ConcurrentLinkedMap<Stat, Data> totals = this.seed();
+        this.addTo(totals, origins);
+        return totals;
+    }
+
+    /**
+     * Sums every origin that wrote anything into one table, seeded across every known stat.
+     *
+     * @return a fresh table covering every known stat
+     */
+    public @NotNull ConcurrentLinkedMap<Stat, Data> toMap() {
+        ConcurrentLinkedMap<Stat, Data> totals = this.seed();
+
+        this.entries.forEach((origin, statEntries) -> statEntries.forEach((statModel, data) -> {
+            Data target = totals.get(statModel);
+            target.base += data.getBase();
+            target.bonus += data.getBonus();
+        }));
+
+        return totals;
+    }
+
+    private @NotNull ConcurrentLinkedMap<Stat, Data> seed() {
+        return this.reference.getStats()
             .stream()
             .map(statModel -> Pair.of(statModel, new Data()))
             .collect(Concurrent.toLinkedMap());
-
-        this.addTo(totals, origins);
-
-        return totals;
     }
 
 }
