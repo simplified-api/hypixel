@@ -7,6 +7,7 @@ import api.simplified.skyblock.model.Gemstone;
 import api.simplified.skyblock.model.Reforge;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.expression.Expression;
 import dev.simplified.util.NumberUtil;
@@ -196,22 +197,22 @@ public class PlayerDataHelper {
     }
 
     /**
-     * Totals what an object's slotted gemstones give, at the object's own rarity.
+     * Totals what a set of slotted gemstones give, at the rarity of what they are slotted into.
      * <p>
      * A gemstone's value depends on both its quality and the rarity of what it is slotted into, so
      * the same gemstone is worth more in a legendary item than in a rare one.
      *
-     * @param objectData the item or accessory to read
+     * @param gemstones the quality of each slotted gemstone, keyed by the gemstone
+     * @param rarity the rarity the gemstones are scaled against
      * @return the value each stat gains, keyed by the stat
      */
-    public static ConcurrentMap<Stat, Double> handleGemstoneBonus(ObjectData<?> objectData) {
+    public static ConcurrentMap<Stat, Double> handleGemstoneBonus(@NotNull ConcurrentMap<Gemstone, ConcurrentList<Gemstone.Type>> gemstones, @NotNull Rarity rarity) {
         ConcurrentMap<Stat, Double> gemstoneAdjusted = Concurrent.newMap();
 
-        objectData.getGemstones().forEach(entry -> entry.getValue().forEach(gemstoneType -> {
-            Gemstone gemstone = entry.getKey();
+        gemstones.forEach((gemstone, gemstoneTypes) -> gemstoneTypes.forEach(gemstoneType -> {
             double value = gemstone.getValues()
                 .getOrDefault(gemstoneType, Concurrent.newMap())
-                .getOrDefault(objectData.getRarity(), 0.0);
+                .getOrDefault(rarity, 0.0);
 
             if (value > 0.0)
                 gemstoneAdjusted.put(gemstone.getStat(), value + gemstoneAdjusted.getOrDefault(gemstone.getStat(), 0.0));

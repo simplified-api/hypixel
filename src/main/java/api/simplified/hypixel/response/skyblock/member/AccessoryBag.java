@@ -1,10 +1,11 @@
 package api.simplified.hypixel.response.skyblock.member;
 
 import api.simplified.hypixel.common.NbtContent;
+import api.simplified.hypixel.profile_stats.RarityUpgrade;
 import api.simplified.hypixel.profile_stats.ReferenceSnapshot;
-import api.simplified.hypixel.profile_stats.data.AccessoryData;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.skyblock.SkyBlockData;
+import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.date.SkyBlockDate;
 import api.simplified.skyblock.model.Accessory;
 import api.simplified.skyblock.model.Power;
@@ -21,6 +22,7 @@ import lib.minecraft.nbt.tag.StringTag;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,9 +60,9 @@ public class AccessoryBag {
     private transient int abiphoneContacts;
 
     @Getter(AccessLevel.NONE)
-    private transient ConcurrentList<AccessoryData> detectedAccessories;
+    private transient ConcurrentList<DetectedAccessory> detectedAccessories;
     @Getter(AccessLevel.NONE)
-    private transient ConcurrentList<AccessoryData> accessories;
+    private transient ConcurrentList<DetectedAccessory> accessories;
 
     // Power
 
@@ -115,7 +117,7 @@ public class AccessoryBag {
      * Accessories parsed out of the talisman bag and resolved against the accessory repository,
      * empty for a bag decoded on its own.
      */
-    public @NotNull ConcurrentList<AccessoryData> getDetectedAccessories() {
+    public @NotNull ConcurrentList<DetectedAccessory> getDetectedAccessories() {
         if (this.detectedAccessories != null)
             return this.detectedAccessories;
 
@@ -135,7 +137,7 @@ public class AccessoryBag {
      * @param reference the reference tables to resolve against
      * @return the accessories the bag holds
      */
-    public @NotNull ConcurrentList<AccessoryData> getDetectedAccessories(@NotNull ReferenceSnapshot reference) {
+    public @NotNull ConcurrentList<DetectedAccessory> getDetectedAccessories(@NotNull ReferenceSnapshot reference) {
         if (this.detectedAccessories == null) {
             this.detectedAccessories = this.contents.getRawData().isEmpty()
                 ? Concurrent.newUnmodifiableList()
@@ -147,10 +149,13 @@ public class AccessoryBag {
                     .flatMap(compoundTag -> reference.getAccessory(
                             compoundTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue()
                         )
-                        .map(accessory -> Pair.of(accessory, compoundTag))
+                        .map(accessory -> new DetectedAccessory(
+                            accessory,
+                            compoundTag,
+                            RarityUpgrade.resolve(accessory.getItem(), compoundTag)
+                        ))
                         .stream()
                     )
-                    .map(entry -> new AccessoryData(reference, entry.getKey(), entry.getValue()))
                     .collect(Concurrent.toList());
         }
 
@@ -161,7 +166,7 @@ public class AccessoryBag {
      * The detected accessories that count toward magical power, with the lower-ranked members of each
      * family dropped.
      */
-    public @NotNull ConcurrentList<AccessoryData> getAccessories() {
+    public @NotNull ConcurrentList<DetectedAccessory> getAccessories() {
         return this.accessories != null
             ? this.accessories
             : this.dropOutrankedAccessories(this.getDetectedAccessories());
@@ -173,13 +178,13 @@ public class AccessoryBag {
      * @param reference the reference tables to resolve against
      * @return the accessories that count toward magical power
      */
-    public @NotNull ConcurrentList<AccessoryData> getAccessories(@NotNull ReferenceSnapshot reference) {
+    public @NotNull ConcurrentList<DetectedAccessory> getAccessories(@NotNull ReferenceSnapshot reference) {
         return this.accessories != null
             ? this.accessories
             : this.dropOutrankedAccessories(this.getDetectedAccessories(reference));
     }
 
-    private @NotNull ConcurrentList<AccessoryData> dropOutrankedAccessories(@NotNull ConcurrentList<AccessoryData> detectedAccessories) {
+    private @NotNull ConcurrentList<DetectedAccessory> dropOutrankedAccessories(@NotNull ConcurrentList<DetectedAccessory> detectedAccessories) {
         // Store Families
         ConcurrentMap<String, ConcurrentSet<Accessory>> familyAccessoryDataMap = Concurrent.newMap();
         detectedAccessories
@@ -325,17 +330,45 @@ public class AccessoryBag {
             .collect(Concurrent.toUnmodifiableList());
     }
 
-    private int handleMagicalPower(@NotNull AccessoryData accessoryData) {
-        int magicalPower = accessoryData.getRarity().getMagicPower();
+    private int handleMagicalPower(@NotNull DetectedAccessory detectedAccessory) {
+        int magicalPower = detectedAccessory.getRarity().getMagicPower();
 
         // TODO: Dynamic
-        if (accessoryData.getAccessory().getId().equals("HEGEMONY_ARTIFACT"))
+        if (detectedAccessory.getAccessory().getId().equals("HEGEMONY_ARTIFACT"))
             magicalPower *= 2;
 
-        if (accessoryData.getAccessory().getId().equals("ABICASE"))
+        if (detectedAccessory.getAccessory().getId().equals("ABICASE"))
             magicalPower += this.abiphoneContacts / 2;
 
         return magicalPower;
+    }
+
+    /**
+     * One item found in a member's accessory bag, resolved far enough to be counted and ranked.
+     * <p>
+     * This is what magical power and the family filter need and no more - neither reads a stat, so
+     * neither pays for one. Totalling what the accessory gives is a separate step, and the result of
+     * it belongs to the computation that asked rather than to the bag.
+     */
+    @Getter
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class DetectedAccessory {
+
+        /**
+         * Reference data for the accessory this instance is of.
+         */
+        private final @NotNull Accessory accessory;
+
+        /**
+         * The accessory's NBT tag exactly as it was decoded.
+         */
+        private final @NotNull CompoundTag compoundTag;
+
+        /**
+         * Rarity after every upgrade the instance carries, which may sit above the accessory's own.
+         */
+        private final @NotNull Rarity rarity;
+
     }
 
     /**

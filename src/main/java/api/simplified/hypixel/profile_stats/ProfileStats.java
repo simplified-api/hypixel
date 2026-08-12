@@ -1,7 +1,6 @@
 package api.simplified.hypixel.profile_stats;
 
 import api.simplified.hypixel.profile_stats.data.Data;
-import api.simplified.hypixel.profile_stats.data.ItemData;
 import api.simplified.hypixel.profile_stats.data.PlayerDataHelper;
 import api.simplified.hypixel.profile_stats.data.StatData;
 import api.simplified.hypixel.profile_stats.data.StatHalf;
@@ -74,7 +73,15 @@ public class ProfileStats extends StatData<StatSource> {
     /**
      * The four armour pieces, each empty when that slot is unfilled.
      */
-    private final ConcurrentList<Optional<ItemData>> armor = Concurrent.newList();
+    private final ConcurrentList<Optional<ItemStats>> armor = Concurrent.newList();
+
+    /**
+     * The accessories that count toward magical power, each totalled in its own right.
+     * <p>
+     * These belong to the result rather than to the bag, so a second compute for the same member
+     * starts from unwritten tables rather than from the first one's.
+     */
+    private final ConcurrentList<ItemStats> accessories = Concurrent.newList();
 
     /**
      * Set bonus the worn armour qualifies for, empty when the pieces do not form a set.
@@ -119,7 +126,13 @@ public class ProfileStats extends StatData<StatSource> {
         // --- Resolve Gear ---
         // neither is a source - each is a list of tables of its own - and both resolve against the
         // shared snapshot here so nothing reaches for one of its own later
-        this.accessoryBag.getAccessories(reference);
+        this.accessoryBag.getAccessories(reference)
+            .forEach(detectedAccessory -> this.accessories.add(new ItemStats(
+                reference,
+                detectedAccessory.getAccessory().getItem(),
+                Optional.of(detectedAccessory.getAccessory()),
+                detectedAccessory.getCompoundTag()
+            )));
         this.loadArmor(reference, member);
 
         // --- Populate Default Expression Variables ---
@@ -189,7 +202,7 @@ public class ProfileStats extends StatData<StatSource> {
 
         if (calculateBonusStats) {
             // --- Load Bonus Accessory Item Stats ---
-            this.getAccessoryBag().getAccessories().forEach(accessoryData -> accessoryData.calculateBonus(variables));
+            this.getAccessories().forEach(accessoryStats -> accessoryStats.calculateBonus(variables));
 
             // --- Load Bonus Armor Stats ---
             this.getArmor()
@@ -238,9 +251,8 @@ public class ProfileStats extends StatData<StatSource> {
                         .forEach(itemData -> applyPetPercentage(itemData, itemData.getCompoundTag(), variables, bonusPetPerkStat));
 
                     // Handle Accessories
-                    this.getAccessoryBag()
-                        .getAccessories()
-                        .forEach(accessoryData -> applyPetPercentage(accessoryData, accessoryData.getCompoundTag(), variables, bonusPetPerkStat));
+                    this.getAccessories()
+                        .forEach(accessoryStats -> applyPetPercentage(accessoryStats, accessoryStats.getCompoundTag(), variables, bonusPetPerkStat));
                 });
 
             // TODO: Load Post Bonus Stats
@@ -321,9 +333,8 @@ public class ProfileStats extends StatData<StatSource> {
         collectInto(totalStats, this, optimizerConstant);
 
         // Collect Accessory Data
-        this.getAccessoryBag()
-            .getAccessories()
-            .forEach(accessoryData -> collectInto(totalStats, accessoryData, optimizerConstant));
+        this.getAccessories()
+            .forEach(accessoryStats -> collectInto(totalStats, accessoryStats, optimizerConstant));
 
         // Collect Armor Data
         this.getArmor()
@@ -356,7 +367,7 @@ public class ProfileStats extends StatData<StatSource> {
         }));
     }
 
-    private void loadArmor(ReferenceSnapshot reference, SkyBlockMember member) {
+    private void loadArmor(@NotNull ReferenceSnapshot reference, @NotNull SkyBlockMember member) {
         if (member.getInventory().getArmor() != null) {
             ConcurrentList<Pair<CompoundTag, Optional<Item>>> armorItemModels = member.getInventory().getArmor()
                 .getNbtData()
@@ -377,16 +388,17 @@ public class ProfileStats extends StatData<StatSource> {
             );
 
             armorItemModels.forEach(armorItemModelPair -> {
-                ItemData itemData = null;
+                ItemStats itemStats = null;
 
                 if (armorItemModelPair.left().notEmpty() && armorItemModelPair.right().isPresent())
-                    itemData = new ItemData(
+                    itemStats = new ItemStats(
                         reference,
                         armorItemModelPair.right().get(),
+                        Optional.empty(),
                         armorItemModelPair.left()
                     );
 
-                this.armor.add(Optional.ofNullable(itemData));
+                this.armor.add(Optional.ofNullable(itemStats));
             });
         }
     }
