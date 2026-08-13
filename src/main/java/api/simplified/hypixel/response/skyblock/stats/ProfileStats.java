@@ -102,6 +102,14 @@ public class ProfileStats extends StatData<StatSource> {
         sources.forEach(source -> source.contribute(this.context, this.table));
         this.table.publishTotals(this.context.getVariables()::put);
 
+        // the pet's contribution is named on its own as well, off the cells it wrote rather than
+        // part-way through writing them
+        this.table.getEntries(StatSource.ACTIVE_PET)
+            .forEach((statModel, data) -> this.context.getVariables().put(
+                String.format("STAT_PET_%s", statModel.getId()),
+                data.getTotal()
+            ));
+
         // --- Bonus Pass ---
         if (calculateBonusStats)
             PostProcess.run(this.context, this.table, this.armor, this.accessories);

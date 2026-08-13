@@ -158,6 +158,31 @@ enum VariableProvider {
     },
 
     /**
+     * What each of the active pet's perks contributes, one variable per stat a perk names.
+     * <p>
+     * This cannot be read back off the stat table the way a total can, because the table folds every
+     * perk into the one pet origin - so it is computed here, off the same resolved pet the source
+     * reads rather than off a second copy of the arithmetic.
+     */
+    PET_PERK {
+
+        @Override
+        public void provide(@NotNull StatContext context, @NotNull VariableSink sink) {
+            ResolvedPet.of(context.getMember())
+                .ifPresent(resolvedPet -> resolvedPet.getPerkStats().forEach(perkStat -> sink.put(
+                    String.format(
+                        "%s_%s%s",
+                        this.name(),
+                        perkStat.perkName(),
+                        perkStat.stat().map(stat -> "_" + stat.getId()).orElse("")
+                    ),
+                    perkStat.value()
+                )));
+        }
+
+    },
+
+    /**
      * Damage scaling earned from combat levels, as a fraction rather than a percentage.
      */
     DAMAGE_MULTIPLIER {

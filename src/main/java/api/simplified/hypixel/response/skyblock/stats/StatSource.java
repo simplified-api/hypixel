@@ -3,7 +3,6 @@ package api.simplified.hypixel.response.skyblock.stats;
 import api.simplified.hypixel.response.skyblock.member.CenturyCake;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
-import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.hypixel.response.skyblock.member.pet.Pets;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
@@ -62,67 +61,36 @@ public enum StatSource implements StatOrigin {
 
         @Override
         public void contribute(@NotNull StatContext context, @NotNull StatSink sink) {
-            Optional<OwnedPet> optionalActivePet = context.getMember().getPets().getActivePet();
-
-            if (optionalActivePet.isEmpty())
-                return;
-
-            OwnedPet activePet = optionalActivePet.get();
-
-            if (activePet.getId().isEmpty())
-                return;
-
-            Optional<Pet> optionalPet = SkyBlockData.getRepository(Pet.class).findFirst(Pet::getId, activePet.getId());
+            Optional<ResolvedPet> optionalPet = ResolvedPet.of(context.getMember());
 
             if (optionalPet.isEmpty())
                 return;
 
-            Pet petModel = optionalPet.get();
-            Rarity petRarity = activePet.getRarity();
+            ResolvedPet resolvedPet = optionalPet.get();
 
             // the pet's own sub-steps read back what the earlier ones gave, so they accumulate here
             // and reach the sink once, settled
             ConcurrentMap<Stat, Double> bonuses = Concurrent.newMap();
 
             // Load Rarity Filtered Pet Stats
-            petModel.getStats(petRarity)
-                .forEach(substitute -> substitute.getStat()
-                    .ifPresent(stat -> {
-                        Pet.Substitute.Value value = substitute.getValues().get(petRarity);
-                        if (value != null)
-                            bonuses.merge(stat, value.getBase() + (value.getScalar() * activePet.getLevel()), Double::sum);
-                    })
-                );
+            resolvedPet.getStats().forEach((stat, value) -> bonuses.merge(stat, value, Double::sum));
 
-            // Save Pet Stats to Expression Variables
-            bonuses.forEach((statModel, value) -> context.getVariables().put(String.format("STAT_PET_%s", statModel.getId()), value));
-
-            // Load Rarity Filtered Perk Stats
-            petModel.getPerks(petRarity).forEach(perk -> {
-                // Load Bonus Pet Perk Stats
-                SkyBlockData.getRepository(BonusPetPerkStat.class)
+            // Load Bonus Pet Perk Stats
+            resolvedPet.getPet()
+                .getPerks(resolvedPet.getRarity())
+                .forEach(perk -> SkyBlockData.getRepository(BonusPetPerkStat.class)
                     .findFirst(
-                        Pair.of(BonusPetPerkStat::getPetId, petModel.getId()),
+                        Pair.of(BonusPetPerkStat::getPetId, resolvedPet.getPet().getId()),
                         Pair.of(BonusPetPerkStat::getPerkName, perk.getName())
                     )
-                    .ifPresent(context.getBonusPetPerkStats()::add);
+                    .ifPresent(context.getBonusPetPerkStats()::add)
+                );
 
-                perk.getStats(petRarity).forEach(substitute -> {
-                    Pet.Substitute.Value value = substitute.getValues().get(petRarity);
-                    double perkValue = (value != null)
-                        ? value.getBase() + (value.getScalar() * activePet.getLevel())
-                        : 0.0;
+            // Load Rarity Filtered Perk Stats
+            resolvedPet.getPerkStats()
+                .forEach(perkStat -> perkStat.stat().ifPresent(stat -> bonuses.merge(stat, perkStat.value(), Double::sum)));
 
-                    // Save Perk Stat
-                    substitute.getStat().ifPresent(stat -> bonuses.merge(stat, perkValue, Double::sum));
-
-                    // Store Bonus Pet Perk
-                    String statKey = substitute.getStat().map(stat -> "_" + stat.getId()).orElse("");
-                    context.getVariables().put(String.format("PET_PERK_%s%s", perk.getName(), statKey), perkValue);
-                });
-            });
-
-            String heldItemId = activePet.getHeldItem().orElse("");
+            String heldItemId = resolvedPet.getHeldItemId();
 
             // Handle Static Pet Item Bonuses
             if (!heldItemId.isEmpty()) {
