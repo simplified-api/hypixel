@@ -54,7 +54,7 @@ final class PostProcess {
             .forEach(itemStats -> applyEnchantmentMultipliers(itemStats, table));
 
         // --- Pet Percentage ---
-        context.publishTotals(table);
+        table.publishTotals(variables::put);
         context.getBonusPetPerkStats()
             .stream()
             .filter(BonusPetPerkStat::isPercentage)

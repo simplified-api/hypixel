@@ -45,17 +45,4 @@ final class StatContext {
      */
     private final @NotNull ConcurrentList<BonusPetPerkStat> bonusPetPerkStats = Concurrent.newList();
 
-    /**
-     * Republishes every stat total under {@code STAT_<statId>}, so the next pass's expressions read
-     * the pass that has just finished rather than one that is still running.
-     *
-     * @param table the table to read the totals from
-     */
-    public void publishTotals(@NotNull StatTable table) {
-        table.toMap().forEach((statModel, data) -> this.variables.put(
-            String.format("STAT_%s", statModel.getId()),
-            data.getTotal()
-        ));
-    }
-
 }

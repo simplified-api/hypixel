@@ -176,6 +176,16 @@ final class StatTable implements StatSink {
         return totals;
     }
 
+    /**
+     * Publishes every stat total under {@code STAT_<statId>}, so a later pass's expressions read the
+     * pass that has just finished rather than one that is still running.
+     *
+     * @param sink where the variables are written
+     */
+    void publishTotals(@NotNull VariableSink sink) {
+        this.toMap().forEach((statModel, data) -> sink.put(String.format("STAT_%s", statModel.getId()), data.getTotal()));
+    }
+
     private @NotNull ConcurrentLinkedMap<Stat, Data> seed() {
         return SkyBlockData.getRepository(Stat.class).findAll()
             .stream()

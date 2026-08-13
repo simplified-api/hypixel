@@ -2,30 +2,23 @@ package api.simplified.hypixel.response.skyblock.stats;
 
 import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
-import api.simplified.hypixel.response.skyblock.island.Banking;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
-import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
-import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.BonusArmorSet;
 import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.Item;
-import api.simplified.skyblock.model.Skill;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentList;
-import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
 import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.StringTag;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -52,11 +45,6 @@ import java.util.Optional;
 public class ProfileStats extends StatData<StatSource> {
 
     private static final @NotNull ConcurrentList<StatSource> EVERY_SOURCE = Concurrent.newUnmodifiableList(StatSource.values());
-
-    /**
-     * Damage scaling earned from combat levels, as a fraction rather than a percentage.
-     */
-    private final double damageMultiplier;
 
     /**
      * The member's accessory bag, already initialized with its member-scoped values.
@@ -105,69 +93,14 @@ public class ProfileStats extends StatData<StatSource> {
             )));
         this.loadArmor(member);
 
-        // --- Populate Default Expression Variables ---
-        ConcurrentMap<String, Double> variables = this.context.getVariables();
-        this.getActivePet().ifPresent(activePet -> variables.put("PET_LEVEL", (double) activePet.getLevel()));
-        variables.put("SKILL_AVERAGE", member.getSkills().getAverage());
-        variables.put("SKYBLOCK_LEVEL", (double) member.getLeveling().getLevel());
-        variables.put("BESTIARY_MILESTONE", (double) member.getBestiary().getMilestone());
-        variables.put("BANK", skyBlockIsland.getBanking().map(Banking::getBalance).orElse(0.0));
-        SkyBlockData.getRepository(Skill.class).findAll()
-            .forEach(skillModel -> variables.put(
-                String.format("SKILL_LEVEL_%s", skillModel.getId()),
-                (double) member.getSkills().getSkill(skillModel.getId()).getLevel()
-            ));
-
-        for (DungeonData.Type dungeonType : DungeonData.Type.values()) {
-            if (dungeonType == DungeonData.Type.UNKNOWN) continue;
-            variables.put(
-                String.format("DUNGEON_LEVEL_%s", dungeonType.name()),
-                (double) member.getDungeons()
-                    .getDungeon(dungeonType)
-                    .getLevel()
-            );
-        }
-
-        for (DungeonClass.Type classType : DungeonClass.Type.values()) {
-            if (classType == DungeonClass.Type.UNKNOWN) continue;
-            variables.put(
-                String.format("DUNGEON_CLASS_LEVEL_%s", classType.name()),
-                (double) member.getDungeons()
-                    .getClass(classType)
-                    .getLevel()
-            );
-        }
-
-        member.getCollection()
-            .forEach((itemId, collected) -> variables.put(
-                String.format("COLLECTION_%s", itemId),
-                (double) collected
-            ));
-
-        // --- Load Damage Multiplier ---
-        this.damageMultiplier = SkyBlockData.getRepository(Skill.class).findFirst(Skill::getId, "COMBAT")
-            .map(skillModel -> {
-                int skillLevel = member.getSkills()
-                    .getSkill(skillModel.getId())
-                    .getLevel();
-
-                if (skillLevel > 0) {
-                    return skillModel.getLevels()
-                        .stream()
-                        .filter(skillLevelModel -> skillLevelModel.getLevel() <= skillLevel)
-                        .map(Skill.Level::getEffects)
-                        .flatMap(map -> map.entrySet().stream())
-                        .mapToDouble(Map.Entry::getValue)
-                        .sum();
-                }
-
-                return 0.0;
-            })
-            .orElse(0.0) / 100.0;
+        // --- Variable Seed ---
+        // every provider writes through a sink it cannot read back, so the seed has no order either
+        for (VariableProvider provider : VariableProvider.values())
+            provider.provide(this.context, this.context.getVariables()::put);
 
         // --- Flat Pass ---
         sources.forEach(source -> source.contribute(this.context, this.table));
-        this.context.publishTotals(this.table);
+        this.table.publishTotals(this.context.getVariables()::put);
 
         // --- Bonus Pass ---
         if (calculateBonusStats)
@@ -215,6 +148,13 @@ public class ProfileStats extends StatData<StatSource> {
      */
     static @NotNull ProfileStats compute(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats, @NotNull ConcurrentList<StatSource> sources) {
         return new ProfileStats(skyBlockIsland, member, calculateBonusStats, sources);
+    }
+
+    /**
+     * Damage scaling earned from combat levels, as a fraction rather than a percentage.
+     */
+    public double getDamageMultiplier() {
+        return this.context.getVariables().getOrDefault(VariableProvider.DAMAGE_MULTIPLIER.name(), 0.0);
     }
 
     /**
