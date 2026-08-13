@@ -25,7 +25,6 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
@@ -51,6 +50,8 @@ import java.util.Optional;
 @Getter
 @SuppressWarnings("unused")
 public class ProfileStats extends StatData<StatSource> {
+
+    private static final @NotNull ConcurrentList<StatSource> EVERY_SOURCE = Concurrent.newUnmodifiableList(StatSource.values());
 
     /**
      * Damage scaling earned from combat levels, as a fraction rather than a percentage.
@@ -88,7 +89,7 @@ public class ProfileStats extends StatData<StatSource> {
     @Getter(AccessLevel.NONE)
     private final StatContext context;
 
-    private ProfileStats(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
+    private ProfileStats(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats, @NotNull ConcurrentList<StatSource> sources) {
         this.activePet = member.getPets().getActivePet();
         this.accessoryBag = member.getAccessoryBag();
         this.context = new StatContext(skyBlockIsland, member, this.accessoryBag);
@@ -165,7 +166,7 @@ public class ProfileStats extends StatData<StatSource> {
             .orElse(0.0) / 100.0;
 
         // --- Flat Pass ---
-        Arrays.stream(StatSource.values()).forEach(source -> source.contribute(this.context, this.table));
+        sources.forEach(source -> source.contribute(this.context, this.table));
         this.context.publishTotals(this.table);
 
         // --- Bonus Pass ---
@@ -196,7 +197,24 @@ public class ProfileStats extends StatData<StatSource> {
      * @return the member's stats
      */
     public static @NotNull ProfileStats compute(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
-        return new ProfileStats(skyBlockIsland, member, calculateBonusStats);
+        return compute(skyBlockIsland, member, calculateBonusStats, EVERY_SOURCE);
+    }
+
+    /**
+     * Totals one member's stats from a given set of sources, in the order given.
+     * <p>
+     * A source writes through a sink it cannot read back, so the flat pass has no order to get wrong
+     * and no source can be made to depend on another having run. That is a property rather than an
+     * observation, which is what this reaches far enough in to check.
+     *
+     * @param skyBlockIsland the profile the member belongs to, read for the shared bank balance
+     * @param member the member to total
+     * @param calculateBonusStats whether to evaluate the bonuses that depend on the flat totals
+     * @param sources the sources to run, in the order to run them
+     * @return the member's stats, holding only what those sources contribute
+     */
+    static @NotNull ProfileStats compute(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats, @NotNull ConcurrentList<StatSource> sources) {
+        return new ProfileStats(skyBlockIsland, member, calculateBonusStats, sources);
     }
 
     /**
