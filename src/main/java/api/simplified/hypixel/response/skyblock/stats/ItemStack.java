@@ -165,11 +165,15 @@ public final class ItemStack extends StatData<ItemOrigin> {
             .collect(Concurrent.toUnmodifiableList());
 
         // Load Reforge Model
-        this.reforge = SkyBlockData.getRepository(Reforge.class).findFirst(Reforge::getId, compoundTag
-            .getPathOrDefault("tag.ExtraAttributes.modifier", StringTag.EMPTY)
-            .getValue()
-            .toUpperCase()
-        );
+        // an accessory slot never contributes a reforge, so it never resolves one either - the field
+        // stays because an accessory really can hold one, what goes is the lookup and the write
+        this.reforge = accessory.isPresent()
+            ? Optional.empty()
+            : SkyBlockData.getRepository(Reforge.class).findFirst(Reforge::getId, compoundTag
+                .getPathOrDefault("tag.ExtraAttributes.modifier", StringTag.EMPTY)
+                .getValue()
+                .toUpperCase()
+            );
 
         // Load Bonus Reforge Model
         this.bonusReforgeStatModel = this.getReforge().flatMap(reforge -> SkyBlockData.getRepository(BonusReforgeStat.class).findFirst(BonusReforgeStat::getReforgeId, reforge.getId()));
@@ -185,8 +189,10 @@ public final class ItemStack extends StatData<ItemOrigin> {
         itemModel.getStats().forEach((key, value) -> this.table.add(ItemOrigin.STATS, key, StatHalf.BONUS, value));
 
         // Save Reforge Stats
-        handleReforgeBonus(this.getReforge(), this.getRarity())
-            .forEach((statModel, value) -> this.table.add(ItemOrigin.REFORGES, statModel, StatHalf.BONUS, value));
+        if (accessory.isEmpty()) {
+            handleReforgeBonus(this.getReforge(), this.getRarity())
+                .forEach((statModel, value) -> this.table.add(ItemOrigin.REFORGES, statModel, StatHalf.BONUS, value));
+        }
 
         // Save Gemstone Stats
         handleGemstoneBonus(this.getGemstones(), this.getRarity())
