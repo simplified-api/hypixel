@@ -1,11 +1,13 @@
 package api.simplified.hypixel.response.skyblock.stats;
 
+import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.Accessory;
 import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.BonusReforgeStat;
 import api.simplified.skyblock.model.Enchantment;
 import api.simplified.skyblock.model.Gemstone;
+import api.simplified.skyblock.model.HotPotatoStat;
 import api.simplified.skyblock.model.Item;
 import api.simplified.skyblock.model.Reforge;
 import api.simplified.skyblock.model.Stat;
@@ -137,13 +139,11 @@ public final class ItemStack extends StatData<ItemOrigin> {
     /**
      * Constructs a new {@code ItemStack} and totals every unconditional modifier on the instance.
      *
-     * @param reference the reference tables to resolve against
      * @param itemModel reference data for the item being read
      * @param accessory reference data for the accessory, empty for anything not out of the bag
      * @param compoundTag the item's NBT tag
      */
-    public ItemStack(@NotNull ReferenceSnapshot reference, @NotNull Item itemModel, @NotNull Optional<Accessory> accessory, @NotNull CompoundTag compoundTag) {
-        super(reference);
+    public ItemStack(@NotNull Item itemModel, @NotNull Optional<Accessory> accessory, @NotNull CompoundTag compoundTag) {
         this.item = itemModel;
         this.accessory = accessory;
         this.compoundTag = compoundTag;
@@ -157,23 +157,25 @@ public final class ItemStack extends StatData<ItemOrigin> {
 
         // Load Gemstones
         CompoundTag gemTag = compoundTag.getPathOrDefault("tag.ExtraAttributes.gems", CompoundTag.EMPTY);
-        this.gemstones = Concurrent.newUnmodifiableMap(gemTag.notEmpty() ? findGemstones(reference.getGemstones(), gemTag) : Concurrent.newMap());
+        this.gemstones = Concurrent.newUnmodifiableMap(gemTag.notEmpty() ? findGemstones(SkyBlockData.getRepository(Gemstone.class).findAll(), gemTag) : Concurrent.newMap());
 
         // Load Bonus Item Stat Model
-        this.bonusItemStatModels = reference.getBonusItemStats(itemModel.getId());
+        this.bonusItemStatModels = SkyBlockData.getRepository(BonusItemStat.class)
+            .findAll(BonusItemStat::getItemId, itemModel.getId())
+            .collect(Concurrent.toUnmodifiableList());
 
         // Load Reforge Model
-        this.reforge = reference.getReforge(compoundTag
+        this.reforge = SkyBlockData.getRepository(Reforge.class).findFirst(Reforge::getId, compoundTag
             .getPathOrDefault("tag.ExtraAttributes.modifier", StringTag.EMPTY)
             .getValue()
             .toUpperCase()
         );
 
         // Load Bonus Reforge Model
-        this.bonusReforgeStatModel = this.getReforge().flatMap(reforge -> reference.getBonusReforgeStat(reforge.getId()));
+        this.bonusReforgeStatModel = this.getReforge().flatMap(reforge -> SkyBlockData.getRepository(BonusReforgeStat.class).findFirst(BonusReforgeStat::getReforgeId, reforge.getId()));
 
         // Load Enrichment - look up stat by enrichment key from NBT
-        this.enrichmentStat = reference.getStat(compoundTag
+        this.enrichmentStat = SkyBlockData.getRepository(Stat.class).findFirst(Stat::getId, compoundTag
             .getPathOrDefault("tag.ExtraAttributes.talisman_enrichment", StringTag.EMPTY)
             .getValue()
             .toUpperCase()
@@ -196,7 +198,9 @@ public final class ItemStack extends StatData<ItemOrigin> {
             .ifPresent(stat -> this.table.add(ItemOrigin.ENRICHMENTS, stat, StatHalf.BONUS, stat.getEnrichment()));
 
         // Save Hot Potato Book Stats
-        reference.getHotPotatoStats(itemModel.getCategory().getId())
+        SkyBlockData.getRepository(HotPotatoStat.class)
+            .stream()
+            .filter(hotPotatoStat -> hotPotatoStat.getItemTypes().contains(itemModel.getCategory().getId()))
             .forEach(hotPotatoStat -> this.table.add(ItemOrigin.HOT_POTATOES, hotPotatoStat.getStat(), StatHalf.BONUS, this.getHotPotatoBooks() * hotPotatoStat.getValue()));
 
         // Save Art Of Peace Stats
@@ -215,7 +219,7 @@ public final class ItemStack extends StatData<ItemOrigin> {
             .entrySet()
             .stream()
             .map(entry -> Pair.of(
-                reference.getEnchantment(entry.getKey().toUpperCase()).orElse(null),
+                SkyBlockData.getRepository(Enchantment.class).findFirst(Enchantment::getId, entry.getKey().toUpperCase()).orElse(null),
                 ((IntTag) entry.getValue()).getValue()
             ))
             .filter(enchantmentData -> Objects.nonNull(enchantmentData.left()))

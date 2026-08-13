@@ -13,8 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Everything one compute reads: the member being totalled, the island they are on, the reference data
- * hoisted for the duration, and the variables a bonus expression can name.
+ * Everything one compute reads: the member being totalled, the island they are on, and the variables
+ * a bonus expression can name.
  */
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
@@ -31,14 +31,9 @@ final class StatContext {
     private final @NotNull SkyBlockMember member;
 
     /**
-     * The member's accessory bag, already resolved against this compute's reference data.
+     * The member's accessory bag, with its accessories already resolved.
      */
     private final @NotNull AccessoryBag accessoryBag;
-
-    /**
-     * The reference tables this compute resolves every id against.
-     */
-    private final @NotNull ReferenceSnapshot reference;
 
     /**
      * The player state a bonus expression can refer to.

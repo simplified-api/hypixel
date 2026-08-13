@@ -1,7 +1,5 @@
 package api.simplified.hypixel.response.skyblock.stats;
 
-import api.simplified.hypixel.response.skyblock.stats.ReferenceSnapshot;
-import api.simplified.hypixel.response.skyblock.stats.StatOrigin;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentMap;
@@ -20,22 +18,7 @@ public abstract class StatData<T extends StatOrigin> {
     /**
      * Every stat this source provides, held per bucket and only for the cells something wrote.
      */
-    protected final @NotNull StatTable table;
-
-    /**
-     * The reference tables this source resolves every id against.
-     */
-    protected final @NotNull ReferenceSnapshot reference;
-
-    /**
-     * Constructs a new {@code StatData} reading its reference data from one snapshot.
-     *
-     * @param reference the reference tables to resolve against
-     */
-    protected StatData(@NotNull ReferenceSnapshot reference) {
-        this.reference = reference;
-        this.table = new StatTable(reference);
-    }
+    protected final @NotNull StatTable table = new StatTable();
 
     /**
      * The table this source writes into, which a pass that rescales what is already there rewrites

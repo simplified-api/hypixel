@@ -1,8 +1,6 @@
 package api.simplified.hypixel.response.skyblock.stats;
 
-import api.simplified.hypixel.response.skyblock.stats.ReferenceSnapshot;
-import api.simplified.hypixel.response.skyblock.stats.StatOrigin;
-import api.simplified.hypixel.response.skyblock.stats.StatSink;
+import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;
@@ -26,21 +24,11 @@ import java.util.Arrays;
 final class StatTable implements StatSink {
 
     private final @NotNull ConcurrentMap<StatOrigin, ConcurrentLinkedMap<Stat, Data>> entries = Concurrent.newMap();
-    private final @NotNull ReferenceSnapshot reference;
 
     /**
      * Stat ids no {@link Stat} row matches, counted once per id rather than dropped in silence.
      */
     @Getter private final @NotNull ConcurrentMap<String, Integer> unresolvedStatIds = Concurrent.newMap();
-
-    /**
-     * Constructs a new {@code StatTable} resolving its stat ids against one snapshot.
-     *
-     * @param reference the reference tables to resolve against
-     */
-    public StatTable(@NotNull ReferenceSnapshot reference) {
-        this.reference = reference;
-    }
 
     /**
      * Adds one value to a stat already in hand.
@@ -68,7 +56,7 @@ final class StatTable implements StatSink {
      */
     @Override
     public @NotNull StatTable add(@NotNull StatOrigin origin, @NotNull String statId, @NotNull StatHalf half, double value) {
-        return this.reference.getStat(statId)
+        return SkyBlockData.getRepository(Stat.class).findFirst(Stat::getId, statId)
             .map(statModel -> this.add(origin, statModel, half, value))
             .orElseGet(() -> {
                 this.unresolvedStatIds.merge(statId, 1, Integer::sum);
@@ -189,7 +177,7 @@ final class StatTable implements StatSink {
     }
 
     private @NotNull ConcurrentLinkedMap<Stat, Data> seed() {
-        return this.reference.getStats()
+        return SkyBlockData.getRepository(Stat.class).findAll()
             .stream()
             .map(statModel -> Pair.of(statModel, new Data()))
             .collect(Concurrent.toLinkedMap());

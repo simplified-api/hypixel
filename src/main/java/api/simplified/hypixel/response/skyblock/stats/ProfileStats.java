@@ -7,6 +7,7 @@ import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonClass;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
+import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.BonusArmorSet;
 import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.Item;
@@ -87,23 +88,21 @@ public class ProfileStats extends StatData<StatSource> {
     @Getter(AccessLevel.NONE)
     private final StatContext context;
 
-    private ProfileStats(@NotNull ReferenceSnapshot reference, @NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
-        super(reference);
+    private ProfileStats(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
         this.activePet = member.getPets().getActivePet();
         this.accessoryBag = member.getAccessoryBag();
-        this.context = new StatContext(skyBlockIsland, member, this.accessoryBag, reference);
+        this.context = new StatContext(skyBlockIsland, member, this.accessoryBag);
 
         // --- Resolve Gear ---
-        // neither is a source - each is a list of tables of its own - and both resolve against the
-        // shared snapshot here so nothing reaches for one of its own later
-        this.accessoryBag.getAccessories(reference)
+        // neither is a source - each is a list of tables of its own - so both are resolved here rather
+        // than reached for once a pass is running
+        this.accessoryBag.getAccessories()
             .forEach(detectedAccessory -> this.accessories.add(new ItemStack(
-                reference,
                 detectedAccessory.getAccessory().getItem(),
                 Optional.of(detectedAccessory.getAccessory()),
                 detectedAccessory.getCompoundTag()
             )));
-        this.loadArmor(reference, member);
+        this.loadArmor(member);
 
         // --- Populate Default Expression Variables ---
         ConcurrentMap<String, Double> variables = this.context.getVariables();
@@ -112,7 +111,7 @@ public class ProfileStats extends StatData<StatSource> {
         variables.put("SKYBLOCK_LEVEL", (double) member.getLeveling().getLevel());
         variables.put("BESTIARY_MILESTONE", (double) member.getBestiary().getMilestone());
         variables.put("BANK", skyBlockIsland.getBanking().map(Banking::getBalance).orElse(0.0));
-        reference.getSkills()
+        SkyBlockData.getRepository(Skill.class).findAll()
             .forEach(skillModel -> variables.put(
                 String.format("SKILL_LEVEL_%s", skillModel.getId()),
                 (double) member.getSkills().getSkill(skillModel.getId()).getLevel()
@@ -145,8 +144,7 @@ public class ProfileStats extends StatData<StatSource> {
             ));
 
         // --- Load Damage Multiplier ---
-        this.damageMultiplier = reference.getSkills()
-            .findFirst(Skill::getId, "COMBAT")
+        this.damageMultiplier = SkyBlockData.getRepository(Skill.class).findFirst(Skill::getId, "COMBAT")
             .map(skillModel -> {
                 int skillLevel = member.getSkills()
                     .getSkill(skillModel.getId())
@@ -198,7 +196,7 @@ public class ProfileStats extends StatData<StatSource> {
      * @return the member's stats
      */
     public static @NotNull ProfileStats compute(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats) {
-        return new ProfileStats(ReferenceSnapshot.load(), skyBlockIsland, member, calculateBonusStats);
+        return new ProfileStats(skyBlockIsland, member, calculateBonusStats);
     }
 
     /**
@@ -228,7 +226,7 @@ public class ProfileStats extends StatData<StatSource> {
      */
     public ConcurrentLinkedMap<Stat, Data> getCombinedStats(boolean optimizerConstant) {
         // Initialize
-        ConcurrentLinkedMap<Stat, Data> totalStats = this.reference.getStats()
+        ConcurrentLinkedMap<Stat, Data> totalStats = SkyBlockData.getRepository(Stat.class).findAll()
             .stream()
             .map(statModel -> Pair.of(statModel, new Data()))
             .collect(Concurrent.toLinkedMap());
@@ -264,19 +262,19 @@ public class ProfileStats extends StatData<StatSource> {
             }));
     }
 
-    private void loadArmor(@NotNull ReferenceSnapshot reference, @NotNull SkyBlockMember member) {
+    private void loadArmor(@NotNull SkyBlockMember member) {
         ConcurrentList<Pair<CompoundTag, Optional<Item>>> armorItemModels = member.getInventory().getArmor()
             .getNbtData()
             .<CompoundTag>getListTag("i")
             .stream()
             .map(itemTag -> Pair.of(
                 itemTag,
-                reference.getItem(itemTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue())
+                SkyBlockData.getRepository(Item.class).findFirst(Item::getId, itemTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue())
             ))
             .collect(Concurrent.toList())
             .reversed();
 
-        this.bonusArmorSetModel = reference.getBonusArmorSets().findFirst(
+        this.bonusArmorSetModel = SkyBlockData.getRepository(BonusArmorSet.class).findAll().findFirst(
             Pair.of(BonusArmorSet::getHelmetItem, armorItemModels.getFirst().right().orElse(null)),
             Pair.of(BonusArmorSet::getChestplateItem, armorItemModels.get(1).right().orElse(null)),
             Pair.of(BonusArmorSet::getLeggingsItem, armorItemModels.get(2).right().orElse(null)),
@@ -288,7 +286,6 @@ public class ProfileStats extends StatData<StatSource> {
 
             if (armorItemModelPair.left().notEmpty() && armorItemModelPair.right().isPresent())
                 itemStats = new ItemStack(
-                    reference,
                     armorItemModelPair.right().get(),
                     Optional.empty(),
                     armorItemModelPair.left()

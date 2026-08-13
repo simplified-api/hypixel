@@ -5,15 +5,21 @@ import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.hypixel.response.skyblock.member.pet.Pets;
+import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.BonusPetPerkStat;
+import api.simplified.skyblock.model.HotmPerk;
+import api.simplified.skyblock.model.MelodySong;
 import api.simplified.skyblock.model.Pet;
 import api.simplified.skyblock.model.PetItem;
+import api.simplified.skyblock.model.Potion;
+import api.simplified.skyblock.model.ShopPerk;
 import api.simplified.skyblock.model.Skill;
 import api.simplified.skyblock.model.Slayer;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.collection.tuple.pair.Pair;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +72,7 @@ public enum StatSource implements StatOrigin {
             if (activePet.getId().isEmpty())
                 return;
 
-            Optional<Pet> optionalPet = context.getReference().getPet(activePet.getId());
+            Optional<Pet> optionalPet = SkyBlockData.getRepository(Pet.class).findFirst(Pet::getId, activePet.getId());
 
             if (optionalPet.isEmpty())
                 return;
@@ -94,8 +100,11 @@ public enum StatSource implements StatOrigin {
             // Load Rarity Filtered Perk Stats
             petModel.getPerks(petRarity).forEach(perk -> {
                 // Load Bonus Pet Perk Stats
-                context.getReference()
-                    .getBonusPetPerkStat(petModel.getId(), perk.getName())
+                SkyBlockData.getRepository(BonusPetPerkStat.class)
+                    .findFirst(
+                        Pair.of(BonusPetPerkStat::getPetId, petModel.getId()),
+                        Pair.of(BonusPetPerkStat::getPerkName, perk.getName())
+                    )
                     .ifPresent(context.getBonusPetPerkStats()::add);
 
                 perk.getStats(petRarity).forEach(substitute -> {
@@ -117,8 +126,7 @@ public enum StatSource implements StatOrigin {
 
             // Handle Static Pet Item Bonuses
             if (!heldItemId.isEmpty()) {
-                context.getReference()
-                    .getPetItem(heldItemId)
+                SkyBlockData.getRepository(PetItem.class).findFirst(PetItem::getId, heldItemId)
                     .filter(PetItem::notPercentage)
                     .ifPresent(petItem -> petItem.getStats().forEach(sub ->
                         sub.getStat().ifPresent(stat -> bonuses.merge(stat, sub.getValues().getOrDefault(1, 0.0), Double::sum))
@@ -138,8 +146,7 @@ public enum StatSource implements StatOrigin {
 
             // Handle Percentage Pet Item Bonuses
             if (!heldItemId.isEmpty()) {
-                context.getReference()
-                    .getPetItem(heldItemId)
+                SkyBlockData.getRepository(PetItem.class).findFirst(PetItem::getId, heldItemId)
                     .filter(PetItem::isPercentage)
                     .ifPresent(petItem -> petItem.getStats().forEach(sub ->
                         sub.getStat().ifPresent(stat -> bonuses.put(
@@ -170,8 +177,7 @@ public enum StatSource implements StatOrigin {
                     ConcurrentMap<Stat, Double> potionStatEffects = Concurrent.newMap();
 
                     // Load Potion
-                    context.getReference()
-                        .getPotion(potion.getEffect().toUpperCase())
+                    SkyBlockData.getRepository(Potion.class).findFirst(Potion::getId, potion.getEffect().toUpperCase())
                         .ifPresent(potionModel -> potionModel.getStats()
                             .stream()
                             .filter(sub -> sub.getValues().containsKey(potion.getLevel()))
@@ -196,8 +202,7 @@ public enum StatSource implements StatOrigin {
 
         @Override
         public void contribute(@NotNull StatContext context, @NotNull StatSink sink) {
-            context.getReference()
-                .getStats()
+            SkyBlockData.getRepository(Stat.class).findAll()
                 .forEach(statModel -> sink.add(this, statModel, StatHalf.BASE, statModel.getBase()));
         }
 
@@ -227,8 +232,10 @@ public enum StatSource implements StatOrigin {
 
             sink.add(this, "MAGIC_FIND", StatHalf.BASE, 15);
 
-            context.getReference()
-                .getWisdomStats()
+            // the reference data names the wisdom family by suffix rather than declaring it anywhere
+            SkyBlockData.getRepository(Stat.class)
+                .stream()
+                .filter(statModel -> statModel.getId().endsWith("_WISDOM"))
                 .forEach(wisdomStatModel -> sink.add(this, wisdomStatModel, StatHalf.BASE, 25));
         }
 
@@ -283,8 +290,7 @@ public enum StatSource implements StatOrigin {
             context.getMember()
                 .getPlayerData()
                 .getShopPerks()
-                .forEach(entry -> context.getReference()
-                    .getShopPerk(entry.getKey().toUpperCase())
+                .forEach(entry -> SkyBlockData.getRepository(ShopPerk.class).findFirst(ShopPerk::getId, entry.getKey().toUpperCase())
                     .ifPresent(shopPerk -> shopPerk.getStats()
                         .forEach(sub -> sub.getStat()
                             .ifPresent(stat -> sink.add(this, stat, StatHalf.BONUS, sub.getValues().getOrDefault(entry.getValue(), 0.0)))
@@ -332,8 +338,7 @@ public enum StatSource implements StatOrigin {
                 .getForaging()
                 .getMelodyHarp()
                 .getSongs()
-                .forEach((songName, songData) -> context.getReference()
-                    .getMelodySong(songName.toUpperCase())
+                .forEach((songName, songData) -> SkyBlockData.getRepository(MelodySong.class).findFirst(MelodySong::getId, songName.toUpperCase())
                     .ifPresent(melodySongModel -> sink.add(this, "INTELLIGENCE", StatHalf.BONUS, melodySongModel.getIntelligenceReward()))
                 );
         }
@@ -353,8 +358,7 @@ public enum StatSource implements StatOrigin {
                 .map(SkillTree.Skill::getEntries)
                 .ifPresent(entries -> entries.stream()
                     .filter(entry -> entry.getValue().isEnabled()) // a perk switched off grants nothing
-                    .forEach(entry -> context.getReference()
-                        .getHotmPerk(entry.getKey().toUpperCase())
+                    .forEach(entry -> SkyBlockData.getRepository(HotmPerk.class).findFirst(HotmPerk::getId, entry.getKey().toUpperCase())
                         .ifPresent(hotmPerk -> hotmPerk.getStats()
                             .forEach(sub -> sub.getStat()
                                 .ifPresent(stat -> sink.add(this, stat, StatHalf.BONUS, sub.getValues().getOrDefault(entry.getValue().getLevel(), 0.0)))
@@ -390,8 +394,7 @@ public enum StatSource implements StatOrigin {
 
         @Override
         public void contribute(@NotNull StatContext context, @NotNull StatSink sink) {
-            context.getReference()
-                .getSkills()
+            SkyBlockData.getRepository(Skill.class).findAll()
                 .forEach(skillModel -> {
                     int skillLevel = context.getMember()
                         .getSkills()
@@ -421,9 +424,7 @@ public enum StatSource implements StatOrigin {
             context.getMember()
                 .getSlayers()
                 .getBosses()
-                .forEach(slayerBoss -> context.getReference()
-                    .getSlayers()
-                    .findFirst(Slayer::getId, slayerBoss.getId())
+                .forEach(slayerBoss -> SkyBlockData.getRepository(Slayer.class).findFirst(Slayer::getId, slayerBoss.getId())
                     .ifPresent(slayerModel -> {
                         int slayerLevel = slayerBoss.getLevel();
 

@@ -3,7 +3,6 @@ package api.simplified.hypixel.response.skyblock.member;
 import api.simplified.hypixel.common.NbtContent;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.stats.RarityUpgrade;
-import api.simplified.hypixel.response.skyblock.stats.ReferenceSnapshot;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.date.SkyBlockDate;
@@ -118,27 +117,8 @@ public class AccessoryBag {
      * empty for a bag decoded on its own.
      */
     public @NotNull ConcurrentList<DetectedAccessory> getDetectedAccessories() {
-        if (this.detectedAccessories != null)
-            return this.detectedAccessories;
-
-        // a bag with nothing to parse resolves nothing, so it never reaches the reference data
-        if (this.contents.getRawData().isEmpty()) {
-            this.detectedAccessories = Concurrent.newUnmodifiableList();
-            return this.detectedAccessories;
-        }
-
-        return this.getDetectedAccessories(ReferenceSnapshot.load());
-    }
-
-    /**
-     * Accessories parsed out of the talisman bag and resolved against one snapshot, so a whole bag
-     * costs the reference tables one read rather than one per accessory.
-     *
-     * @param reference the reference tables to resolve against
-     * @return the accessories the bag holds
-     */
-    public @NotNull ConcurrentList<DetectedAccessory> getDetectedAccessories(@NotNull ReferenceSnapshot reference) {
         if (this.detectedAccessories == null) {
+            // a bag with nothing to parse resolves nothing, so it never reaches the reference data
             this.detectedAccessories = this.contents.getRawData().isEmpty()
                 ? Concurrent.newUnmodifiableList()
                 : this.contents
@@ -146,7 +126,9 @@ public class AccessoryBag {
                     .<CompoundTag>getListTag("i")
                     .stream()
                     .filter(CompoundTag::notEmpty)
-                    .flatMap(compoundTag -> reference.getAccessory(
+                    .flatMap(compoundTag -> SkyBlockData.getRepository(Accessory.class)
+                        .findFirst(
+                            Accessory::getId,
                             compoundTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue()
                         )
                         .map(accessory -> new DetectedAccessory(
@@ -170,18 +152,6 @@ public class AccessoryBag {
         return this.accessories != null
             ? this.accessories
             : this.dropOutrankedAccessories(this.getDetectedAccessories());
-    }
-
-    /**
-     * The counting accessories, resolved against one snapshot rather than one lookup per accessory.
-     *
-     * @param reference the reference tables to resolve against
-     * @return the accessories that count toward magical power
-     */
-    public @NotNull ConcurrentList<DetectedAccessory> getAccessories(@NotNull ReferenceSnapshot reference) {
-        return this.accessories != null
-            ? this.accessories
-            : this.dropOutrankedAccessories(this.getDetectedAccessories(reference));
     }
 
     private @NotNull ConcurrentList<DetectedAccessory> dropOutrankedAccessories(@NotNull ConcurrentList<DetectedAccessory> detectedAccessories) {
