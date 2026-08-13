@@ -2,19 +2,16 @@ package api.simplified.hypixel.response.skyblock.stats;
 
 import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
-import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
-import api.simplified.skyblock.model.BonusPetPerkStat;
-import dev.simplified.collection.Concurrent;
-import dev.simplified.collection.ConcurrentList;
-import dev.simplified.collection.ConcurrentMap;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Everything one compute reads: the member being totalled, the island they are on, and the variables
- * a bonus expression can name.
+ * What one compute reads and never writes: the member being totalled and the island they are on.
+ * <p>
+ * Nothing a compute produces is in here. A stage that needs a value an earlier stage made is handed
+ * it, so no stage can reach a half-built one through the back of this.
  */
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
@@ -29,20 +26,5 @@ final class StatContext {
      * The member being totalled.
      */
     private final @NotNull SkyBlockMember member;
-
-    /**
-     * The member's accessory bag, with its accessories already resolved.
-     */
-    private final @NotNull AccessoryBag accessoryBag;
-
-    /**
-     * The player state a bonus expression can refer to.
-     */
-    private final @NotNull ConcurrentMap<String, Double> variables = Concurrent.newMap();
-
-    /**
-     * Conditional bonuses declared for the active pet's perks, gathered as the pet is read.
-     */
-    private final @NotNull ConcurrentList<BonusPetPerkStat> bonusPetPerkStats = Concurrent.newList();
 
 }

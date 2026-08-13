@@ -6,7 +6,6 @@ import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.Pets;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
-import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.HotmPerk;
 import api.simplified.skyblock.model.MelodySong;
 import api.simplified.skyblock.model.Pet;
@@ -18,7 +17,6 @@ import api.simplified.skyblock.model.Slayer;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
-import dev.simplified.collection.tuple.pair.Pair;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +45,7 @@ public enum StatSource implements StatOrigin {
 
         @Override
         public void contribute(@NotNull StatContext context, @NotNull StatSink sink) {
-            context.getAccessoryBag()
+            context.getMember().getAccessoryBag()
                 .getSelectedPowerStats()
                 .forEach((statId, value) -> sink.add(this, statId, StatHalf.BONUS, value));
         }
@@ -75,17 +73,6 @@ public enum StatSource implements StatOrigin {
             // Load Rarity Filtered Pet Stats
             resolvedPet.getStats().forEach((stat, value) -> bonuses.merge(stat, value, Double::sum));
 
-            // Load Bonus Pet Perk Stats
-            resolvedPet.getPet()
-                .getPerks(resolvedPet.getRarity())
-                .forEach(perk -> SkyBlockData.getRepository(BonusPetPerkStat.class)
-                    .findFirst(
-                        Pair.of(BonusPetPerkStat::getPetId, resolvedPet.getPet().getId()),
-                        Pair.of(BonusPetPerkStat::getPerkName, perk.getName())
-                    )
-                    .ifPresent(context.getBonusPetPerkStats()::add)
-                );
-
             // Load Rarity Filtered Perk Stats
             resolvedPet.getPerkStats()
                 .forEach(perkStat -> perkStat.stat().ifPresent(stat -> bonuses.merge(stat, perkStat.value(), Double::sum)));
@@ -100,17 +87,6 @@ public enum StatSource implements StatOrigin {
                         sub.getStat().ifPresent(stat -> bonuses.merge(stat, sub.getValues().getOrDefault(1, 0.0), Double::sum))
                     ));
             }
-
-            // Handle Static Pet Stat Bonuses
-            context.getBonusPetPerkStats()
-                .stream()
-                .filter(BonusPetPerkStat::notPercentage)
-                .filter(BonusPetPerkStat::noRequiredItem)
-                .filter(BonusPetPerkStat::noRequiredMobType)
-                .forEach(bonusPetPerkStat -> {
-                    BuffEvaluator evaluator = BuffEvaluator.compile(bonusPetPerkStat);
-                    bonuses.replaceAll((statModel, value) -> evaluator.apply(statModel, value, context.getVariables(), Operation.Pass.BONUS));
-                });
 
             // Handle Percentage Pet Item Bonuses
             if (!heldItemId.isEmpty()) {

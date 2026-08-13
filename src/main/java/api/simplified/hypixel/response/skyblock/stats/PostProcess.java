@@ -4,6 +4,7 @@ import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.BuffEffectsModel;
 import api.simplified.skyblock.model.Stat;
+import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import lombok.AccessLevel;
@@ -27,18 +28,22 @@ final class PostProcess {
     /**
      * Runs the four sub-steps, in the order the totals they read require.
      *
-     * @param context the member, the island and the reference data to read from
+     * @param context the member and the island to read from
+     * @param variables the expression variables, republished as each round settles
      * @param table the profile's own table
      * @param armor the armour pieces, absent slots included
      * @param accessories the accessories that survived the family filter
      */
     public static void run(
         @NotNull StatContext context,
+        @NotNull ConcurrentMap<String, Double> variables,
         @NotNull StatTable table,
         @NotNull ConcurrentList<Optional<ItemStack>> armor,
         @NotNull ConcurrentList<ItemStack> accessories
     ) {
-        ConcurrentMap<String, Double> variables = context.getVariables();
+        ConcurrentList<BonusPetPerkStat> bonusPerkStats = ResolvedPet.of(context.getMember())
+            .map(ResolvedPet::getBonusPerkStats)
+            .orElseGet(Concurrent::newUnmodifiableList);
 
         // --- Accessory Bonus ---
         accessories.forEach(accessoryStats -> applyItemBonuses(accessoryStats, variables));
@@ -53,10 +58,23 @@ final class PostProcess {
             .flatMap(Optional::stream)
             .forEach(itemStats -> applyEnchantmentMultipliers(itemStats, table));
 
+        // --- Pet Static ---
+        // a rule that reads a total belongs where the totals are settled, not part-way through the
+        // pass that is still writing them
+        table.publishTotals(variables::put);
+        bonusPerkStats.stream()
+            .filter(BonusPetPerkStat::notPercentage)
+            .filter(BonusPetPerkStat::noRequiredItem)
+            .filter(BonusPetPerkStat::noRequiredMobType)
+            .forEach(bonusPetPerkStat -> rewrite(
+                table,
+                BuffEvaluator.compile(bonusPetPerkStat).bind(null),
+                variables
+            ));
+
         // --- Pet Percentage ---
         table.publishTotals(variables::put);
-        context.getBonusPetPerkStats()
-            .stream()
+        bonusPerkStats.stream()
             .filter(BonusPetPerkStat::isPercentage)
             .filter(BonusPetPerkStat::noRequiredItem)
             .filter(BonusPetPerkStat::noRequiredMobType)

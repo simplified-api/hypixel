@@ -6,12 +6,12 @@ import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.BonusArmorSet;
-import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.Item;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
 import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.StringTag;
@@ -77,10 +77,13 @@ public class ProfileStats extends StatData<StatSource> {
     @Getter(AccessLevel.NONE)
     private final StatContext context;
 
+    @Getter(AccessLevel.NONE)
+    private final ConcurrentMap<String, Double> variables = Concurrent.newMap();
+
     private ProfileStats(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats, @NotNull ConcurrentList<StatSource> sources) {
         this.activePet = member.getPets().getActivePet();
         this.accessoryBag = member.getAccessoryBag();
-        this.context = new StatContext(skyBlockIsland, member, this.accessoryBag);
+        this.context = new StatContext(skyBlockIsland, member);
 
         // --- Resolve Gear ---
         // neither is a source - each is a list of tables of its own - so both are resolved here rather
@@ -96,23 +99,23 @@ public class ProfileStats extends StatData<StatSource> {
         // --- Variable Seed ---
         // every provider writes through a sink it cannot read back, so the seed has no order either
         for (VariableProvider provider : VariableProvider.values())
-            provider.provide(this.context, this.context.getVariables()::put);
+            provider.provide(this.context, this.variables::put);
 
         // --- Flat Pass ---
         sources.forEach(source -> source.contribute(this.context, this.table));
-        this.table.publishTotals(this.context.getVariables()::put);
+        this.table.publishTotals(this.variables::put);
 
         // the pet's contribution is named on its own as well, off the cells it wrote rather than
         // part-way through writing them
         this.table.getEntries(StatSource.ACTIVE_PET)
-            .forEach((statModel, data) -> this.context.getVariables().put(
+            .forEach((statModel, data) -> this.variables.put(
                 String.format("STAT_PET_%s", statModel.getId()),
                 data.getTotal()
             ));
 
         // --- Bonus Pass ---
         if (calculateBonusStats)
-            PostProcess.run(this.context, this.table, this.armor, this.accessories);
+            PostProcess.run(this.context, this.variables, this.table, this.armor, this.accessories);
     }
 
     /**
@@ -162,14 +165,7 @@ public class ProfileStats extends StatData<StatSource> {
      * Damage scaling earned from combat levels, as a fraction rather than a percentage.
      */
     public double getDamageMultiplier() {
-        return this.context.getVariables().getOrDefault(VariableProvider.DAMAGE_MULTIPLIER.name(), 0.0);
-    }
-
-    /**
-     * Conditional bonuses declared for the active pet's perks, gathered as the pet is read.
-     */
-    public ConcurrentList<BonusPetPerkStat> getBonusPetPerkStatModels() {
-        return this.context.getBonusPetPerkStats();
+        return this.variables.getOrDefault(VariableProvider.DAMAGE_MULTIPLIER.name(), 0.0);
     }
 
     /**
