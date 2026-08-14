@@ -379,13 +379,45 @@ public enum StatSource implements StatOrigin {
                 .ifPresent(entries -> entries.stream()
                     .filter(entry -> entry.getValue().isEnabled()) // a perk switched off grants nothing
                     .forEach(entry -> SkyBlockData.getRepository(HotmPerk.class).findFirst(HotmPerk::getId, entry.getKey().toUpperCase())
-                        .ifPresent(hotmPerk -> hotmPerk.getStats()
-                            .forEach(sub -> sub.getStat()
-                                .ifPresent(stat -> sink.add(this, stat, StatHalf.BONUS, sub.getValues().getOrDefault(entry.getValue().getLevel(), 0.0)))
-                            )
-                        )
+                        .ifPresent(hotmPerk -> this.contributePerk(hotmPerk, entry.getValue().getLevel(), sink))
                     )
                 );
+        }
+
+        /**
+         * Writes what one unlocked perk grants, read off the rows attached to it.
+         *
+         * <p>
+         * A perk resolves for its identity and carries no payload of its own, so the level is a
+         * carrier the rows read rather than a key into a map the perk holds. Every stat is offered to
+         * each row starting from nothing, because a row that introduces a stat the member has no cell
+         * for is the whole point of attaching one to a perk - a rule whose target does not match hands
+         * back the zero it was given, and only what a row actually wrote reaches the sink.
+         *
+         * @param hotmPerk the perk the tree named, resolved for its identity
+         * @param level the level the tree has it at
+         * @param sink the write face of the member's table
+         */
+        private void contributePerk(@NotNull HotmPerk hotmPerk, int level, @NotNull StatSink sink) {
+            ConcurrentList<Buff> rows = BuffEvaluator.select(Buff.Subject.Kind.PERK, hotmPerk.getId(), SkillTree.Tree.MINING.name());
+
+            if (rows.isEmpty())
+                return;
+
+            BuffEvaluator.Context perkContext = BuffEvaluator.Context.of(Concurrent.newMap())
+                .carrier(Buff.Term.Carrier.ID, hotmPerk.getId())
+                .carrier(Buff.Term.Carrier.LEVEL, level);
+
+            ConcurrentList<Stat> statModels = SkyBlockData.getRepository(Stat.class).findAll();
+
+            rows.stream()
+                .map(BuffEvaluator::compile)
+                .forEach(evaluator -> statModels.forEach(statModel -> {
+                    double value = evaluator.apply(statModel, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, 0.0, perkContext);
+
+                    if (value != 0.0)
+                        sink.add(this, statModel, StatHalf.BONUS, value);
+                }));
         }
 
     },
