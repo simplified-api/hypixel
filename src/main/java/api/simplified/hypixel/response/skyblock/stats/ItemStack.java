@@ -1,8 +1,10 @@
 package api.simplified.hypixel.response.skyblock.stats;
 
+import api.simplified.hypixel.response.skyblock.stats.buff.BuffEvaluator;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.Accessory;
+import api.simplified.skyblock.model.Buff;
 import api.simplified.skyblock.model.Enchantment;
 import api.simplified.skyblock.model.Gemstone;
 import api.simplified.skyblock.model.HotPotatoStat;
@@ -141,9 +143,9 @@ public final class ItemStack {
         this.accessory = accessory;
         this.compoundTag = compoundTag;
         this.timestamp = readTimestamp(compoundTag.getPath("tag.ExtraAttributes.timestamp"));
-        this.recombobulated = RarityUpgrade.isRecombobulated(compoundTag);
-        this.tierBoosted = RarityUpgrade.isTierBoosted(compoundTag);
-        this.rarity = RarityUpgrade.resolve(itemModel, compoundTag);
+        this.recombobulated = compoundTag.getPathOrDefault("tag.ExtraAttributes.rarity_upgrades", IntTag.EMPTY).getValue() > 0;
+        this.tierBoosted = compoundTag.getPathOrDefault("tag.ExtraAttributes.baseStatBoostPercentage", IntTag.EMPTY).getValue() > 0;
+        this.rarity = resolveRarity(itemModel, compoundTag);
         this.hotPotatoBooks = compoundTag.getPathOrDefault("tag.ExtraAttributes.hot_potato_count", IntTag.EMPTY).getValue();
         this.hasArtOfWar = compoundTag.containsPath("tag.ExtraAttributes.art_of_war_count");
         this.hasArtOfPeace = compoundTag.containsPath("tag.ExtraAttributes.artOfPeaceApplied");
@@ -346,6 +348,35 @@ public final class ItemStack {
             .map(localDateTime -> localDateTime.atZone(HYPIXEL_TIMEZONE))
             .map(ZonedDateTime::toInstant)
             .map(Instant::toEpochMilli);
+    }
+
+    /**
+     * The rarity an item instance ends up at, once every upgrade it carries has been folded on.
+     *
+     * <p>
+     * It reads the item's own tag and the rarity rows, and nothing else - no stat total exists yet
+     * and none is needed - which is what lets an accessory be counted and ranked without resolving a
+     * single stat. That is also why this is a static a caller with a tag and a row can reach rather
+     * than something only a built instance answers.
+     *
+     * @param itemModel reference data for the item being read
+     * @param compoundTag the item's NBT tag
+     * @return the resolved rarity, the item's own when nothing raises it
+     */
+    public static @NotNull Rarity resolveRarity(@NotNull Item itemModel, @NotNull CompoundTag compoundTag) {
+        BuffEvaluator.Context context = BuffEvaluator.Context.of(Concurrent.newMap())
+            .carrier(Buff.Term.Carrier.ID, itemModel.getId())
+            .carrier(Buff.Term.Carrier.CATEGORY, itemModel.getCategory().getId())
+            .tag(compoundTag);
+
+        double ordinal = itemModel.getRarity().ordinal();
+
+        for (Buff row : BuffEvaluator.select(Buff.Subject.Kind.ITEM, itemModel.getId(), null))
+            ordinal = BuffEvaluator.compile(row).applyRarity(ordinal, context);
+
+        // the ladder has ends, and a row that walks off one of them is a row to fix rather than a
+        // reason to throw at whichever member happened to be holding the item
+        return Rarity.of(Math.clamp((int) ordinal, 0, Rarity.values().length - 1));
     }
 
     /**

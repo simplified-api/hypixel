@@ -2,7 +2,7 @@ package api.simplified.hypixel.response.skyblock.member;
 
 import api.simplified.hypixel.common.NbtContent;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
-import api.simplified.hypixel.response.skyblock.stats.RarityUpgrade;
+import api.simplified.hypixel.response.skyblock.stats.ItemStack;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.date.SkyBlockDate;
@@ -134,7 +134,7 @@ public class AccessoryBag {
                         .map(accessory -> new DetectedAccessory(
                             accessory,
                             compoundTag,
-                            RarityUpgrade.resolve(accessory.getItem(), compoundTag)
+                            ItemStack.resolveRarity(accessory.getItem(), compoundTag)
                         ))
                         .stream()
                     )

@@ -369,8 +369,14 @@ class BuffEvaluatorTest {
 
         assertThat(rarity.getRules().getFirst().getStage(), is(Buff.Rule.Stage.RARITY));
         assertThat(
-            BuffEvaluator.compile(rarity).apply(strength, Buff.Channel.RARITY, Buff.Rule.Stage.RARITY, 4.0, BuffEvaluator.Context.of(Concurrent.newMap())),
+            BuffEvaluator.compile(rarity).applyRarity(4.0, BuffEvaluator.Context.of(Concurrent.newMap())),
             is(closeTo(5.0, EPSILON))
+        );
+
+        // and it is unreachable through the stat path, because a rule with no target matches no stat
+        assertThat(
+            BuffEvaluator.compile(rarity).apply(strength, Buff.Channel.RARITY, Buff.Rule.Stage.RARITY, 4.0, BuffEvaluator.Context.of(Concurrent.newMap())),
+            is(closeTo(4.0, EPSILON))
         );
     }
 

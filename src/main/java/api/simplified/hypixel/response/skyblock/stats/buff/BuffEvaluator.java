@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
+import java.util.stream.Stream;
 
 /**
  * One buff row folded onto a running number.
@@ -122,21 +123,41 @@ public final class BuffEvaluator {
      * @return the number to write back, unchanged when the row does not apply
      */
     public double apply(@NotNull Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, double current, @NotNull Context context) {
+        return this.fold(statModel, channel, stage, current, context);
+    }
+
+    /**
+     * Folds this row onto an item instance's rarity.
+     *
+     * <p>
+     * A rarity rule carries no target - there is one rarity per instance, so a target would have
+     * exactly one legal value - and it resolves before any stat total exists, which is why this takes
+     * no stat rather than taking one it would not read.
+     *
+     * @param ordinal the rarity's position in the ladder, as it stands
+     * @param context what the row's terms and tests read
+     * @return the position to read the rarity back at
+     */
+    public double applyRarity(double ordinal, @NotNull Context context) {
+        return this.fold(null, Buff.Channel.RARITY, Buff.Rule.Stage.RARITY, ordinal, context);
+    }
+
+    private double fold(@Nullable Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, double current, @NotNull Context context) {
         if (!this.holdsAll(this.row.getConditions(), statModel, current, context))
             return current;
 
         double value = current;
 
         // an effects entry is an add on the value channel, so it settles with the rank-one rules
-        if (channel == Buff.Channel.VALUE && stage == Buff.Rule.Stage.BONUS)
+        if (statModel != null && channel == Buff.Channel.VALUE && stage == Buff.Rule.Stage.BONUS)
             value += this.row.getEffects().getOrDefault(statModel.getId(), 0.0);
 
         ConcurrentList<Buff.Rule> applicable = this.row.getRules()
             .stream()
             .filter(rule -> rule.getStage() == stage)
             .filter(rule -> rule.getChannels().contains(channel))
-            .filter(rule -> channel == Buff.Channel.RARITY || (rule.getTarget() != null && rule.getTarget().matches(statModel)))
-            .filter(rule -> rule.getOperation().appliesTo(statModel))
+            .filter(rule -> statModel == null || (rule.getTarget() != null && rule.getTarget().matches(statModel)))
+            .filter(rule -> statModel == null || rule.getOperation().appliesTo(statModel))
             .filter(rule -> this.holdsAll(rule.getWhen(), statModel, current, context))
             .collect(Concurrent.toList());
 
@@ -155,7 +176,7 @@ public final class BuffEvaluator {
         return value;
     }
 
-    private @NotNull OptionalDouble operand(@NotNull Buff.Rule rule, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private @NotNull OptionalDouble operand(@NotNull Buff.Rule rule, @Nullable Stat statModel, double current, @NotNull Context context) {
         if (rule.getOperation() == Buff.Operation.REMOVE)
             return OptionalDouble.of(0.0);
 
@@ -181,7 +202,7 @@ public final class BuffEvaluator {
 
     // --- Terms ---
 
-    private @NotNull OptionalDouble number(@NotNull Buff.Term term, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private @NotNull OptionalDouble number(@NotNull Buff.Term term, @Nullable Stat statModel, double current, @NotNull Context context) {
         return switch (term.getKind()) {
             case NUMBER -> term.getAmount() == null ? OptionalDouble.empty() : OptionalDouble.of(term.getAmount());
             case CURRENT -> OptionalDouble.of(current);
@@ -197,7 +218,7 @@ public final class BuffEvaluator {
         };
     }
 
-    private @NotNull Optional<String> key(@NotNull Buff.Term term, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private @NotNull Optional<String> key(@NotNull Buff.Term term, @Nullable Stat statModel, double current, @NotNull Context context) {
         return switch (term.getKind()) {
             case TAG -> this.tagText(term, context);
             case CARRIER -> term.getCarrier() == null ? Optional.empty() : context.carrierKey(term.getCarrier());
@@ -206,14 +227,17 @@ public final class BuffEvaluator {
         };
     }
 
-    private @NotNull OptionalDouble statTotal(@NotNull Buff.Term term, @NotNull Stat statModel, @NotNull Context context) {
+    private @NotNull OptionalDouble statTotal(@NotNull Buff.Term term, @Nullable Stat statModel, @NotNull Context context) {
         if (term.getStat() == null)
             return OptionalDouble.empty();
 
         // TARGET is whichever stat the rule is writing, which is what lets one row scale every stat
         // by its own pet contribution rather than by a stat it names
-        String statId = "TARGET".equals(term.getStat()) ? statModel.getId() : term.getStat();
-        return context.stat(statId, term.getOrigin());
+        if (!"TARGET".equals(term.getStat()))
+            return context.stat(term.getStat(), term.getOrigin());
+
+        // nothing is being written on the rarity channel, so there is no target to be
+        return statModel == null ? OptionalDouble.empty() : context.stat(statModel.getId(), term.getOrigin());
     }
 
     private @NotNull OptionalDouble tagNumber(@NotNull Buff.Term term, @NotNull Context context) {
@@ -249,7 +273,7 @@ public final class BuffEvaluator {
         return context.getTag().map(compoundTag -> compoundTag.getPath(term.getPath()));
     }
 
-    private @NotNull OptionalDouble lookup(@NotNull Buff.Term term, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private @NotNull OptionalDouble lookup(@NotNull Buff.Term term, @Nullable Stat statModel, double current, @NotNull Context context) {
         Buff.Lookup table = term.getLookup();
 
         if (table == null || table.getOn() == null)
@@ -265,7 +289,7 @@ public final class BuffEvaluator {
             .orElse(OptionalDouble.empty());
     }
 
-    private @NotNull OptionalDouble read(@NotNull Buff.Lookup table, @NotNull ConcurrentMap<String, Double> amounts, @NotNull Buff.Term axis, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private @NotNull OptionalDouble read(@NotNull Buff.Lookup table, @NotNull ConcurrentMap<String, Double> amounts, @NotNull Buff.Term axis, @Nullable Stat statModel, double current, @NotNull Context context) {
         if (table.getMode() == Buff.Lookup.Mode.EXACT) {
             return this.key(axis, statModel, current, context)
                 .map(amounts::get)
@@ -293,7 +317,7 @@ public final class BuffEvaluator {
         };
     }
 
-    private @NotNull OptionalDouble math(@NotNull Buff.Term term, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private @NotNull OptionalDouble math(@NotNull Buff.Term term, @Nullable Stat statModel, double current, @NotNull Context context) {
         if (term.getText() == null)
             return OptionalDouble.empty();
 
@@ -322,11 +346,11 @@ public final class BuffEvaluator {
 
     // --- Conditions ---
 
-    private boolean holdsAll(@NotNull ConcurrentList<Buff.Condition> conditions, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private boolean holdsAll(@NotNull ConcurrentList<Buff.Condition> conditions, @Nullable Stat statModel, double current, @NotNull Context context) {
         return conditions.stream().allMatch(condition -> this.holds(condition, statModel, current, context));
     }
 
-    private boolean holds(@NotNull Buff.Condition condition, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private boolean holds(@NotNull Buff.Condition condition, @Nullable Stat statModel, double current, @NotNull Context context) {
         if (!this.holdsAll(condition.getAll(), statModel, current, context))
             return false;
 
@@ -342,7 +366,7 @@ public final class BuffEvaluator {
         return this.compares(condition, statModel, current, context);
     }
 
-    private boolean compares(@NotNull Buff.Condition condition, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private boolean compares(@NotNull Buff.Condition condition, @Nullable Stat statModel, double current, @NotNull Context context) {
         Buff.Term input = condition.getInput();
 
         if (input == null || condition.getOp() == null)
@@ -360,7 +384,7 @@ public final class BuffEvaluator {
         };
     }
 
-    private boolean matches(@NotNull Buff.Condition condition, @NotNull Buff.Term input, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private boolean matches(@NotNull Buff.Condition condition, @NotNull Buff.Term input, @Nullable Stat statModel, double current, @NotNull Context context) {
         if (condition.getKey() != null)
             return this.key(input, statModel, current, context).filter(condition.getKey()::equals).isPresent();
 
@@ -370,7 +394,7 @@ public final class BuffEvaluator {
         return this.number(input, statModel, current, context).stream().anyMatch(value -> value == condition.getAmount());
     }
 
-    private boolean orders(@NotNull Buff.Condition condition, @NotNull Buff.Term input, @NotNull Stat statModel, double current, @NotNull Context context) {
+    private boolean orders(@NotNull Buff.Condition condition, @NotNull Buff.Term input, @Nullable Stat statModel, double current, @NotNull Context context) {
         if (condition.getAmount() == null)
             return false;
 
@@ -393,16 +417,27 @@ public final class BuffEvaluator {
 
     // --- Readings ---
 
+    /**
+     * Counts what a tag holds, optionally only the entries equal to a value.
+     *
+     * <p>
+     * A compound counts by its values rather than its keys, because what a counter on an instance
+     * asks is how many slots hold a thing rather than how many slots there are. An entry whose value
+     * is itself a compound compares equal to nothing, so a nested encoding of the same fact is not
+     * counted - which is the reading the Java this replaces already had.
+     */
     private static double count(@NotNull Tag<?> tag, @Nullable String matching) {
-        if (!(tag instanceof ListTag<?> listTag))
-            return tag instanceof CompoundTag compoundTag ? compoundTag.size() : 0.0;
+        if (tag instanceof ListTag<?> listTag)
+            return matching == null ? listTag.size() : matching(listTag.stream().map(Tag::getValue), matching);
 
-        if (matching == null)
-            return listTag.size();
+        if (tag instanceof CompoundTag compoundTag)
+            return matching == null ? compoundTag.size() : matching(compoundTag.values().stream().map(Tag::getValue), matching);
 
-        return listTag.stream()
-            .filter(entry -> matching.equals(String.valueOf(entry.getValue())))
-            .count();
+        return 0.0;
+    }
+
+    private static double matching(@NotNull Stream<?> values, @NotNull String matching) {
+        return values.filter(matching::equals).count();
     }
 
     /**

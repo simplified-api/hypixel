@@ -9,6 +9,7 @@ import api.simplified.skyblock.model.BonusItemRarity;
 import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.BonusReforgeStat;
+import api.simplified.skyblock.model.Buff;
 import api.simplified.skyblock.model.Stat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,6 +36,7 @@ import java.util.HexFormat;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
@@ -177,15 +179,33 @@ class ProfileStatsCharacterisationTest {
         assertThat(String.format("%d cells written against %d seeded", written, seeded), written, is(lessThan(seeded / 20)));
     }
     @Test
-    @DisplayName("no buff row exists, so no total depends on the hour it is read")
-    void noBuffRowExistsSoNoTotalDependsOnTheHourItIsRead() {
-        // a TIME guard zeroes a running value outside its hour ranges, and it can only arrive on one of these
+    @DisplayName("no row gates on an hour, so no total depends on the time it is read")
+    void noRowGatesOnAnHourSoNoTotalDependsOnTheTimeItIsRead() {
+        // the buff table has rows now, so the property is checked rather than implied by emptiness -
+        // an hour-valued gate is what would make a total depend on when it was computed
+        ConcurrentList<Buff> buffs = SkyBlockData.getRepository(Buff.class).findAll();
+        assertThat("the rarity rows are missing", buffs.size(), is(equalTo(6)));
+        for (Buff row : buffs)
+            assertThat(row.getId() + " gates on an hour", gatesOnAnHour(row), is(false));
+        // the six legacy tables can still carry one until they retire, and they are still empty
         assertThat(SkyBlockData.getRepository(BonusItemStat.class).findAll(), is(empty()));
         assertThat(SkyBlockData.getRepository(BonusReforgeStat.class).findAll(), is(empty()));
         assertThat(SkyBlockData.getRepository(BonusArmorSet.class).findAll(), is(empty()));
         assertThat(SkyBlockData.getRepository(BonusPetPerkStat.class).findAll(), is(empty()));
         assertThat(SkyBlockData.getRepository(BonusEnchantmentStat.class).findAll(), is(empty()));
         assertThat(SkyBlockData.getRepository(BonusItemRarity.class).findAll(), is(empty()));
+    }
+    private static boolean gatesOnAnHour(Buff row) {
+        return Stream.concat(row.getConditions().stream(), row.getRules().stream().flatMap(rule -> rule.getWhen().stream()))
+            .anyMatch(ProfileStatsCharacterisationTest::readsAnHour);
+    }
+    private static boolean readsAnHour(Buff.Condition condition) {
+        if (condition.getInput() != null && condition.getInput().getWorld() == Buff.Term.World.HOUR)
+            return true;
+        if (condition.getNot() != null && readsAnHour(condition.getNot()))
+            return true;
+        return Stream.concat(condition.getAll().stream(), condition.getAny().stream())
+            .anyMatch(ProfileStatsCharacterisationTest::readsAnHour);
     }
     private static int activeCenturyCakes() {
         return (int) member.getPlayerData()

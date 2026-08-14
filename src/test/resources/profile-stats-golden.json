@@ -1,7 +1,7 @@
 {
   "header": {
     "fixtureSha256": "bcf889504fc60774e5303d865fe8c132467ea7e5ba26efd04efd7f674906251c",
-    "corpusCommitSha": "4c37add8b06e95fe18eb2cfb14c02bdeba9c86b5",
+    "corpusCommitSha": "870028cb95586521835a066812f83c68cad1e7ce",
     "activeCenturyCakes": 18
   },
   "cells": {
@@ -156,9 +156,9 @@
     "armor/3:INFERNAL_CRIMSON_BOOTS/SUN_TZU/HEALTH/bonus": 40.0,
     "damageMultiplier": 0.3,
     "profile/ACCESSORY_POWER/ABILITY_DAMAGE/bonus": 5.0,
-    "profile/ACCESSORY_POWER/CRIT_DAMAGE/bonus": -113.72350897777899,
-    "profile/ACCESSORY_POWER/INTELLIGENCE/bonus": 3582.2905328000384,
-    "profile/ACCESSORY_POWER/STRENGTH/bonus": -113.72350897777899,
+    "profile/ACCESSORY_POWER/CRIT_DAMAGE/bonus": -113.88701944330984,
+    "profile/ACCESSORY_POWER/INTELLIGENCE/bonus": 3587.4411124642606,
+    "profile/ACCESSORY_POWER/STRENGTH/bonus": -113.88701944330984,
     "profile/ACTIVE_PET/FORAGING_FORTUNE/bonus": 70.0,
     "profile/ACTIVE_PET/MAGIC_FIND/bonus": 10.0,
     "profile/ACTIVE_PET/STRENGTH/bonus": 150.0,
