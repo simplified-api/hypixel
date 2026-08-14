@@ -82,7 +82,7 @@ public class ProfileStats {
 
         // --- Bonus Pass ---
         if (calculateBonusStats)
-            PostProcess.run(this.context, this.sheet, this.variables);
+            PostProcess.run(this.sheet, this.variables, PostProcess.program(this.context));
     }
 
     /**

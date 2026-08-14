@@ -13,59 +13,225 @@ import org.jetbrains.annotations.NotNull;
 /**
  * The bonus pass: every contribution whose value is expressed against the flat totals.
  * <p>
- * Four sub-steps, and the order between them is the whole of why this is a type rather than four
- * loops. The enchantment multiplier rescales what the item bonuses have already added, so it runs
- * after them; the pet percentage rescales what the multiplier has already scaled, so it runs after
- * that. Only a reference row can make the order visible, and the six tables that would carry one
- * ship no rows, so the order is held in place by the tests rather than by the corpus.
+ * The sequence is a value rather than a run of statements, so what the pass does in what order is
+ * something a caller reads and a test varies. {@link #STEPS} is that sequence and running the pass is
+ * running it in order.
+ * <p>
+ * The order is load-bearing in three places and only three: the republish sits between the
+ * enchantment multiplier and the pet rounds, so a pet expression reads post-multiplier totals; the pet
+ * rounds rescale item tables the item rounds have already written; and the {@code POST} round runs
+ * over tables the {@code BONUS} round has settled. Two steps over disjoint tables commute, and most
+ * pairs here are disjoint.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 final class PostProcess {
 
     /**
-     * Runs the four sub-steps, in the order the totals they read require.
+     * The pass, in order.
+     * <p>
+     * A step's scope names what it ranges over rather than what it writes, which is the whole of the
+     * difference between {@link Round#MULTIPLIER} and the rest - it ranges over armour and rescales
+     * the profile table.
+     */
+    static final @NotNull ConcurrentList<Step> STEPS = Concurrent.newUnmodifiableList(
+        new Step(Round.ITEM, Scope.ACCESSORIES),
+        new Step(Round.ITEM, Scope.ARMOR),
+        new Step(Round.MULTIPLIER, Scope.ARMOR),
+        new Step(Round.REPUBLISH, Scope.PROFILE),
+        new Step(Round.PET, Scope.PROFILE),
+        new Step(Round.PET, Scope.ARMOR),
+        new Step(Round.PET, Scope.ACCESSORIES),
+        new Step(Round.POST, Scope.PROFILE),
+        new Step(Round.POST, Scope.ARMOR),
+        new Step(Round.POST, Scope.ACCESSORIES)
+    );
+
+    /**
+     * Runs the declared pass.
      *
-     * @param context the member and the island to read from
      * @param sheet the profile's own table and one per filled item slot
      * @param variables the expression variables, republished as each round settles
+     * @param program the rows the summoned pet's perks carry, one evaluator each
      */
     public static void run(
-        @NotNull StatContext context,
         @NotNull StatSheet sheet,
-        @NotNull ConcurrentMap<String, Double> variables
+        @NotNull ConcurrentMap<String, Double> variables,
+        @NotNull ConcurrentList<BuffEvaluator> program
     ) {
-        StatTable table = sheet.getProfile();
-        ConcurrentList<StatSheet.Slot> armor = sheet.getSlots(ItemSlot.Kind.ARMOR);
-        ConcurrentList<StatSheet.Slot> accessories = sheet.getSlots(ItemSlot.Kind.ACCESSORY);
+        run(sheet, variables, program, STEPS);
+    }
 
-        ConcurrentList<BuffEvaluator> petPerks = ResolvedPet.of(context.getMember())
+    /**
+     * Runs a given sequence, which is what lets a test assert the declared one is doing work.
+     *
+     * @param sheet the profile's own table and one per filled item slot
+     * @param variables the expression variables, republished as each round settles
+     * @param program the rows the summoned pet's perks carry, one evaluator each
+     * @param steps the sequence to run, in order
+     */
+    static void run(
+        @NotNull StatSheet sheet,
+        @NotNull ConcurrentMap<String, Double> variables,
+        @NotNull ConcurrentList<BuffEvaluator> program,
+        @NotNull ConcurrentList<Step> steps
+    ) {
+        steps.forEach(step -> step.round().run(sheet, variables, program, step.scope()));
+    }
+
+    /**
+     * Every buff row the summoned pet's perks carry, one evaluator each, empty when none is summoned.
+     *
+     * @param context the member and the island to read from
+     * @return the program the pet rounds fold
+     */
+    static @NotNull ConcurrentList<BuffEvaluator> program(@NotNull StatContext context) {
+        return ResolvedPet.of(context.getMember())
             .map(PostProcess::petPerkRows)
             .orElseGet(Concurrent::newUnmodifiableList);
+    }
 
-        // --- Accessory Bonus ---
-        accessories.forEach(slot -> applyItemBonuses(slot, variables));
+    /**
+     * One step of the pass.
+     *
+     * @param round what the step does
+     * @param scope what it ranges over
+     */
+    record Step(@NotNull Round round, @NotNull Scope scope) {
+    }
 
-        // --- Armour Bonus ---
-        armor.forEach(slot -> applyItemBonuses(slot, variables));
+    /**
+     * What the tables a step ranges over are.
+     */
+    enum Scope {
 
-        // --- Enchantment Multiplier ---
-        armor.forEach(slot -> applyEnchantmentMultipliers(slot.stack(), table));
+        /**
+         * The member's own table, which no item slot backs.
+         */
+        PROFILE,
 
-        // --- Pet Rules ---
-        // a rule that reads a total belongs where the totals are settled, not part-way through the
-        // pass that is still writing them. What was two steps split by a percentage flag is one, and
-        // the operation rank is what orders the flat contributions ahead of the proportional ones
-        table.publishTotals(variables::put);
-        table.publishOriginTotals(variables::put);
+        /**
+         * The four worn armour pieces.
+         */
+        ARMOR,
 
-        BuffEvaluator.Context profileContext = BuffEvaluator.Context.of(variables);
+        /**
+         * Every counting accessory out of the bag.
+         */
+        ACCESSORIES;
 
-        // profile, then armour, then accessories - a pet rule reads a total the level above it has
-        // already settled
-        petPerks.forEach(evaluator -> {
-            rewrite(table, evaluator, profileContext);
-            armor.forEach(slot -> rewrite(slot.table(), evaluator, itemContext(slot, variables)));
-            accessories.forEach(slot -> rewrite(slot.table(), evaluator, itemContext(slot, variables)));
+        /**
+         * The slots this scope names, empty for {@link #PROFILE}, which is not a slot.
+         *
+         * @param sheet the sheet to read the slots out of
+         * @return the slots, in the order the sheet opened them
+         */
+        @NotNull ConcurrentList<StatSheet.Slot> slots(@NotNull StatSheet sheet) {
+            return switch (this) {
+                case PROFILE -> Concurrent.newUnmodifiableList();
+                case ARMOR -> sheet.getSlots(ItemSlot.Kind.ARMOR);
+                case ACCESSORIES -> sheet.getSlots(ItemSlot.Kind.ACCESSORY);
+            };
+        }
+
+    }
+
+    /**
+     * What one step does to what its scope names.
+     */
+    enum Round {
+
+        /**
+         * Folds the rows an instance in the slot carries onto that slot's own cells.
+         */
+        ITEM {
+
+            @Override
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
+                scope.slots(sheet).forEach(slot -> applyItemBonuses(slot, variables));
+            }
+
+        },
+
+        /**
+         * Rescales the profile table by each proportional enchantment substitute an armour piece
+         * carries. The one round with no buff grammar in it.
+         */
+        MULTIPLIER {
+
+            @Override
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
+                scope.slots(sheet).forEach(slot -> applyEnchantmentMultipliers(slot.stack(), sheet.getProfile()));
+            }
+
+        },
+
+        /**
+         * Republishes the totals, so that every expression after this reads what the rounds before it
+         * settled rather than what the flat pass left.
+         */
+        REPUBLISH {
+
+            @Override
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
+                sheet.getProfile().publishTotals(variables::put);
+                sheet.getProfile().publishOriginTotals(variables::put);
+            }
+
+        },
+
+        /**
+         * Folds the program's {@code BONUS}-staged rules over the scope's tables.
+         */
+        PET {
+
+            @Override
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
+                fold(sheet, variables, program, scope, Buff.Rule.Stage.BONUS);
+            }
+
+        },
+
+        /**
+         * Folds the program's {@code POST}-staged rules over the same scopes, after every other round
+         * has finished writing.
+         */
+        POST {
+
+            @Override
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
+                fold(sheet, variables, program, scope, Buff.Rule.Stage.POST);
+            }
+
+        };
+
+        abstract void run(
+            @NotNull StatSheet sheet,
+            @NotNull ConcurrentMap<String, Double> variables,
+            @NotNull ConcurrentList<BuffEvaluator> program,
+            @NotNull Scope scope
+        );
+
+    }
+
+    private static void fold(
+        @NotNull StatSheet sheet,
+        @NotNull ConcurrentMap<String, Double> variables,
+        @NotNull ConcurrentList<BuffEvaluator> program,
+        @NotNull Scope scope,
+        @NotNull Buff.Rule.Stage stage
+    ) {
+        if (program.isEmpty())
+            return;
+
+        if (scope == Scope.PROFILE) {
+            BuffEvaluator.Context profileContext = BuffEvaluator.Context.of(variables);
+            program.forEach(evaluator -> rewrite(sheet.getProfile(), evaluator, profileContext, stage));
+            return;
+        }
+
+        scope.slots(sheet).forEach(slot -> {
+            BuffEvaluator.Context context = itemContext(slot, variables);
+            program.forEach(evaluator -> rewrite(slot.table(), evaluator, context, stage));
         });
     }
 
@@ -147,8 +313,8 @@ final class PostProcess {
         );
     }
 
-    private static void rewrite(@NotNull StatTable table, @NotNull BuffEvaluator evaluator, @NotNull BuffEvaluator.Context context) {
-        table.rewrite((statModel, half, current) -> evaluator.apply(statModel, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, current, context));
+    private static void rewrite(@NotNull StatTable table, @NotNull BuffEvaluator evaluator, @NotNull BuffEvaluator.Context context, @NotNull Buff.Rule.Stage stage) {
+        table.rewrite((statModel, half, current) -> evaluator.apply(statModel, Buff.Channel.VALUE, stage, current, context));
     }
 
 }
