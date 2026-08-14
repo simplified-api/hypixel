@@ -7,7 +7,6 @@ import api.simplified.skyblock.model.Accessory;
 import api.simplified.skyblock.model.Buff;
 import api.simplified.skyblock.model.Enchantment;
 import api.simplified.skyblock.model.Gemstone;
-import api.simplified.skyblock.model.HotPotatoStat;
 import api.simplified.skyblock.model.Item;
 import api.simplified.skyblock.model.Reforge;
 import api.simplified.skyblock.model.Stat;
@@ -233,12 +232,6 @@ public final class ItemStack {
         this.enrichmentStat
             .filter(stat -> stat.getEnrichment() > 0.0)
             .ifPresent(stat -> sink.add(ItemOrigin.ENRICHMENTS, stat, StatHalf.BONUS, stat.getEnrichment()));
-
-        // Save Hot Potato Book Stats
-        SkyBlockData.getRepository(HotPotatoStat.class)
-            .stream()
-            .filter(hotPotatoStat -> hotPotatoStat.getItemTypes().contains(this.item.getCategory().getId()))
-            .forEach(hotPotatoStat -> sink.add(ItemOrigin.HOT_POTATOES, hotPotatoStat.getStat(), StatHalf.BONUS, this.hotPotatoBooks * hotPotatoStat.getValue()));
 
         // Save Art Of Peace Stats
         if (this.hasArtOfPeace)
