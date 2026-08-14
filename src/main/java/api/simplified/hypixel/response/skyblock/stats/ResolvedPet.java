@@ -4,13 +4,11 @@ import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
-import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.Pet;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import dev.simplified.collection.tuple.pair.Pair;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,11 +56,6 @@ final class ResolvedPet {
      */
     private final @NotNull ConcurrentList<PerkStat> perkStats;
 
-    /**
-     * The conditional bonuses declared for this pet's perks, still to be evaluated.
-     */
-    private final @NotNull ConcurrentList<BonusPetPerkStat> bonusPerkStats;
-
     private ResolvedPet(@NotNull Pet pet, @NotNull OwnedPet activePet) {
         this.pet = pet;
         this.rarity = activePet.getRarity();
@@ -70,7 +63,6 @@ final class ResolvedPet {
         this.heldItemId = activePet.getHeldItem().orElse("");
         this.stats = Concurrent.newMap();
         this.perkStats = Concurrent.newList();
-        this.bonusPerkStats = Concurrent.newList();
 
         pet.getStats(this.rarity)
             .forEach(substitute -> substitute.getStat().ifPresent(stat -> {
@@ -80,19 +72,10 @@ final class ResolvedPet {
                     this.stats.merge(stat, this.scale(value), Double::sum);
             }));
 
-        pet.getPerks(this.rarity).forEach(perk -> {
-            SkyBlockData.getRepository(BonusPetPerkStat.class)
-                .findFirst(
-                    Pair.of(BonusPetPerkStat::getPetId, pet.getId()),
-                    Pair.of(BonusPetPerkStat::getPerkName, perk.getName())
-                )
-                .ifPresent(this.bonusPerkStats::add);
-
-            perk.getStats(this.rarity).forEach(substitute -> {
-                Pet.Substitute.Value value = substitute.getValues().get(this.rarity);
-                this.perkStats.add(new PerkStat(perk.getName(), substitute.getStat(), value == null ? 0.0 : this.scale(value)));
-            });
-        });
+        pet.getPerks(this.rarity).forEach(perk -> perk.getStats(this.rarity).forEach(substitute -> {
+            Pet.Substitute.Value value = substitute.getValues().get(this.rarity);
+            this.perkStats.add(new PerkStat(perk.getName(), substitute.getStat(), value == null ? 0.0 : this.scale(value)));
+        }));
     }
 
     /**

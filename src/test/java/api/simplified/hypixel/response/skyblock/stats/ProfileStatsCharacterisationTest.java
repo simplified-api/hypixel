@@ -3,12 +3,6 @@ import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.member.CenturyCake;
 import api.simplified.skyblock.SkyBlockData;
-import api.simplified.skyblock.model.BonusArmorSet;
-import api.simplified.skyblock.model.BonusEnchantmentStat;
-import api.simplified.skyblock.model.BonusItemRarity;
-import api.simplified.skyblock.model.BonusItemStat;
-import api.simplified.skyblock.model.BonusPetPerkStat;
-import api.simplified.skyblock.model.BonusReforgeStat;
 import api.simplified.skyblock.model.Buff;
 import api.simplified.skyblock.model.Stat;
 import com.google.gson.Gson;
@@ -39,7 +33,6 @@ import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasKey;
@@ -187,13 +180,6 @@ class ProfileStatsCharacterisationTest {
         assertThat("the rarity rows are missing", buffs.size(), is(equalTo(6)));
         for (Buff row : buffs)
             assertThat(row.getId() + " gates on an hour", gatesOnAnHour(row), is(false));
-        // the six legacy tables can still carry one until they retire, and they are still empty
-        assertThat(SkyBlockData.getRepository(BonusItemStat.class).findAll(), is(empty()));
-        assertThat(SkyBlockData.getRepository(BonusReforgeStat.class).findAll(), is(empty()));
-        assertThat(SkyBlockData.getRepository(BonusArmorSet.class).findAll(), is(empty()));
-        assertThat(SkyBlockData.getRepository(BonusPetPerkStat.class).findAll(), is(empty()));
-        assertThat(SkyBlockData.getRepository(BonusEnchantmentStat.class).findAll(), is(empty()));
-        assertThat(SkyBlockData.getRepository(BonusItemRarity.class).findAll(), is(empty()));
     }
     private static boolean gatesOnAnHour(Buff row) {
         return Stream.concat(row.getConditions().stream(), row.getRules().stream().flatMap(rule -> rule.getWhen().stream()))
