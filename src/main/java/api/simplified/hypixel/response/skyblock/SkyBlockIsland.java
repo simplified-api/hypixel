@@ -2,9 +2,9 @@ package api.simplified.hypixel.response.skyblock;
 
 import api.simplified.hypixel.response.skyblock.island.Banking;
 import api.simplified.hypixel.response.skyblock.island.CommunityUpgrades;
+import api.simplified.hypixel.response.skyblock.island.GameMode;
+import api.simplified.hypixel.response.skyblock.island.Profile;
 import api.simplified.hypixel.response.skyblock.stats.ProfileStats;
-import api.simplified.skyblock.common.GameMode;
-import api.simplified.skyblock.common.Profile;
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.collection.Concurrent;

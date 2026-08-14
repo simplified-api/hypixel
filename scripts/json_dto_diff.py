@@ -30,7 +30,7 @@ MODULE = os.path.dirname(HERE)
 DEFAULT_SRC = os.path.join(MODULE, "src/main/java/api/simplified/hypixel")
 DEFAULT_JSON = os.path.join(MODULE, "src/test/resources/craftedfury.json")
 
-# Types we never descend into: JDK, NBT, and skyblock-data model classes.
+# Types we never descend into: JDK, NBT, and skyblock model classes.
 OPAQUE = {
     "String", "UUID", "int", "long", "double", "float", "boolean", "short", "byte",
     "Integer", "Long", "Double", "Float", "Boolean", "Short", "Byte", "Number",
