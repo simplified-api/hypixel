@@ -119,7 +119,7 @@ public enum StatSource implements StatOrigin {
             // one lookup where there were two, because what split them was a flag saying whether the
             // amount was a percentage - and that is the operation, which a row now carries
             if (!heldItemId.isEmpty()) {
-                BuffEvaluator.Context petContext = WorldFacts.of(context).fill(BuffEvaluator.Context.of(Concurrent.newMap()))
+                BuffEvaluator.Context petContext = ComputeFacts.of(context).fill(BuffEvaluator.Context.of(Concurrent.newMap()))
                     .carrier(Buff.Term.Carrier.ID, heldItemId)
                     .carrier(Buff.Term.Carrier.HOLDER, resolvedPet.getPet().getId())
                     .carrier(Buff.Term.Carrier.RARITY, resolvedPet.getRarity().name())
@@ -379,7 +379,7 @@ public enum StatSource implements StatOrigin {
                 .ifPresent(entries -> entries.stream()
                     .filter(entry -> entry.getValue().isEnabled()) // a perk switched off grants nothing
                     .forEach(entry -> SkyBlockData.getRepository(HotmPerk.class).findFirst(HotmPerk::getId, entry.getKey().toUpperCase())
-                        .ifPresent(hotmPerk -> this.contributePerk(hotmPerk, entry.getValue().getLevel(), WorldFacts.of(context), sink))
+                        .ifPresent(hotmPerk -> this.contributePerk(hotmPerk, entry.getValue().getLevel(), ComputeFacts.of(context), sink))
                     )
                 );
         }
@@ -399,7 +399,7 @@ public enum StatSource implements StatOrigin {
          * @param world what the compute can know about the world it runs in
          * @param sink the write face of the member's table
          */
-        private void contributePerk(@NotNull HotmPerk hotmPerk, int level, @NotNull WorldFacts world, @NotNull StatSink sink) {
+        private void contributePerk(@NotNull HotmPerk hotmPerk, int level, @NotNull ComputeFacts world, @NotNull StatSink sink) {
             ConcurrentList<Buff> rows = BuffEvaluator.select(Buff.Subject.Kind.PERK, hotmPerk.getId(), SkillTree.Tree.MINING.name());
 
             if (rows.isEmpty())

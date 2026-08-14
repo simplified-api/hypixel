@@ -85,16 +85,18 @@ public class ProfileStats {
         this.sheet.getProfile().publishOriginTotals(this.variables::put);
 
         // --- Bonus Pass ---
+        // the sheet is filled by now, which the group counts need - a count taken before the flat
+        // pass opened the slots is a count of nothing
         ConcurrentList<BuffEvaluator> program = PostProcess.program(this.context);
-        WorldFacts world = WorldFacts.of(this.context);
+        ComputeFacts facts = ComputeFacts.of(this.context, this.sheet);
 
         if (calculateBonusStats)
-            PostProcess.run(this.sheet, this.variables, program, world);
+            PostProcess.run(this.sheet, this.variables, program, facts);
 
         // --- Caps ---
         // resolved once the sheet is settled and never written back into it, because a ceiling is a
         // property of reading sources together rather than a contribution any one of them made
-        this.caps = PostProcess.capProgram(this.sheet, this.variables, program, world);
+        this.caps = PostProcess.capProgram(this.sheet, this.variables, program, facts);
     }
 
     /**

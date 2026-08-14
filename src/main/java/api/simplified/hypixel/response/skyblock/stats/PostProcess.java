@@ -57,7 +57,7 @@ final class PostProcess {
         @NotNull StatSheet sheet,
         @NotNull ConcurrentMap<String, Double> variables,
         @NotNull ConcurrentList<BuffEvaluator> program,
-        @NotNull WorldFacts world
+        @NotNull ComputeFacts world
     ) {
         run(sheet, variables, program, world, STEPS);
     }
@@ -74,22 +74,41 @@ final class PostProcess {
         @NotNull StatSheet sheet,
         @NotNull ConcurrentMap<String, Double> variables,
         @NotNull ConcurrentList<BuffEvaluator> program,
-        @NotNull WorldFacts world,
+        @NotNull ComputeFacts world,
         @NotNull ConcurrentList<Step> steps
     ) {
         steps.forEach(step -> step.round().run(sheet, variables, program, world, step.scope()));
     }
 
     /**
-     * Every buff row the summoned pet's perks carry, one evaluator each, empty when none is summoned.
+     * Every row that belongs to the member rather than to one carried thing, one evaluator each.
+     *
+     * <p>
+     * Three kinds qualify and they qualify for one reason: none of them hangs off a slot. A
+     * {@code PET_PERK} row belongs to the summoned pet, a {@code GROUP} row to a set the member is
+     * wearing some of, and a {@code PROFILE} row to the member outright - so all three are folded
+     * over the profile, the armour and the accessories in turn, which is what member-wide reach is.
+     *
+     * <p>
+     * A group row is selected whether or not enough of its set is worn. What decides that is the
+     * {@code COUNT} term in its own condition, read against a count taken once - so a set the member
+     * has two pieces of is a row that evaluates and declines, rather than a row nobody looked at.
      *
      * @param context the member and the island to read from
      * @return the program the pet rounds fold
      */
     static @NotNull ConcurrentList<BuffEvaluator> program(@NotNull StatContext context) {
-        return ResolvedPet.of(context.getMember())
-            .map(PostProcess::petPerkRows)
-            .orElseGet(Concurrent::newUnmodifiableList);
+        ConcurrentList<Buff> rows = Concurrent.newList();
+
+        ResolvedPet.of(context.getMember())
+            .ifPresent(resolvedPet -> rows.addAll(petPerkRows(resolvedPet)));
+
+        rows.addAll(BuffEvaluator.selectAll(Buff.Subject.Kind.GROUP));
+        rows.addAll(BuffEvaluator.selectAll(Buff.Subject.Kind.PROFILE));
+
+        return rows.stream()
+            .map(BuffEvaluator::compile)
+            .collect(Concurrent.toUnmodifiableList());
     }
 
     /**
@@ -148,7 +167,7 @@ final class PostProcess {
         ITEM {
 
             @Override
-            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull WorldFacts world, @NotNull Scope scope) {
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull ComputeFacts world, @NotNull Scope scope) {
                 scope.slots(sheet).forEach(slot -> applyItemBonuses(sheet, slot, variables, world));
             }
 
@@ -161,7 +180,7 @@ final class PostProcess {
         MULTIPLIER {
 
             @Override
-            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull WorldFacts world, @NotNull Scope scope) {
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull ComputeFacts world, @NotNull Scope scope) {
                 scope.slots(sheet).forEach(slot -> applyEnchantmentMultipliers(slot.stack(), sheet.getProfile()));
             }
 
@@ -174,7 +193,7 @@ final class PostProcess {
         REPUBLISH {
 
             @Override
-            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull WorldFacts world, @NotNull Scope scope) {
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull ComputeFacts world, @NotNull Scope scope) {
                 sheet.getProfile().publishTotals(variables::put);
                 sheet.getProfile().publishOriginTotals(variables::put);
             }
@@ -187,7 +206,7 @@ final class PostProcess {
         PET {
 
             @Override
-            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull WorldFacts world, @NotNull Scope scope) {
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull ComputeFacts world, @NotNull Scope scope) {
                 fold(sheet, variables, program, world, scope, Buff.Rule.Stage.BONUS);
             }
 
@@ -200,7 +219,7 @@ final class PostProcess {
         POST {
 
             @Override
-            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull WorldFacts world, @NotNull Scope scope) {
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull ComputeFacts world, @NotNull Scope scope) {
                 fold(sheet, variables, program, world, scope, Buff.Rule.Stage.POST);
             }
 
@@ -210,7 +229,7 @@ final class PostProcess {
             @NotNull StatSheet sheet,
             @NotNull ConcurrentMap<String, Double> variables,
             @NotNull ConcurrentList<BuffEvaluator> program,
-            @NotNull WorldFacts world,
+            @NotNull ComputeFacts world,
             @NotNull Scope scope
         );
 
@@ -220,7 +239,7 @@ final class PostProcess {
         @NotNull StatSheet sheet,
         @NotNull ConcurrentMap<String, Double> variables,
         @NotNull ConcurrentList<BuffEvaluator> program,
-        @NotNull WorldFacts world,
+        @NotNull ComputeFacts world,
         @NotNull Scope scope,
         @NotNull Buff.Rule.Stage stage
     ) {
@@ -247,13 +266,12 @@ final class PostProcess {
      * - are conditions on a row now, so a row that does not apply is <b>counted</b> rather than
      * dropped by a predicate nothing reports.
      */
-    private static @NotNull ConcurrentList<BuffEvaluator> petPerkRows(@NotNull ResolvedPet resolvedPet) {
+    private static @NotNull ConcurrentList<Buff> petPerkRows(@NotNull ResolvedPet resolvedPet) {
         return resolvedPet.getPerkStats()
             .stream()
             .map(ResolvedPet.PerkStat::perkName)
             .distinct()
             .flatMap(perkName -> BuffEvaluator.select(Buff.Subject.Kind.PET_PERK, resolvedPet.getPet().getId(), perkName).stream())
-            .map(BuffEvaluator::compile)
             .collect(Concurrent.toUnmodifiableList());
     }
 
@@ -286,7 +304,7 @@ final class PostProcess {
         @NotNull StatSheet sheet,
         @NotNull ConcurrentMap<String, Double> variables,
         @NotNull ConcurrentList<BuffEvaluator> program,
-        @NotNull WorldFacts world
+        @NotNull ComputeFacts world
     ) {
         ConcurrentList<StatCap.Scoped> scoped = Concurrent.newList();
         BuffEvaluator.Context profileContext = world.fill(BuffEvaluator.Context.of(variables));
@@ -317,7 +335,7 @@ final class PostProcess {
         return rows;
     }
 
-    private static void applyItemBonuses(@NotNull StatSheet sheet, @NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables, @NotNull WorldFacts world) {
+    private static void applyItemBonuses(@NotNull StatSheet sheet, @NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables, @NotNull ComputeFacts world) {
         ConcurrentList<Buff> rows = rowsFor(slot);
 
         if (rows.isEmpty())
@@ -342,7 +360,7 @@ final class PostProcess {
         });
     }
 
-    private static @NotNull BuffEvaluator.Context itemContext(@NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables, @NotNull WorldFacts world) {
+    private static @NotNull BuffEvaluator.Context itemContext(@NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables, @NotNull ComputeFacts world) {
         ItemStack itemStats = slot.stack();
 
         return world.fill(BuffEvaluator.Context.of(variables))

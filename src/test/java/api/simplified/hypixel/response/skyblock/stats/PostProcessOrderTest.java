@@ -189,7 +189,7 @@ class PostProcessOrderTest {
     private static @NotNull StatSheet run(@NotNull ConcurrentList<BuffEvaluator> program, @NotNull ConcurrentList<PostProcess.Step> steps) {
         StatSheet sheet = new StatSheet();
         sheet.add(StatSource.SKILLS, STRENGTH, StatHalf.BONUS, 100.0);
-        PostProcess.run(sheet, Concurrent.newMap(), program, WorldFacts.NONE, steps);
+        PostProcess.run(sheet, Concurrent.newMap(), program, ComputeFacts.NONE, steps);
 
         return sheet;
     }

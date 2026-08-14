@@ -3,7 +3,12 @@ package api.simplified.hypixel.response.skyblock.stats;
 import api.simplified.hypixel.response.skyblock.stats.buff.BuffEvaluator;
 import api.simplified.skyblock.date.SkyBlockDate;
 import api.simplified.skyblock.model.Buff;
+import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * What a compute can know about the world it runs in, resolved once and written onto every context a
@@ -43,34 +48,108 @@ import org.jetbrains.annotations.NotNull;
  * An item's rarity resolves during its own construction, before any of this exists, so a rarity rule
  * gating on the world is inert whatever this holds.
  *
+ * <p>
+ * The group counts sit here for the same reason: a group is declared in place, on the row that owns
+ * it, so how many of a named set the member is wearing is one question answered once against the
+ * filled sheet rather than per row per slot.
+ *
  * @param mode the island's game mode
  * @param dungeonClass the class the member last queued as
  * @param season the SkyBlock season as of now
  * @param hour the hour of the SkyBlock day as of now
+ * @param groupCounts how many members of each declared group the member is wearing, keyed by group id
  */
-record WorldFacts(@NotNull String mode, @NotNull String dungeonClass, @NotNull String season, int hour) {
+record ComputeFacts(
+    @NotNull String mode,
+    @NotNull String dungeonClass,
+    @NotNull String season,
+    int hour,
+    @NotNull ConcurrentMap<String, Integer> groupCounts
+) {
 
     /**
      * The answer for a caller that has no member to read - a test driving the pass directly. Every
      * property resolves empty, which is the same state the five unreachable ones are always in.
      */
-    static final @NotNull WorldFacts NONE = new WorldFacts("", "", "", -1);
+    static final @NotNull ComputeFacts NONE = new ComputeFacts("", "", "", -1, Concurrent.newUnmodifiableMap());
 
     /**
-     * Resolves what this compute can know.
+     * Resolves what a caller running before the sheet is filled can know.
+     *
+     * <p>
+     * The flat pass is that caller. It runs before any slot is open, so no group can be counted -
+     * and a group gate belongs to the bonus pass anyway, which is where a set bonus reads what the
+     * whole set came to.
      *
      * @param statContext the member and the island to read from
-     * @return the facts, read once
+     * @return the facts, with no group counted
      */
-    static @NotNull WorldFacts of(@NotNull StatContext statContext) {
+    static @NotNull ComputeFacts of(@NotNull StatContext statContext) {
         SkyBlockDate now = new SkyBlockDate(System.currentTimeMillis());
 
-        return new WorldFacts(
+        return new ComputeFacts(
             statContext.getIsland().getGameMode().name(),
             statContext.getMember().getDungeons().getSelectedClass().name(),
             now.getSeason().name(),
-            now.getHour()
+            now.getHour(),
+            Concurrent.newUnmodifiableMap()
         );
+    }
+
+    /**
+     * Resolves everything this compute can know, group counts included.
+     *
+     * <p>
+     * The sheet must already be filled, because a group is counted off what the flat pass put in the
+     * slots. A count taken before the slots are open is a count of nothing.
+     *
+     * @param statContext the member and the island to read from
+     * @param sheet the filled sheet, read for what the member is wearing
+     * @return the facts, read once
+     */
+    static @NotNull ComputeFacts of(@NotNull StatContext statContext, @NotNull StatSheet sheet) {
+        SkyBlockDate now = new SkyBlockDate(System.currentTimeMillis());
+
+        return new ComputeFacts(
+            statContext.getIsland().getGameMode().name(),
+            statContext.getMember().getDungeons().getSelectedClass().name(),
+            now.getSeason().name(),
+            now.getHour(),
+            countGroups(sheet)
+        );
+    }
+
+    /**
+     * Counts how many members of each declared group the member is wearing.
+     *
+     * <p>
+     * Every declared group is counted rather than only the ones some row goes on to ask about,
+     * because a {@code COUNT} term names a group id and nothing says in advance which ids a condition
+     * will reach. A group nobody wears counts zero and is present, which is what lets a gate read
+     * "fewer than four" rather than reading nothing at all.
+     *
+     * @param sheet the filled sheet
+     * @return the counts, keyed by group id
+     */
+    private static @NotNull ConcurrentMap<String, Integer> countGroups(@NotNull StatSheet sheet) {
+        ConcurrentList<Buff> declaring = BuffEvaluator.selectAll(Buff.Subject.Kind.GROUP);
+
+        if (declaring.isEmpty())
+            return Concurrent.newUnmodifiableMap();
+
+        ConcurrentList<String> worn = sheet.getSlots()
+            .values()
+            .stream()
+            .map(slot -> slot.stack().getItem().getId())
+            .collect(Concurrent.toUnmodifiableList());
+
+        ConcurrentMap<String, Integer> counts = Concurrent.newMap();
+
+        declaring.stream()
+            .filter(row -> row.getGroupId() != null)
+            .forEach(row -> counts.put(row.getGroupId(), (int) worn.stream().filter(row.getMemberIds()::contains).count()));
+
+        return counts;
     }
 
     /**
@@ -95,6 +174,9 @@ record WorldFacts(@NotNull String mode, @NotNull String dungeonClass, @NotNull S
 
         if (this.hour() >= 0)
             context.world(Buff.Term.World.HOUR, this.hour());
+
+        for (Map.Entry<String, Integer> counted : this.groupCounts().entrySet())
+            context.groupCount(counted.getKey(), counted.getValue());
 
         return context;
     }
