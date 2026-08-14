@@ -147,7 +147,7 @@ final class PostProcess {
 
             @Override
             void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
-                scope.slots(sheet).forEach(slot -> applyItemBonuses(slot, variables));
+                scope.slots(sheet).forEach(slot -> applyItemBonuses(sheet, slot, variables));
             }
 
         },
@@ -312,7 +312,7 @@ final class PostProcess {
         return rows;
     }
 
-    private static void applyItemBonuses(@NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables) {
+    private static void applyItemBonuses(@NotNull StatSheet sheet, @NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables) {
         ConcurrentList<Buff> rows = rowsFor(slot);
 
         if (rows.isEmpty())
@@ -320,13 +320,23 @@ final class PostProcess {
 
         BuffEvaluator.Context context = itemContext(slot, variables);
 
-        // an item bonus lands on the bonus half only - the base half is what the source itself gave
-        rows.stream()
-            .map(BuffEvaluator::compile)
-            .forEach(evaluator -> slot.table().getEntries().forEach((bucket, statEntries) -> statEntries.forEach((statModel, data) -> StatHalf.BONUS.set(
+        rows.stream().map(BuffEvaluator::compile).forEach(evaluator -> {
+            // a carrier rule rewrites what the carrier itself contributed, and lands on the bonus
+            // half only - the base half is what the source gave before anything scaled it
+            slot.table().getEntries().forEach((bucket, statEntries) -> statEntries.forEach((statModel, data) -> StatHalf.BONUS.set(
                 data,
-                evaluator.apply(statModel, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, data.getBonus(), context)
-            ))));
+                evaluator.apply(statModel, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, Buff.Rule.Scope.CARRIER, data.getBonus(), context)
+            )));
+
+            // a profile rule on a carried row reaches everything the member has, so it reads its own
+            // carrier's rarity and tag and writes what every source together came to. The guard is
+            // not cosmetic: without it every slot walks the whole profile table once per row it
+            // carries, and two of the rarity rows match every slot there is
+            if (evaluator.writes(Buff.Rule.Scope.PROFILE))
+                sheet.getProfile().rewrite((statModel, half, current) -> evaluator.apply(
+                    statModel, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, Buff.Rule.Scope.PROFILE, current, context
+                ));
+        });
     }
 
     private static @NotNull BuffEvaluator.Context itemContext(@NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables) {

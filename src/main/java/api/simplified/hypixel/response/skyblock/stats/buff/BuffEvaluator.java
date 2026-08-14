@@ -123,7 +123,48 @@ public final class BuffEvaluator {
      * @return the number to write back, unchanged when the row does not apply
      */
     public double apply(@NotNull Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, double current, @NotNull Context context) {
-        return this.fold(statModel, channel, stage, current, context);
+        return this.fold(statModel, channel, stage, null, current, context);
+    }
+
+    /**
+     * Folds the rules of one scope onto one running number, leaving the rest of the row to whichever
+     * table owns them.
+     *
+     * <p>
+     * A scope belongs to a rule rather than to a row, so one row reaches two tables and a caller
+     * holding one of them folds only the half addressed to it. A caller holding the only table in
+     * play wants every scope at once, and that is what the overload without a scope does.
+     *
+     * <p>
+     * {@link Buff#getEffects()} is shorthand for a rule at the default scope, so it folds in the
+     * {@link Buff.Rule.Scope#CARRIER} pass alone - a row carrying an effect beside a profile rule
+     * would otherwise contribute that effect to both tables.
+     *
+     * @param statModel the stat being written
+     * @param channel which number of it is being written
+     * @param stage which round is running
+     * @param scope whose contributions the table being written holds
+     * @param current the number as it stands
+     * @param context what the row's terms and tests read
+     * @return the number to write back, unchanged when no rule of that scope applies
+     */
+    public double apply(@NotNull Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, @NotNull Buff.Rule.Scope scope, double current, @NotNull Context context) {
+        return this.fold(statModel, channel, stage, scope, current, context);
+    }
+
+    /**
+     * Whether this row holds any rule addressed to one scope.
+     *
+     * <p>
+     * It reads the row rather than evaluating it, so a caller can skip walking a table no rule of
+     * that scope would write - which is the difference between one pass over the profile table and
+     * one per carried row per slot.
+     *
+     * @param scope the scope to look for
+     * @return {@code true} when at least one rule carries it
+     */
+    public boolean writes(@NotNull Buff.Rule.Scope scope) {
+        return this.row.getRules().stream().anyMatch(rule -> rule.getScope() == scope);
     }
 
     /**
@@ -139,7 +180,7 @@ public final class BuffEvaluator {
      * @return the position to read the rarity back at
      */
     public double applyRarity(double ordinal, @NotNull Context context) {
-        return this.fold(null, Buff.Channel.RARITY, Buff.Rule.Stage.RARITY, ordinal, context);
+        return this.fold(null, Buff.Channel.RARITY, Buff.Rule.Stage.RARITY, null, ordinal, context);
     }
 
     /**
@@ -163,23 +204,24 @@ public final class BuffEvaluator {
         if (!this.holdsAll(this.row.getConditions(), statModel, 0.0, context))
             return Concurrent.newUnmodifiableList();
 
-        return this.applicable(statModel, channel, stage, 0.0, context)
+        return this.applicable(statModel, channel, stage, null, 0.0, context)
             .stream()
             .map(Buff.Rule::getOperation)
             .collect(Concurrent.toUnmodifiableList());
     }
 
-    private double fold(@Nullable Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, double current, @NotNull Context context) {
+    private double fold(@Nullable Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, @Nullable Buff.Rule.Scope scope, double current, @NotNull Context context) {
         if (!this.holdsAll(this.row.getConditions(), statModel, current, context))
             return current;
 
         double value = current;
 
-        // an effects entry is an add on the value channel, so it settles with the rank-one rules
-        if (statModel != null && channel == Buff.Channel.VALUE && stage == Buff.Rule.Stage.BONUS)
+        // an effects entry is an add on the value channel at the default scope, so it settles with
+        // the rank-one rules and a pass folding one scope reads it only where that scope is the one
+        if (statModel != null && channel == Buff.Channel.VALUE && stage == Buff.Rule.Stage.BONUS && (scope == null || scope == Buff.Rule.Scope.CARRIER))
             value += this.row.getEffects().getOrDefault(statModel.getId(), 0.0);
 
-        ConcurrentList<Buff.Rule> applicable = this.applicable(statModel, channel, stage, current, context);
+        ConcurrentList<Buff.Rule> applicable = this.applicable(statModel, channel, stage, scope, current, context);
 
         applicable.sort(BY_RANK);
 
@@ -196,11 +238,14 @@ public final class BuffEvaluator {
         return value;
     }
 
-    private @NotNull ConcurrentList<Buff.Rule> applicable(@Nullable Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, double current, @NotNull Context context) {
+    private @NotNull ConcurrentList<Buff.Rule> applicable(@Nullable Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, @Nullable Buff.Rule.Scope scope, double current, @NotNull Context context) {
         return this.row.getRules()
             .stream()
             .filter(rule -> rule.getStage() == stage)
             .filter(rule -> rule.getChannels().contains(channel))
+            // an absent scope folds every rule, which is what a caller holding the only table in
+            // play wants - and what every caller wanted before a rule could name a second one
+            .filter(rule -> scope == null || rule.getScope() == scope)
             .filter(rule -> statModel == null || (rule.getTarget() != null && rule.getTarget().matches(statModel)))
             .filter(rule -> statModel == null || rule.getOperation().appliesTo(statModel))
             .filter(rule -> this.holdsAll(rule.getWhen(), statModel, current, context))
