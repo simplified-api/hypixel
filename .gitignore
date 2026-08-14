@@ -125,3 +125,4 @@ customdata/
 texturepacks/
 .claude/
 notes/
+.env
