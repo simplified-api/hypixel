@@ -232,13 +232,7 @@ public final class ItemStack {
                 .stream()
                 .filter(sub -> sub.getType() != Stat.Type.PERCENT && sub.getType() != Stat.Type.PLUS_PERCENT) // Static Only
                 .filter(sub -> sub.getStat().isPresent()) // Has Stat
-                .forEach(sub -> sink.add(ItemOrigin.ENCHANTS, sub.getStat().get(), StatHalf.BONUS, sub.getValues()
-                    .entrySet()
-                    .stream()
-                    .filter(entry -> level >= entry.getKey())
-                    .mapToDouble(Map.Entry::getValue)
-                    .sum()
-                ));
+                .forEach(sub -> sink.add(ItemOrigin.ENCHANTS, sub.getStat().get(), StatHalf.BONUS, valueAt(sub, level)));
         });
 
         // Save New Year Cake Bag Stats
@@ -257,6 +251,30 @@ public final class ItemStack {
      */
     public boolean hasArtOfWar() {
         return this.hasArtOfWar;
+    }
+
+    /**
+     * What one substitute is worth at a level.
+     *
+     * <p>
+     * A {@code values} entry is the <b>total at that level</b> rather than what the level adds on top
+     * of the one below, so the answer is the entry at the highest key the level has reached and never
+     * a sum of the entries below it. Respiration III grants 45 and its map reads
+     * {@code {1:15, 2:30, 3:45}}; the ladder is already cumulative and summing it counts every rung
+     * again.
+     *
+     * @param substitute the substitute to read
+     * @param level the level the instance carries the enchantment at
+     * @return the value at the reached rung, zero when the level reaches none of them
+     */
+    static double valueAt(@NotNull Stat.Substitute substitute, int level) {
+        return substitute.getValues()
+            .entrySet()
+            .stream()
+            .filter(entry -> level >= entry.getKey())
+            .max(Map.Entry.comparingByKey())
+            .map(Map.Entry::getValue)
+            .orElse(0.0);
     }
 
     /**

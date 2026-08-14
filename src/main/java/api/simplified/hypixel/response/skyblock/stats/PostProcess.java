@@ -346,12 +346,7 @@ final class PostProcess {
             .filter(sub -> sub.getStat().isPresent())
             .filter(sub -> sub.getType() == Stat.Type.PERCENT || sub.getType() == Stat.Type.PLUS_PERCENT)
             .forEach(sub -> {
-                double enchantMultiplier = 1 + sub.getValues()
-                    .entrySet()
-                    .stream()
-                    .filter(entry -> level >= entry.getKey())
-                    .mapToDouble(java.util.Map.Entry::getValue)
-                    .sum() / 100.0;
+                double enchantMultiplier = 1 + ItemStack.valueAt(sub, level) / 100.0;
 
                 table.rewrite(sub.getStat().get(), (statModel, half, current) -> current * enchantMultiplier);
             })
