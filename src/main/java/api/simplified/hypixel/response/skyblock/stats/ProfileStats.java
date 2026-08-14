@@ -4,6 +4,7 @@ import api.simplified.hypixel.response.skyblock.SkyBlockIsland;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
+import api.simplified.hypixel.response.skyblock.stats.buff.BuffEvaluator;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
@@ -61,6 +62,9 @@ public class ProfileStats {
     @Getter(AccessLevel.NONE)
     private final ConcurrentMap<String, Double> variables = Concurrent.newMap();
 
+    @Getter(AccessLevel.NONE)
+    private final ConcurrentList<StatCap.Scoped> caps;
+
     private ProfileStats(@NotNull SkyBlockIsland skyBlockIsland, @NotNull SkyBlockMember member, boolean calculateBonusStats, @NotNull ConcurrentList<StatSource> sources) {
         this.activePet = member.getPets().getActivePet();
         this.accessoryBag = member.getAccessoryBag();
@@ -81,8 +85,15 @@ public class ProfileStats {
         this.sheet.getProfile().publishOriginTotals(this.variables::put);
 
         // --- Bonus Pass ---
+        ConcurrentList<BuffEvaluator> program = PostProcess.program(this.context);
+
         if (calculateBonusStats)
-            PostProcess.run(this.sheet, this.variables, PostProcess.program(this.context));
+            PostProcess.run(this.sheet, this.variables, program);
+
+        // --- Caps ---
+        // resolved once the sheet is settled and never written back into it, because a ceiling is a
+        // property of reading sources together rather than a contribution any one of them made
+        this.caps = PostProcess.capProgram(this.sheet, this.variables, program);
     }
 
     /**
@@ -190,7 +201,34 @@ public class ProfileStats {
         // Collect Item Data
         this.sheet.getSlots().forEach((address, slot) -> collectInto(totalStats, slot.table(), optimizerConstant));
 
+        // Clamp
+        // the ceiling reaches the member's whole number, so it applies here and not to the cells this
+        // summed - which is why a clamped read leaves the sheet reading exactly what each source gave
+        totalStats.forEach((statModel, data) -> {
+            StatCap cap = this.getStatCap(statModel);
+
+            if (cap.isUncapped())
+                return;
+
+            double clamped = cap.clamp(data.getTotal());
+
+            // the base half is what the member has before anything was added to it, so an overflow is
+            // taken off the bonus and the base is left alone
+            if (clamped < data.getTotal())
+                StatHalf.BONUS.set(data, clamped - data.getBase());
+        });
+
         return totalStats;
+    }
+
+    /**
+     * One stat's ceiling as it stands for this member.
+     *
+     * @param statModel the stat to read
+     * @return the resolved ceiling, uncapped when nothing clamps it
+     */
+    public @NotNull StatCap getStatCap(@NotNull Stat statModel) {
+        return StatCap.resolve(statModel, this.caps);
     }
 
     /**

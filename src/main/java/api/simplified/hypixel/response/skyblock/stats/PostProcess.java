@@ -263,12 +263,57 @@ final class PostProcess {
      * invariant with nothing anywhere saying so. The bucket is the writer's business, so a carrier
      * rule rewrites what the carrier contributed and the split inside that is not addressable.
      */
-    private static void applyItemBonuses(@NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables) {
+    /**
+     * Every rule the member carries that could write a ceiling, each with the context of whatever
+     * carries it.
+     *
+     * <p>
+     * A ceiling is the member's while the rules raising it are spread over gear and a pet, so this is
+     * the one place they are gathered together. It selects the same rows the item rounds already do
+     * and pairs each with the same context, which is what keeps a cap rule reading its carrier's own
+     * rarity and level rather than the profile's.
+     *
+     * @param sheet the profile's own table and one per filled item slot
+     * @param variables the expression variables, as the pass left them
+     * @param program the rows the summoned pet's perks carry
+     * @return every evaluator that could write the cap channel, scoped to its carrier
+     */
+    static @NotNull ConcurrentList<StatCap.Scoped> capProgram(
+        @NotNull StatSheet sheet,
+        @NotNull ConcurrentMap<String, Double> variables,
+        @NotNull ConcurrentList<BuffEvaluator> program
+    ) {
+        ConcurrentList<StatCap.Scoped> scoped = Concurrent.newList();
+        BuffEvaluator.Context profileContext = BuffEvaluator.Context.of(variables);
+
+        program.forEach(evaluator -> scoped.add(new StatCap.Scoped(evaluator, profileContext)));
+
+        sheet.getSlots().forEach((address, slot) -> {
+            BuffEvaluator.Context context = itemContext(slot, variables);
+            rowsFor(slot).forEach(row -> scoped.add(new StatCap.Scoped(BuffEvaluator.compile(row), context)));
+        });
+
+        return scoped;
+    }
+
+    /**
+     * The rows an instance in a slot carries - its own, its reforge's and each of its enchantments'.
+     *
+     * @param slot the slot to read
+     * @return the rows, in selection order
+     */
+    private static @NotNull ConcurrentList<Buff> rowsFor(@NotNull StatSheet.Slot slot) {
         ItemStack itemStats = slot.stack();
         ConcurrentList<Buff> rows = Concurrent.newList(BuffEvaluator.select(Buff.Subject.Kind.ITEM, itemStats.getItem().getId(), null));
 
         itemStats.getReforge().ifPresent(reforge -> rows.addAll(BuffEvaluator.select(Buff.Subject.Kind.REFORGE, reforge.getId(), null)));
         itemStats.getEnchantments().forEach((enchantment, level) -> rows.addAll(BuffEvaluator.select(Buff.Subject.Kind.ENCHANTMENT, enchantment.getId(), null)));
+
+        return rows;
+    }
+
+    private static void applyItemBonuses(@NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables) {
+        ConcurrentList<Buff> rows = rowsFor(slot);
 
         if (rows.isEmpty())
             return;

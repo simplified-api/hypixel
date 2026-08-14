@@ -142,6 +142,33 @@ public final class BuffEvaluator {
         return this.fold(null, Buff.Channel.RARITY, Buff.Rule.Stage.RARITY, ordinal, context);
     }
 
+    /**
+     * The operations this row would fold onto one channel, without folding any of them.
+     *
+     * <p>
+     * Two of them mean something a number cannot carry back.
+     * {@link Buff.Operation#REMOVE} folds nothing and is the identity in an arithmetic step, so a
+     * removal is only ever visible where the channel is read - a ceiling that resolved to a number
+     * and a ceiling that was taken away are different answers, and an absent cap is already spelled
+     * {@code 0.0} on the stat's own column. {@link Buff.Operation#SET} matters for the mirror reason:
+     * it is the only operation that means anything against a channel that has no value yet.
+     *
+     * @param statModel the stat being read
+     * @param channel which number of it is being read
+     * @param stage which round is running
+     * @param context what the row's terms and tests read
+     * @return the operations of every rule that applies, empty when the row does not
+     */
+    public @NotNull ConcurrentList<Buff.Operation> operations(@NotNull Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, @NotNull Context context) {
+        if (!this.holdsAll(this.row.getConditions(), statModel, 0.0, context))
+            return Concurrent.newUnmodifiableList();
+
+        return this.applicable(statModel, channel, stage, 0.0, context)
+            .stream()
+            .map(Buff.Rule::getOperation)
+            .collect(Concurrent.toUnmodifiableList());
+    }
+
     private double fold(@Nullable Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, double current, @NotNull Context context) {
         if (!this.holdsAll(this.row.getConditions(), statModel, current, context))
             return current;
@@ -152,14 +179,7 @@ public final class BuffEvaluator {
         if (statModel != null && channel == Buff.Channel.VALUE && stage == Buff.Rule.Stage.BONUS)
             value += this.row.getEffects().getOrDefault(statModel.getId(), 0.0);
 
-        ConcurrentList<Buff.Rule> applicable = this.row.getRules()
-            .stream()
-            .filter(rule -> rule.getStage() == stage)
-            .filter(rule -> rule.getChannels().contains(channel))
-            .filter(rule -> statModel == null || (rule.getTarget() != null && rule.getTarget().matches(statModel)))
-            .filter(rule -> statModel == null || rule.getOperation().appliesTo(statModel))
-            .filter(rule -> this.holdsAll(rule.getWhen(), statModel, current, context))
-            .collect(Concurrent.toList());
+        ConcurrentList<Buff.Rule> applicable = this.applicable(statModel, channel, stage, current, context);
 
         applicable.sort(BY_RANK);
 
@@ -174,6 +194,17 @@ public final class BuffEvaluator {
         }
 
         return value;
+    }
+
+    private @NotNull ConcurrentList<Buff.Rule> applicable(@Nullable Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, double current, @NotNull Context context) {
+        return this.row.getRules()
+            .stream()
+            .filter(rule -> rule.getStage() == stage)
+            .filter(rule -> rule.getChannels().contains(channel))
+            .filter(rule -> statModel == null || (rule.getTarget() != null && rule.getTarget().matches(statModel)))
+            .filter(rule -> statModel == null || rule.getOperation().appliesTo(statModel))
+            .filter(rule -> this.holdsAll(rule.getWhen(), statModel, current, context))
+            .collect(Concurrent.toList());
     }
 
     private @NotNull OptionalDouble operand(@NotNull Buff.Rule rule, @Nullable Stat statModel, double current, @NotNull Context context) {
