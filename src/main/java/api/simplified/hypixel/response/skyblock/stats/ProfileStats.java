@@ -5,16 +5,12 @@ import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.skyblock.SkyBlockData;
-import api.simplified.skyblock.model.BonusArmorSet;
-import api.simplified.skyblock.model.Item;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
-import lib.minecraft.nbt.tag.CompoundTag;
-import lib.minecraft.nbt.tag.StringTag;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 /**
- * Every stat one member has on one profile, totalled from all sixteen sources that feed them.
+ * Every stat one member has on one profile, totalled from all eighteen sources that feed them.
  * <p>
  * This is the top of the derived layer and by far the heaviest thing in it. Skills, slayers,
  * dungeons, armour, accessories, the active pet, potions, century cakes, essence perks and the rest
@@ -42,7 +38,7 @@ import java.util.Optional;
  */
 @Getter
 @SuppressWarnings("unused")
-public class ProfileStats extends StatData<StatSource> {
+public class ProfileStats {
 
     private static final @NotNull ConcurrentList<StatSource> EVERY_SOURCE = Concurrent.newUnmodifiableList(StatSource.values());
 
@@ -56,26 +52,11 @@ public class ProfileStats extends StatData<StatSource> {
      */
     private final Optional<OwnedPet> activePet;
 
-    /**
-     * The four armour pieces, each empty when that slot is unfilled.
-     */
-    private final ConcurrentList<Optional<ItemStack>> armor = Concurrent.newList();
-
-    /**
-     * The accessories that count toward magical power, each totalled in its own right.
-     * <p>
-     * These belong to the result rather than to the bag, so a second compute for the same member
-     * starts from unwritten tables rather than from the first one's.
-     */
-    private final ConcurrentList<ItemStack> accessories = Concurrent.newList();
-
-    /**
-     * Set bonus the worn armour qualifies for, empty when the pieces do not form a set.
-     */
-    private Optional<BonusArmorSet> bonusArmorSetModel = Optional.empty();
-
     @Getter(AccessLevel.NONE)
     private final StatContext context;
+
+    @Getter(AccessLevel.NONE)
+    private final StatSheet sheet = new StatSheet();
 
     @Getter(AccessLevel.NONE)
     private final ConcurrentMap<String, Double> variables = Concurrent.newMap();
@@ -85,29 +66,19 @@ public class ProfileStats extends StatData<StatSource> {
         this.accessoryBag = member.getAccessoryBag();
         this.context = new StatContext(skyBlockIsland, member);
 
-        // --- Resolve Gear ---
-        // neither is a source - each is a list of tables of its own - so both are resolved here rather
-        // than reached for once a pass is running
-        this.accessoryBag.getAccessories()
-            .forEach(detectedAccessory -> this.accessories.add(new ItemStack(
-                detectedAccessory.getAccessory().getItem(),
-                Optional.of(detectedAccessory.getAccessory()),
-                detectedAccessory.getCompoundTag()
-            )));
-        this.loadArmor(member);
-
         // --- Variable Seed ---
         // every provider writes through a sink it cannot read back, so the seed has no order either
         for (VariableProvider provider : VariableProvider.values())
             provider.provide(this.context, this.variables::put);
 
         // --- Flat Pass ---
-        sources.forEach(source -> source.contribute(this.context, this.table));
-        this.table.publishTotals(this.variables::put);
+        sources.forEach(source -> source.contribute(this.context, this.sheet));
+        this.sheet.getProfile().publishTotals(this.variables::put);
 
         // the pet's contribution is named on its own as well, off the cells it wrote rather than
         // part-way through writing them
-        this.table.getEntries(StatSource.ACTIVE_PET)
+        this.sheet.getProfile()
+            .getEntries(StatSource.ACTIVE_PET)
             .forEach((statModel, data) -> this.variables.put(
                 String.format("STAT_PET_%s", statModel.getId()),
                 data.getTotal()
@@ -115,7 +86,7 @@ public class ProfileStats extends StatData<StatSource> {
 
         // --- Bonus Pass ---
         if (calculateBonusStats)
-            PostProcess.run(this.context, this.variables, this.table, this.armor, this.accessories);
+            PostProcess.run(this.context, this.sheet, this.variables);
     }
 
     /**
@@ -162,10 +133,34 @@ public class ProfileStats extends StatData<StatSource> {
     }
 
     /**
-     * Damage scaling earned from combat levels, as a fraction rather than a percentage.
+     * The accessories that count toward magical power, each totalled in its own right.
      */
-    public double getDamageMultiplier() {
-        return this.variables.getOrDefault(VariableProvider.DAMAGE_MULTIPLIER.name(), 0.0);
+    public @NotNull ConcurrentList<ItemStack> getAccessories() {
+        return this.stacks(ItemSlot.Kind.ACCESSORY);
+    }
+
+    /**
+     * Totals one stat across every source at once.
+     *
+     * @param statModel the stat to total
+     * @return the summed base and bonus, both zero when no source provides it
+     */
+    public Data getAllData(Stat statModel) {
+        return this.getAllStats().getOrDefault(statModel, new Data());
+    }
+
+    /**
+     * Every stat the profile's own sources provide, summed across all of them.
+     */
+    public ConcurrentLinkedMap<Stat, Data> getAllStats() {
+        return this.sheet.getProfile().toMap();
+    }
+
+    /**
+     * The worn armour pieces, each totalled in its own right.
+     */
+    public @NotNull ConcurrentList<ItemStack> getArmor() {
+        return this.stacks(ItemSlot.Kind.ARMOR);
     }
 
     /**
@@ -193,29 +188,75 @@ public class ProfileStats extends StatData<StatSource> {
             .map(statModel -> Pair.of(statModel, new Data()))
             .collect(Concurrent.toLinkedMap());
 
-        // Collect Stat Data
-        collectInto(totalStats, this, optimizerConstant);
+        // Collect Profile Data
+        collectInto(totalStats, this.sheet.getProfile(), optimizerConstant);
 
-        // Collect Accessory Data
-        this.getAccessories()
-            .forEach(accessoryStats -> collectInto(totalStats, accessoryStats, optimizerConstant));
-
-        // Collect Armor Data
-        this.getArmor()
-            .stream()
-            .flatMap(Optional::stream)
-            .forEach(itemData -> collectInto(totalStats, itemData, optimizerConstant));
+        // Collect Item Data
+        this.sheet.getSlots().forEach((address, slot) -> collectInto(totalStats, slot.table(), optimizerConstant));
 
         return totalStats;
     }
 
-    @Override
-    protected StatSource[] getAllTypes() {
-        return StatSource.values();
+    /**
+     * Damage scaling earned from combat levels, as a fraction rather than a percentage.
+     */
+    public double getDamageMultiplier() {
+        return this.variables.getOrDefault(VariableProvider.DAMAGE_MULTIPLIER.name(), 0.0);
     }
 
-    private static void collectInto(@NotNull ConcurrentLinkedMap<Stat, Data> totalStats, @NotNull StatData<?> statData, boolean optimizerConstant) {
-        statData.getStats()
+    /**
+     * Reads one stat from a chosen subset of sources.
+     *
+     * @param statModel the stat to read
+     * @param sources the sources to include
+     * @return the summed base and bonus across those sources
+     */
+    public Data getData(Stat statModel, StatSource... sources) {
+        return this.getStatsOf(sources).get(statModel);
+    }
+
+    /**
+     * Every source that provided something, with the stats it provided.
+     * <p>
+     * A source that provided nothing is absent rather than present and empty, and so is a stat no
+     * source wrote - reading a total through {@link #getStatsOf} seeds those back at zero.
+     */
+    public ConcurrentMap<StatOrigin, ConcurrentLinkedMap<Stat, Data>> getStats() {
+        return this.sheet.getProfile().getEntries();
+    }
+
+    /**
+     * Reads one source on its own.
+     *
+     * @param source the source to read
+     * @return the stats that source provides
+     */
+    public ConcurrentLinkedMap<Stat, Data> getStats(StatSource source) {
+        return this.sheet.getProfile().getEntries(source);
+    }
+
+    /**
+     * Sums a chosen subset of sources into one table.
+     * <p>
+     * The table is seeded from every stat in the reference data, so a stat no source provides is
+     * present at zero rather than absent - a caller can read any stat without checking first.
+     *
+     * @param sources the sources to include
+     * @return a fresh table covering every known stat
+     */
+    public ConcurrentLinkedMap<Stat, Data> getStatsOf(StatSource... sources) {
+        return this.sheet.getProfile().toMap(sources);
+    }
+
+    /**
+     * Everything this compute wrote: the profile's own table and one per filled item slot.
+     */
+    @NotNull StatSheet getSheet() {
+        return this.sheet;
+    }
+
+    private static void collectInto(@NotNull ConcurrentLinkedMap<Stat, Data> totalStats, @NotNull StatTable table, boolean optimizerConstant) {
+        table.getEntries()
             .stream()
             .filter(entry -> !optimizerConstant || entry.getKey().isOptimizerConstant())
             .forEach(entry -> entry.getValue().forEach((statModel, data) -> {
@@ -224,37 +265,11 @@ public class ProfileStats extends StatData<StatSource> {
             }));
     }
 
-    private void loadArmor(@NotNull SkyBlockMember member) {
-        ConcurrentList<Pair<CompoundTag, Optional<Item>>> armorItemModels = member.getInventory().getArmor()
-            .getNbtData()
-            .<CompoundTag>getListTag("i")
+    private @NotNull ConcurrentList<ItemStack> stacks(@NotNull ItemSlot.Kind kind) {
+        return this.sheet.getSlots(kind)
             .stream()
-            .map(itemTag -> Pair.of(
-                itemTag,
-                SkyBlockData.getRepository(Item.class).findFirst(Item::getId, itemTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue())
-            ))
-            .collect(Concurrent.toList())
-            .reversed();
-
-        this.bonusArmorSetModel = SkyBlockData.getRepository(BonusArmorSet.class).findAll().findFirst(
-            Pair.of(BonusArmorSet::getHelmetItem, armorItemModels.getFirst().right().orElse(null)),
-            Pair.of(BonusArmorSet::getChestplateItem, armorItemModels.get(1).right().orElse(null)),
-            Pair.of(BonusArmorSet::getLeggingsItem, armorItemModels.get(2).right().orElse(null)),
-            Pair.of(BonusArmorSet::getBootsItem, armorItemModels.get(3).right().orElse(null))
-        );
-
-        armorItemModels.forEach(armorItemModelPair -> {
-            ItemStack itemStats = null;
-
-            if (armorItemModelPair.left().notEmpty() && armorItemModelPair.right().isPresent())
-                itemStats = new ItemStack(
-                    armorItemModelPair.right().get(),
-                    Optional.empty(),
-                    armorItemModelPair.left()
-                );
-
-            this.armor.add(Optional.ofNullable(itemStats));
-        });
+            .map(StatSheet.Slot::stack)
+            .collect(Concurrent.toUnmodifiableList());
     }
 
 }

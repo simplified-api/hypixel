@@ -44,15 +44,15 @@ import java.util.Optional;
  * <p>
  * An item on the wire is a tag tree, not a stat sheet - the modifiers that decide what it actually
  * gives sit under {@code tag.ExtraAttributes} as ids, and mean nothing until each is looked up. The
- * constructor does that lookup once and totals everything unconditional, so what is left is only
- * whatever depends on the rest of the player.
+ * constructor does that lookup once, and nothing more: an instance is what a slot holds, so the cells
+ * belong to the slot's table and {@link #fill} is what puts them there.
  * <p>
  * An accessory is an item, so it is one of these too - the buckets it never fills simply stay
  * unwritten, and the ones an armour piece never fills do the same. Anything conditional on the rest
  * of the player is left to the bonus pass, which needs totals this cannot see.
  */
 @Getter
-public final class ItemStack extends StatData<ItemOrigin> {
+public final class ItemStack {
 
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("M/d/yy h:m a", Locale.US);
     private static final ZoneId HYPIXEL_TIMEZONE = ZoneId.of("America/New_York");
@@ -133,11 +133,16 @@ public final class ItemStack extends StatData<ItemOrigin> {
      */
     private final @NotNull Optional<Long> timestamp;
 
+    /**
+     * Cakes stored in the New Year Cake Bag, empty for anything that is not a readable one.
+     */
+    private final @NotNull Optional<Integer> newYearCakes;
+
     @Getter(AccessLevel.NONE) private final boolean hasArtOfWar;
     @Getter(AccessLevel.NONE) private final boolean hasArtOfPeace;
 
     /**
-     * Constructs a new {@code ItemStack} and totals every unconditional modifier on the instance.
+     * Constructs a new {@code ItemStack} and resolves every modifier the instance names.
      *
      * @param itemModel reference data for the item being read
      * @param accessory reference data for the accessory, empty for anything not out of the bag
@@ -185,39 +190,7 @@ public final class ItemStack extends StatData<ItemOrigin> {
             .toUpperCase()
         );
 
-        // Save Stats
-        itemModel.getStats().forEach((key, value) -> this.table.add(ItemOrigin.STATS, key, StatHalf.BONUS, value));
-
-        // Save Reforge Stats
-        if (accessory.isEmpty()) {
-            handleReforgeBonus(this.getReforge(), this.getRarity())
-                .forEach((statModel, value) -> this.table.add(ItemOrigin.REFORGES, statModel, StatHalf.BONUS, value));
-        }
-
-        // Save Gemstone Stats
-        handleGemstoneBonus(this.getGemstones(), this.getRarity())
-            .forEach((statModel, value) -> this.table.add(ItemOrigin.GEMSTONES, statModel, StatHalf.BONUS, value));
-
-        // Save Enrichment Stats
-        this.getEnrichmentStat()
-            .filter(stat -> stat.getEnrichment() > 0.0)
-            .ifPresent(stat -> this.table.add(ItemOrigin.ENRICHMENTS, stat, StatHalf.BONUS, stat.getEnrichment()));
-
-        // Save Hot Potato Book Stats
-        SkyBlockData.getRepository(HotPotatoStat.class)
-            .stream()
-            .filter(hotPotatoStat -> hotPotatoStat.getItemTypes().contains(itemModel.getCategory().getId()))
-            .forEach(hotPotatoStat -> this.table.add(ItemOrigin.HOT_POTATOES, hotPotatoStat.getStat(), StatHalf.BONUS, this.getHotPotatoBooks() * hotPotatoStat.getValue()));
-
-        // Save Art Of Peace Stats
-        if (this.hasArtOfPeace())
-            this.table.add(ItemOrigin.SUN_TZU, "HEALTH", StatHalf.BONUS, 40.0);
-
-        // Save Art Of War Stats
-        if (this.hasArtOfWar())
-            this.table.add(ItemOrigin.SUN_TZU, "STRENGTH", StatHalf.BONUS, 5.0);
-
-        // Save Enchantment Stats
+        // Load Enchantments
         ConcurrentMap<Enchantment, Integer> enchantments = Concurrent.newMap();
         ConcurrentMap<Enchantment, ConcurrentList<Stat.Substitute>> enchantmentStats = Concurrent.newMap();
 
@@ -241,39 +214,78 @@ public final class ItemStack extends StatData<ItemOrigin> {
                     .stream()
                     .filter(sub -> sub.getValues().keySet().stream().anyMatch(l -> level >= l))
                     .forEach(sub -> enchantmentStats.get(enchantment).add(sub));
-
-                // Handle Enchantment Stats
-                if (enchantment.getMobTypeIds().isEmpty()) {
-                    enchantmentStats.get(enchantment)
-                        .stream()
-                        .filter(sub -> sub.getType() != Stat.Type.PERCENT && sub.getType() != Stat.Type.PLUS_PERCENT) // Static Only
-                        .filter(sub -> sub.getStat().isPresent()) // Has Stat
-                        .forEach(sub -> {
-                            double enchantBonus = sub.getValues().entrySet().stream()
-                                .filter(e -> level >= e.getKey())
-                                .mapToDouble(Map.Entry::getValue)
-                                .sum();
-                            this.table.add(ItemOrigin.ENCHANTS, sub.getStat().get(), StatHalf.BONUS, enchantBonus);
-                        });
-                }
             });
 
         this.enchantments = enchantments;
         this.enchantmentStats = enchantmentStats;
-
-        // New Year Cake Bag
-        if ("NEW_YEAR_CAKE_BAG".equals(itemModel.getId())) {
-            try {
-                byte[] nbtCakeBag = compoundTag.getPathOrDefault("tag.ExtraAttributes.new_year_cake_bag_data", ByteArrayTag.EMPTY).getValue();
-                ListTag<CompoundTag> cakeBagItems = NbtFactory.fromByteArray(nbtCakeBag).getListTag("i");
-                this.table.add(ItemOrigin.CAKE_BAG, "HEALTH", StatHalf.BONUS, cakeBagItems.size());
-            } catch (NbtException ignore) { }
-        }
+        this.newYearCakes = readNewYearCakes(itemModel, compoundTag);
     }
 
-    @Override
-    protected ItemOrigin[] getAllTypes() {
-        return ItemOrigin.values();
+    /**
+     * Writes everything the instance gives unconditionally into the slot it fills.
+     * <p>
+     * Nothing here resolves anything - every part was read in the constructor, and what this decides
+     * is only which bucket each part lands in. What is conditional on the rest of the player is left
+     * to the bonus pass, which needs totals no slot can see.
+     *
+     * @param kind the kind of slot being filled, which is what decides whether a reforge contributes
+     * @param sink the write face of that slot's table
+     */
+    void fill(@NotNull ItemSlot.Kind kind, @NotNull StatSink sink) {
+        // Save Stats
+        this.item.getStats().forEach((statId, value) -> sink.add(ItemOrigin.STATS, statId, StatHalf.BONUS, value));
+
+        // Save Reforge Stats
+        // an accessory slot writes seven of the eight buckets - the instance may carry a reforge, but
+        // the slot it sits in is what decides whether one contributes
+        if (kind != ItemSlot.Kind.ACCESSORY) {
+            handleReforgeBonus(this.reforge, this.rarity)
+                .forEach((statModel, value) -> sink.add(ItemOrigin.REFORGES, statModel, StatHalf.BONUS, value));
+        }
+
+        // Save Gemstone Stats
+        handleGemstoneBonus(this.gemstones, this.rarity)
+            .forEach((statModel, value) -> sink.add(ItemOrigin.GEMSTONES, statModel, StatHalf.BONUS, value));
+
+        // Save Enrichment Stats
+        this.enrichmentStat
+            .filter(stat -> stat.getEnrichment() > 0.0)
+            .ifPresent(stat -> sink.add(ItemOrigin.ENRICHMENTS, stat, StatHalf.BONUS, stat.getEnrichment()));
+
+        // Save Hot Potato Book Stats
+        SkyBlockData.getRepository(HotPotatoStat.class)
+            .stream()
+            .filter(hotPotatoStat -> hotPotatoStat.getItemTypes().contains(this.item.getCategory().getId()))
+            .forEach(hotPotatoStat -> sink.add(ItemOrigin.HOT_POTATOES, hotPotatoStat.getStat(), StatHalf.BONUS, this.hotPotatoBooks * hotPotatoStat.getValue()));
+
+        // Save Art Of Peace Stats
+        if (this.hasArtOfPeace)
+            sink.add(ItemOrigin.SUN_TZU, "HEALTH", StatHalf.BONUS, 40.0);
+
+        // Save Art Of War Stats
+        if (this.hasArtOfWar)
+            sink.add(ItemOrigin.SUN_TZU, "STRENGTH", StatHalf.BONUS, 5.0);
+
+        // Save Enchantment Stats
+        this.enchantments.forEach((enchantment, level) -> {
+            if (!enchantment.getMobTypeIds().isEmpty()) // Applies Against Anything Only
+                return;
+
+            this.enchantmentStats.get(enchantment)
+                .stream()
+                .filter(sub -> sub.getType() != Stat.Type.PERCENT && sub.getType() != Stat.Type.PLUS_PERCENT) // Static Only
+                .filter(sub -> sub.getStat().isPresent()) // Has Stat
+                .forEach(sub -> sink.add(ItemOrigin.ENCHANTS, sub.getStat().get(), StatHalf.BONUS, sub.getValues()
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> level >= entry.getKey())
+                    .mapToDouble(Map.Entry::getValue)
+                    .sum()
+                ));
+        });
+
+        // Save New Year Cake Bag Stats
+        this.newYearCakes.ifPresent(cakes -> sink.add(ItemOrigin.CAKE_BAG, "HEALTH", StatHalf.BONUS, cakes));
     }
 
     /**
@@ -354,6 +366,26 @@ public final class ItemStack extends StatData<ItemOrigin> {
             .map(localDateTime -> localDateTime.atZone(HYPIXEL_TIMEZONE))
             .map(ZonedDateTime::toInstant)
             .map(Instant::toEpochMilli);
+    }
+
+    /**
+     * Counts what a New Year Cake Bag is carrying, out of the gzipped inventory its tag holds.
+     *
+     * @param itemModel reference data for the item being read
+     * @param compoundTag the item's NBT tag
+     * @return the number of cakes stored, empty for anything that is not a readable cake bag
+     */
+    private static Optional<Integer> readNewYearCakes(@NotNull Item itemModel, @NotNull CompoundTag compoundTag) {
+        if (!"NEW_YEAR_CAKE_BAG".equals(itemModel.getId()))
+            return Optional.empty();
+
+        try {
+            byte[] nbtCakeBag = compoundTag.getPathOrDefault("tag.ExtraAttributes.new_year_cake_bag_data", ByteArrayTag.EMPTY).getValue();
+            ListTag<CompoundTag> cakeBagItems = NbtFactory.fromByteArray(nbtCakeBag).getListTag("i");
+            return Optional.of(cakeBagItems.size());
+        } catch (NbtException ignore) {
+            return Optional.empty();
+        }
     }
 
     private static ConcurrentMap<Gemstone, ConcurrentList<Gemstone.Type>> findGemstones(ConcurrentList<Gemstone> gemstoneModels, CompoundTag gemTag) {

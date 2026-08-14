@@ -21,7 +21,7 @@ import java.util.Arrays;
  * Reads that a consumer sees are unaffected: {@link #toMap} seeds every known stat, so a caller may
  * still ask for one that nothing provided and read zero rather than checking first.
  */
-final class StatTable implements StatSink {
+final class StatTable {
 
     private final @NotNull ConcurrentMap<StatOrigin, ConcurrentLinkedMap<Stat, Data>> entries = Concurrent.newMap();
 
@@ -39,7 +39,6 @@ final class StatTable implements StatSink {
      * @param value the amount to add
      * @return this table
      */
-    @Override
     public @NotNull StatTable add(@NotNull StatOrigin origin, @NotNull Stat statModel, @NotNull StatHalf half, double value) {
         half.add(this.getCell(origin, statModel), value);
         return this;
@@ -54,7 +53,6 @@ final class StatTable implements StatSink {
      * @param value the amount to add
      * @return this table
      */
-    @Override
     public @NotNull StatTable add(@NotNull StatOrigin origin, @NotNull String statId, @NotNull StatHalf half, double value) {
         return SkyBlockData.getRepository(Stat.class).findFirst(Stat::getId, statId)
             .map(statModel -> this.add(origin, statModel, half, value))

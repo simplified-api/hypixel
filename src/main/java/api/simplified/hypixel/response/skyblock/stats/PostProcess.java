@@ -11,8 +11,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-
 /**
  * The bonus pass: every contribution whose value is expressed against the flat totals.
  * <p>
@@ -29,34 +27,30 @@ final class PostProcess {
      * Runs the four sub-steps, in the order the totals they read require.
      *
      * @param context the member and the island to read from
+     * @param sheet the profile's own table and one per filled item slot
      * @param variables the expression variables, republished as each round settles
-     * @param table the profile's own table
-     * @param armor the armour pieces, absent slots included
-     * @param accessories the accessories that survived the family filter
      */
     public static void run(
         @NotNull StatContext context,
-        @NotNull ConcurrentMap<String, Double> variables,
-        @NotNull StatTable table,
-        @NotNull ConcurrentList<Optional<ItemStack>> armor,
-        @NotNull ConcurrentList<ItemStack> accessories
+        @NotNull StatSheet sheet,
+        @NotNull ConcurrentMap<String, Double> variables
     ) {
         ConcurrentList<BonusPetPerkStat> bonusPerkStats = ResolvedPet.of(context.getMember())
             .map(ResolvedPet::getBonusPerkStats)
             .orElseGet(Concurrent::newUnmodifiableList);
 
+        StatTable table = sheet.getProfile();
+        ConcurrentList<StatSheet.Slot> armor = sheet.getSlots(ItemSlot.Kind.ARMOR);
+        ConcurrentList<StatSheet.Slot> accessories = sheet.getSlots(ItemSlot.Kind.ACCESSORY);
+
         // --- Accessory Bonus ---
-        accessories.forEach(accessoryStats -> applyItemBonuses(accessoryStats, variables));
+        accessories.forEach(slot -> applyItemBonuses(slot, variables));
 
         // --- Armour Bonus ---
-        armor.stream()
-            .flatMap(Optional::stream)
-            .forEach(itemStats -> applyItemBonuses(itemStats, variables));
+        armor.forEach(slot -> applyItemBonuses(slot, variables));
 
         // --- Enchantment Multiplier ---
-        armor.stream()
-            .flatMap(Optional::stream)
-            .forEach(itemStats -> applyEnchantmentMultipliers(itemStats, table));
+        armor.forEach(slot -> applyEnchantmentMultipliers(slot.stack(), table));
 
         // --- Pet Static ---
         // a rule that reads a total belongs where the totals are settled, not part-way through the
@@ -84,18 +78,16 @@ final class PostProcess {
                 // profile, then armour, then accessories - a pet percentage reads a total the level
                 // above it has already settled
                 rewrite(table, evaluator.bind(null), variables);
-
-                armor.stream()
-                    .flatMap(Optional::stream)
-                    .forEach(itemStats -> rewrite(itemStats.getTable(), evaluator.bind(itemStats.getCompoundTag()), variables));
-
-                accessories.forEach(accessoryStats -> rewrite(accessoryStats.getTable(), evaluator.bind(accessoryStats.getCompoundTag()), variables));
+                armor.forEach(slot -> rewrite(slot.table(), evaluator.bind(slot.stack().getCompoundTag()), variables));
+                accessories.forEach(slot -> rewrite(slot.table(), evaluator.bind(slot.stack().getCompoundTag()), variables));
             });
     }
 
-    private static void applyItemBonuses(@NotNull ItemStack itemStats, @NotNull ConcurrentMap<String, Double> variables) {
+    private static void applyItemBonuses(@NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables) {
+        ItemStack itemStats = slot.stack();
+
         // Handle Reforges
-        itemStats.getBonusReforgeStatModel().ifPresent(bonusReforgeStat -> rewriteBucket(itemStats, ItemOrigin.REFORGES, bonusReforgeStat, variables));
+        itemStats.getBonusReforgeStatModel().ifPresent(bonusReforgeStat -> rewriteBucket(slot, ItemOrigin.REFORGES, bonusReforgeStat, variables));
 
         // Handle Bonus Item Stats
         itemStats.getBonusItemStatModels()
@@ -104,23 +96,23 @@ final class PostProcess {
             .forEach(bonusItemStat -> {
                 // Handle Bonus Gemstone Stats
                 if (bonusItemStat.isForGems())
-                    rewriteBucket(itemStats, ItemOrigin.GEMSTONES, bonusItemStat, variables);
+                    rewriteBucket(slot, ItemOrigin.GEMSTONES, bonusItemStat, variables);
 
                 // Handle Bonus Reforges
                 if (bonusItemStat.isForReforges())
-                    rewriteBucket(itemStats, ItemOrigin.REFORGES, bonusItemStat, variables);
+                    rewriteBucket(slot, ItemOrigin.REFORGES, bonusItemStat, variables);
 
                 // Handle Bonus Stats
                 if (bonusItemStat.isForStats())
-                    rewriteBucket(itemStats, ItemOrigin.STATS, bonusItemStat, variables);
+                    rewriteBucket(slot, ItemOrigin.STATS, bonusItemStat, variables);
             });
     }
 
-    private static void rewriteBucket(@NotNull ItemStack itemStats, @NotNull ItemOrigin bucket, @NotNull BuffEffectsModel model, @NotNull ConcurrentMap<String, Double> variables) {
-        BuffEvaluator evaluator = BuffEvaluator.compile(model).bind(itemStats.getCompoundTag());
+    private static void rewriteBucket(@NotNull StatSheet.Slot slot, @NotNull ItemOrigin bucket, @NotNull BuffEffectsModel model, @NotNull ConcurrentMap<String, Double> variables) {
+        BuffEvaluator evaluator = BuffEvaluator.compile(model).bind(slot.stack().getCompoundTag());
 
         // an item bonus lands on the bonus half only - the base half is what the source itself gave
-        itemStats.getStats(bucket).forEach((statModel, data) -> StatHalf.BONUS.set(
+        slot.table().getEntries(bucket).forEach((statModel, data) -> StatHalf.BONUS.set(
             data,
             evaluator.apply(statModel, data.getBonus(), variables, Operation.Pass.BONUS)
         ));

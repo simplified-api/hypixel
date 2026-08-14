@@ -1,14 +1,14 @@
 package api.simplified.hypixel.response.skyblock.stats;
 
+import api.simplified.hypixel.response.skyblock.member.AccessoryBag;
 import api.simplified.hypixel.response.skyblock.member.CenturyCake;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.Pets;
 import api.simplified.skyblock.SkyBlockData;
-import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.HotmPerk;
+import api.simplified.skyblock.model.Item;
 import api.simplified.skyblock.model.MelodySong;
-import api.simplified.skyblock.model.Pet;
 import api.simplified.skyblock.model.PetItem;
 import api.simplified.skyblock.model.Potion;
 import api.simplified.skyblock.model.ShopPerk;
@@ -16,7 +16,10 @@ import api.simplified.skyblock.model.Skill;
 import api.simplified.skyblock.model.Slayer;
 import api.simplified.skyblock.model.Stat;
 import dev.simplified.collection.Concurrent;
+import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.StringTag;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -24,19 +27,51 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 /**
- * The sixteen sources a member's stats are split between.
+ * The eighteen sources a member's stats are split between.
  * <p>
  * Each constant owns its whole contribution and writes it through a sink it cannot read back, so no
  * source can depend on another having run and the order they are declared in decides nothing. Totals
  * are published between passes instead, where every source has finished and the number is settled.
  * <p>
- * All but the accessory power are fixed for the member, since the rest depend on progression rather
- * than on gear. The selected power is the one an optimiser is free to change, so it alone has to be
- * recomputed per candidate.
+ * Two of the eighteen are containers: they write no cell of their own, opening a slot per item
+ * instance and filling it. All but those two and the accessory power are fixed for the member, since
+ * the rest depend on progression rather than on gear - so the gear and the selected power are what an
+ * optimiser has to recompute per candidate.
  */
 @Getter
 @RequiredArgsConstructor
 public enum StatSource implements StatOrigin {
+
+    /**
+     * The accessories that count toward magical power, each filling a slot of its own.
+     * <p>
+     * Nothing lands under this constant's own name. A container opens a slot per instance and the
+     * cells go there, keyed by the item buckets, which is what keeps one accessory's contribution
+     * separable from the next one's.
+     */
+    ACCESSORIES(false) {
+
+        @Override
+        public void contribute(@NotNull StatContext context, @NotNull StatSink sink) {
+            ConcurrentList<AccessoryBag.DetectedAccessory> detectedAccessories = context.getMember()
+                .getAccessoryBag()
+                .getAccessories();
+
+            for (int index = 0; index < detectedAccessories.size(); index++) {
+                AccessoryBag.DetectedAccessory detectedAccessory = detectedAccessories.get(index);
+
+                ItemStack stack = new ItemStack(
+                    detectedAccessory.getAccessory().getItem(),
+                    Optional.of(detectedAccessory.getAccessory()),
+                    detectedAccessory.getCompoundTag()
+                );
+
+                ItemSlot slot = new ItemSlot(ItemSlot.Kind.ACCESSORY, index);
+                stack.fill(slot.kind(), sink.open(slot, stack));
+            }
+        }
+
+    },
 
     /**
      * Stats granted by the accessory bag's selected power, scaled by its magical power.
@@ -135,6 +170,45 @@ public enum StatSource implements StatOrigin {
                     // Save Active Potions
                     potionStatEffects.forEach((statModel, value) -> sink.add(this, statModel, StatHalf.BONUS, value));
                 });
+        }
+
+    },
+
+    /**
+     * The worn armour pieces, each filling a slot of its own.
+     * <p>
+     * Nothing lands under this constant's own name, and an unworn piece leaves its slot unopened
+     * rather than shifting the pieces after it.
+     */
+    ARMOR(false) {
+
+        @Override
+        public void contribute(@NotNull StatContext context, @NotNull StatSink sink) {
+            ConcurrentList<CompoundTag> armorTags = context.getMember()
+                .getInventory()
+                .getArmor()
+                .getNbtData()
+                .<CompoundTag>getListTag("i")
+                .stream()
+                .collect(Concurrent.toList())
+                .reversed();
+
+            for (int index = 0; index < armorTags.size(); index++) {
+                CompoundTag itemTag = armorTags.get(index);
+
+                if (itemTag.isEmpty())
+                    continue;
+
+                Optional<Item> itemModel = SkyBlockData.getRepository(Item.class)
+                    .findFirst(Item::getId, itemTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue());
+
+                if (itemModel.isEmpty())
+                    continue;
+
+                ItemStack stack = new ItemStack(itemModel.get(), Optional.empty(), itemTag);
+                ItemSlot slot = new ItemSlot(ItemSlot.Kind.ARMOR, index);
+                stack.fill(slot.kind(), sink.open(slot, stack));
+            }
         }
 
     },

@@ -9,11 +9,14 @@ import api.simplified.skyblock.model.BonusItemRarity;
 import api.simplified.skyblock.model.BonusItemStat;
 import api.simplified.skyblock.model.BonusPetPerkStat;
 import api.simplified.skyblock.model.BonusReforgeStat;
+import api.simplified.skyblock.model.Stat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentList;
+import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.GsonSettings;
 import dev.simplified.persistence.JpaSession;
 import org.junit.jupiter.api.AfterAll;
@@ -163,16 +166,10 @@ class ProfileStatsCharacterisationTest {
     @DisplayName("the store holds only the cells something wrote")
     void theStoreHoldsOnlyTheCellsSomethingWrote() {
         int knownStats = profileStats.getAllStats().size();
-        int written = writtenCells(profileStats);
+        int written = writtenCells(profileStats.getStats());
         int seeded = StatSource.values().length * knownStats;
-        for (Optional<ItemStack> armorPiece : profileStats.getArmor()) {
-            if (armorPiece.isPresent()) {
-                written += writtenCells(armorPiece.get());
-                seeded += ItemOrigin.values().length * knownStats;
-            }
-        }
-        for (ItemStack accessoryStats : profileStats.getAccessories()) {
-            written += writtenCells(accessoryStats);
+        for (StatSheet.Slot slot : profileStats.getSheet().getSlots().values()) {
+            written += writtenCells(slot.table().getEntries());
             seeded += ItemOrigin.values().length * knownStats;
         }
         // the dense shape this replaces gave every bucket a value for every stat before a source ran
@@ -200,30 +197,31 @@ class ProfileStatsCharacterisationTest {
     private static Map<String, Double> collect() {
         Map<String, Double> cells = new TreeMap<>();
         record(cells, "damageMultiplier", profileStats.getDamageMultiplier());
-        collectTable(cells, "profile", profileStats);
-        for (int slot = 0; slot < profileStats.getArmor().size(); slot++) {
-            int index = slot;
-            profileStats.getArmor()
-                .get(slot)
-                .ifPresent(itemStats -> collectTable(cells, String.format("armor/%d:%s", index, itemStats.getItem().getId()), itemStats));
-        }
-        ConcurrentList<ItemStack> accessories = profileStats.getAccessories();
-        for (int index = 0; index < accessories.size(); index++) {
-            ItemStack accessoryStats = accessories.get(index);
-            collectTable(cells, String.format("accessory/%03d:%s", index, accessoryStats.getItem().getId()), accessoryStats);
-        }
+        collectTable(cells, "profile", profileStats.getStats());
+        profileStats.getSheet()
+            .getSlots()
+            .forEach((address, slot) -> collectTable(cells, owner(address, slot.stack()), slot.table().getEntries()));
         return cells;
     }
-    private static void collectTable(Map<String, Double> cells, String owner, StatData<?> statData) {
-        statData.getStats().forEach((bucket, statEntries) -> statEntries.forEach((statModel, data) -> {
+    /**
+     * The golden file's owner key for one slot, which the sheet has to reproduce exactly - a re-keyed
+     * cell reads as "nothing became" plus "became nothing" rather than as a moved number.
+     */
+    private static String owner(ItemSlot address, ItemStack stack) {
+        return switch (address.kind()) {
+            case ARMOR -> String.format("armor/%d:%s", address.index(), stack.getItem().getId());
+            case ACCESSORY -> String.format("accessory/%03d:%s", address.index(), stack.getItem().getId());
+        };
+    }
+    private static void collectTable(Map<String, Double> cells, String owner, ConcurrentMap<StatOrigin, ConcurrentLinkedMap<Stat, Data>> entries) {
+        entries.forEach((bucket, statEntries) -> statEntries.forEach((statModel, data) -> {
             String path = String.format("%s/%s/%s", owner, bucket.name(), statModel.getId());
             record(cells, path + "/base", data.getBase());
             record(cells, path + "/bonus", data.getBonus());
         }));
     }
-    private static int writtenCells(StatData<?> statData) {
-        return statData.getStats()
-            .stream()
+    private static int writtenCells(ConcurrentMap<StatOrigin, ConcurrentLinkedMap<Stat, Data>> entries) {
+        return entries.stream()
             .mapToInt(entry -> entry.getValue().size())
             .sum();
     }
