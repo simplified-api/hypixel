@@ -55,7 +55,7 @@ class FlatPassOrderTest {
     @BeforeAll
     static void openCorpus() throws Exception {
         Optional<Path> corpus = LocalSkyBlockData.findCorpus();
-        assumeTrue(corpus.isPresent(), "no skyblock-data checkout beside this module, and none named by -D" + LocalSkyBlockData.ROOT_PROPERTY);
+        assumeTrue(corpus.isPresent(), "no skyblock checkout beside this module, and none named by -D" + LocalSkyBlockData.ROOT_PROPERTY);
         ConcurrentList<String> uncovered = LocalSkyBlockData.uncoveredModels(corpus.get());
         assumeTrue(uncovered.isEmpty(), "the reference models and the corpus are of different vintages - the corpus carries no file for " + uncovered);
         session = LocalSkyBlockData.connect(corpus.get());

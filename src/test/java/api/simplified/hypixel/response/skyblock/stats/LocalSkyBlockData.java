@@ -44,10 +44,10 @@ import java.util.Optional;
 final class LocalSkyBlockData {
 
     /**
-     * System property naming the {@code skyblock-data} checkout, for a runner whose working
-     * directory is not the module.
+     * System property naming the {@code skyblock} checkout, for a runner whose working directory is
+     * not the module.
      */
-    static final @NotNull String ROOT_PROPERTY = "skyblock-data.root";
+    static final @NotNull String ROOT_PROPERTY = "skyblock.corpus.root";
 
     private static final @NotNull String MANIFEST_PATH = "data/v1/index.json";
     private static final @NotNull String SOURCE_ID = "skyblock-data-local";
@@ -59,8 +59,9 @@ final class LocalSkyBlockData {
     /**
      * The corpus checkout, empty when neither the property nor the sibling directory holds one.
      * <p>
-     * The sibling is where a full workspace puts it; a clone of this module alone has no corpus and
-     * every test that needs one skips rather than fails.
+     * The corpus is the {@code data/v1} tree the {@code skyblock} module ships, so the sibling
+     * candidate is that module's checkout - where a full workspace puts it. A clone of this module
+     * alone has no corpus and every test that needs one skips rather than fails.
      *
      * @return the checkout root, empty when no manifest is readable under either candidate
      */
@@ -68,7 +69,7 @@ final class LocalSkyBlockData {
         String declared = System.getProperty(ROOT_PROPERTY);
 
         Path root = (declared == null || declared.isBlank())
-            ? Path.of("..", "skyblock-data")
+            ? Path.of("..", "skyblock")
             : Path.of(declared);
 
         root = root.toAbsolutePath().normalize();
