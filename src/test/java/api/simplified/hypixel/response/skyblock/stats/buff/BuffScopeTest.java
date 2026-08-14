@@ -91,6 +91,49 @@ class BuffScopeTest {
         );
     }
 
+    @Test
+    @DisplayName("a rule reads the half it names and writes the bonus one")
+    void aRuleReadsTheHalfItNamesAndWritesTheBonusOne() {
+        // base 100, bonus 20, so the three halves read 100, 20 and 120
+
+        // BONUS is the default and the simple case - double what the bonuses came to
+        assertThat(cell(scaled("BONUS", 2), 100.0, 20.0), is(closeTo(40.0, EPSILON)));
+
+        // TOTAL doubles the whole cell and writes the difference to the bonus, so the total it
+        // produces is the total a whole-cell rescale would produce - 240 - and only the split differs
+        double bonus = cell(scaled("TOTAL", 2), 100.0, 20.0);
+        assertThat(bonus, is(closeTo(140.0, EPSILON)));
+        assertThat(100.0 + bonus, is(closeTo(240.0, EPSILON)));
+
+        // BASE reads what the source gave and lands its change on the bonus, leaving the base alone
+        assertThat(cell(scaled("BASE", 2), 100.0, 20.0), is(closeTo(120.0, EPSILON)));
+    }
+
+    @Test
+    @DisplayName("an add does not depend on the half it reads")
+    void anAddDoesNotDependOnTheHalfItReads() {
+        // what an add contributes is not a function of what it is added to, so all three halves
+        // agree - which is why the operation declares itself not half-bearing
+        for (String half : new String[] { "BASE", "BONUS", "TOTAL" }) {
+            String row = String.format("""
+                { "rules": [ { "half": "%s", "target": { "kind": "ALL" }, "value": { "kind": "NUMBER", "amount": 7 } } ] }
+                """, half);
+
+            assertThat(half, cell(compile(row), 100.0, 20.0), is(closeTo(27.0, EPSILON)));
+        }
+    }
+
+    private static @NotNull BuffEvaluator scaled(@NotNull String half, int factor) {
+        return compile(String.format("""
+            { "rules": [ { "half": "%s", "operation": "MULTIPLY", "target": { "kind": "ALL" },
+                           "value": { "kind": "NUMBER", "amount": %d } } ] }
+            """, half, factor));
+    }
+
+    private static double cell(@NotNull BuffEvaluator evaluator, double base, double bonus) {
+        return evaluator.applyToCell(STRENGTH, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, null, base, bonus, context());
+    }
+
     private static double fold(@NotNull BuffEvaluator evaluator, @NotNull Buff.Rule.Scope scope, double current) {
         return evaluator.apply(STRENGTH, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, scope, current, context());
     }

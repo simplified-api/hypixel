@@ -153,6 +153,58 @@ public final class BuffEvaluator {
     }
 
     /**
+     * Folds this row onto one cell, reading whichever half each rule names and writing the bonus one.
+     *
+     * <p>
+     * A rule reads a half and writes a half, and they are not the same choice: it always writes the
+     * bonus, because the base is what a source gave before anything scaled it. So what a rule
+     * contributes is the change it made to what it <b>read</b>, and that change lands on the bonus.
+     * A {@code TOTAL} rescale therefore preserves the total a whole-cell rescale would produce and
+     * differs from it only in the split, which is what the column is for.
+     *
+     * @param statModel the stat being written
+     * @param channel which number of it is being written
+     * @param stage which round is running
+     * @param scope whose contributions the table being written holds
+     * @param base what the source itself gave
+     * @param bonus what the bonuses have added
+     * @param context what the row's terms and tests read
+     * @return the new bonus half, unchanged when no rule applies
+     */
+    public double applyToCell(@NotNull Stat statModel, @NotNull Buff.Channel channel, @NotNull Buff.Rule.Stage stage, @Nullable Buff.Rule.Scope scope, double base, double bonus, @NotNull Context context) {
+        if (!this.holdsAll(this.row.getConditions(), statModel, base + bonus, context))
+            return bonus;
+
+        double running = bonus;
+
+        // an effects entry is an add on the value channel at the default scope
+        if (channel == Buff.Channel.VALUE && stage == Buff.Rule.Stage.BONUS && (scope == null || scope == Buff.Rule.Scope.CARRIER))
+            running += this.row.getEffects().getOrDefault(statModel.getId(), 0.0);
+
+        ConcurrentList<Buff.Rule> applicable = this.applicable(statModel, channel, stage, scope, base + running, context);
+
+        applicable.sort(BY_RANK);
+
+        for (Buff.Rule rule : applicable) {
+            double read = switch (rule.getHalf()) {
+                case BASE -> base;
+                case BONUS -> running;
+                case TOTAL -> base + running;
+            };
+
+            OptionalDouble operand = this.operand(rule, statModel, read, context);
+
+            // a rule whose operand does not resolve leaves the number alone rather than zeroing it
+            if (operand.isEmpty())
+                continue;
+
+            running += rule.getOperation().apply(read, operand.getAsDouble()) - read;
+        }
+
+        return running;
+    }
+
+    /**
      * Whether this row holds any rule addressed to one scope.
      *
      * <p>

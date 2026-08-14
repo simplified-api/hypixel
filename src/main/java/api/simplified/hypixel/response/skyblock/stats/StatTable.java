@@ -111,6 +111,21 @@ final class StatTable {
     }
 
     /**
+     * Rewrites the bonus half of every written cell, letting the rewriter read both halves.
+     * <p>
+     * A rule reads whichever half it names and always writes the bonus one, so the two cannot be the
+     * same call - a rewriter handed one half at a time can neither read the total nor leave the base
+     * alone. An unwritten cell stays absent for the same reason as above.
+     *
+     * @param rewriter given the stat and both halves as they stand, answers the new bonus half
+     */
+    public void rewriteBonus(@NotNull CellRewriter rewriter) {
+        this.entries.forEach((origin, statEntries) -> statEntries.forEach((statModel, data) ->
+            StatHalf.BONUS.set(data, rewriter.rewrite(statModel, data.getBase(), data.getBonus()))
+        ));
+    }
+
+    /**
      * Rewrites every written cell of one stat, across every origin that wrote it.
      *
      * @param target the stat to rewrite
@@ -206,6 +221,24 @@ final class StatTable {
             .stream()
             .map(statModel -> Pair.of(statModel, new Data()))
             .collect(Concurrent.toLinkedMap());
+    }
+
+    /**
+     * Answers what one cell's bonus half becomes, given both halves as they stand.
+     */
+    @FunctionalInterface
+    interface CellRewriter {
+
+        /**
+         * Rewrites one cell's bonus half.
+         *
+         * @param statModel the stat the cell holds
+         * @param base what the source itself gave
+         * @param bonus what the bonuses have added
+         * @return the new bonus half
+         */
+        double rewrite(@NotNull Stat statModel, double base, double bonus);
+
     }
 
     /**

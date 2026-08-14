@@ -321,20 +321,18 @@ final class PostProcess {
         BuffEvaluator.Context context = itemContext(slot, variables);
 
         rows.stream().map(BuffEvaluator::compile).forEach(evaluator -> {
-            // a carrier rule rewrites what the carrier itself contributed, and lands on the bonus
-            // half only - the base half is what the source gave before anything scaled it
-            slot.table().getEntries().forEach((bucket, statEntries) -> statEntries.forEach((statModel, data) -> StatHalf.BONUS.set(
-                data,
-                evaluator.apply(statModel, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, Buff.Rule.Scope.CARRIER, data.getBonus(), context)
-            )));
+            // a carrier rule rewrites what the carrier itself contributed
+            slot.table().rewriteBonus((statModel, base, bonus) -> evaluator.applyToCell(
+                statModel, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, Buff.Rule.Scope.CARRIER, base, bonus, context
+            ));
 
             // a profile rule on a carried row reaches everything the member has, so it reads its own
             // carrier's rarity and tag and writes what every source together came to. The guard is
             // not cosmetic: without it every slot walks the whole profile table once per row it
             // carries, and two of the rarity rows match every slot there is
             if (evaluator.writes(Buff.Rule.Scope.PROFILE))
-                sheet.getProfile().rewrite((statModel, half, current) -> evaluator.apply(
-                    statModel, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, Buff.Rule.Scope.PROFILE, current, context
+                sheet.getProfile().rewriteBonus((statModel, base, bonus) -> evaluator.applyToCell(
+                    statModel, Buff.Channel.VALUE, Buff.Rule.Stage.BONUS, Buff.Rule.Scope.PROFILE, base, bonus, context
                 ));
         });
     }
@@ -363,8 +361,18 @@ final class PostProcess {
         );
     }
 
+    /**
+     * Folds one row over every cell of a table the member owns.
+     *
+     * <p>
+     * No scope is named, and that is the point rather than an omission. A rule's scope separates the
+     * carrier's own contributions from the member's, and that separation only exists where a row is
+     * attached to a carrier holding one table of its own - which is the item round. The pet rounds
+     * fold rows that belong to the member, and reaching the profile, the armour and the accessories
+     * in turn <b>is</b> the member-wide reach, so there is no second table to choose between.
+     */
     private static void rewrite(@NotNull StatTable table, @NotNull BuffEvaluator evaluator, @NotNull BuffEvaluator.Context context, @NotNull Buff.Rule.Stage stage) {
-        table.rewrite((statModel, half, current) -> evaluator.apply(statModel, Buff.Channel.VALUE, stage, current, context));
+        table.rewriteBonus((statModel, base, bonus) -> evaluator.applyToCell(statModel, Buff.Channel.VALUE, stage, null, base, bonus, context));
     }
 
 }
