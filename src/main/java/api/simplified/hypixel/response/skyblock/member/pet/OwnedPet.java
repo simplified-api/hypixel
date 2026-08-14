@@ -149,10 +149,14 @@ public class OwnedPet implements Experience {
     }
 
     /**
-     * What this pet contributes toward pet score, counting from one at the lowest rarity.
+     * What this pet contributes toward pet score, counting from one at the lowest rarity and one more
+     * while the pet sits at its level cap.
+     * <p>
+     * The cap is read from the repository row, so this needs a connected session where the rest of
+     * the rarity accessors need none.
      */
     public int getScore() {
-        return this.getRarity().ordinal() + 1;
+        return this.getRarity().ordinal() + 1 + (this.getLevel() >= this.getMaxLevel() ? 1 : 0);
     }
 
     /**
