@@ -28,11 +28,10 @@ Thank you for your interest in contributing! This document explains how to get s
 | Gradle | 8.x | Wrapper is bundled (`./gradlew`) |
 | Git | 2.x+ | For cloning and contributing |
 | Python | 3.x | For `scripts/json_dto_diff.py` |
-| Hypixel API key | - | To capture a fixture and verify a change against the live API |
+| Hypixel API key | - | To verify a change against the live API |
 | IDE | Any | IntelliJ IDEA is the recommended editor |
 
-> [!CAUTION]
-> The test fixture is **not in the repository**. `src/main/resources/craftedfury.json` is a captured `GET /skyblock/profiles` response, gitignored so no real player's inventory ships in the jar. Without it the whole suite fails in `@BeforeAll`. Capture your own before you start - see [Development Setup](#development-setup).
+Both test fixtures are in the repository, so a fresh clone runs the whole suite with no setup beyond the JDK.
 
 ### Development Setup
 
@@ -53,25 +52,15 @@ Thank you for your interest in contributing! This document explains how to get s
    ./gradlew --version
    ```
 
-3. **Supply a fixture**
-
-   Fetch a profiles response for any account and save the body verbatim:
-
-   ```bash
-   curl -H "API-Key: $HYPIXEL_API_KEY" \
-     "https://api.hypixel.net/v2/skyblock/profiles?uuid=<uuid>" \
-     -o src/main/resources/craftedfury.json
-   ```
-
-   The suite reads two members out of it - the first member of `profiles[0]` as the sparse case and the first member of `profiles[1]` as the populated case - so pick an account with at least two profiles, one of them well played. Several assertions are pinned to exact counts from the original capture (792 objectives, 810 Jacob's contests, a `CATACOMBS` weight of `200.0`); those will not match your account and are the assertions to update deliberately, never to loosen.
-
-4. **Run the build**
+3. **Run the build**
 
    ```bash
    ./gradlew build
    ```
 
-5. **Build against local siblings (optional)**
+   `MemberDtoMappingTest` reads `src/test/resources/craftedfury.json` and takes two members out of it - the first member of `profiles[0]` as the sparse case and the first of `profiles[1]` as the populated one. Many assertions are pinned to exact counts from that capture (792 objectives, 810 Jacob's contests, a `CATACOMBS` weight of `200.0 / 2.03`). Refreshing the capture moves them by design; each is a value captured from behaviour before a change, so they are updated deliberately and never loosened.
+
+4. **Build against local siblings (optional)**
 
    Every upstream dependency is `strictly()`-pinned to a JitPack SHA in `build.gradle.kts`. To test against unpublished sibling changes - most often the `skyblock` data models - build from the `Simplified-Api` parent, whose `settings.gradle.kts` substitutes those coordinates for local sources.
 
@@ -279,13 +268,13 @@ api.simplified.hypixel/
 ├── common/                        # Experience, Weight, Weighted, WeightedGroup, NbtContent,
 │                                  #   IdTiers, EnumLookup - the shared vocabulary
 ├── exception/                     # HypixelApiException + the decoded HypixelErrorResponse
-├── profile_stats/                 # ProfileStats: the stat sheet folded out of a member
 └── response/
     ├── forum/                     # RSS feed items
     ├── hypixel/                   # player, guild, counts, status, punishments
     ├── resource/                  # /resources/* definition documents
     └── skyblock/                  # profiles, islands, auctions, bazaar, fire sales
-        └── member/                # the member document - one package per subtree
+        ├── member/                # the member document - one package per subtree
+        └── stats/                 # ProfileStats: the stat sheet folded out of a member
 ```
 
 ### Decode flow
@@ -315,6 +304,6 @@ Three layers, and telling them apart is most of debugging this module:
 
 By submitting a pull request, you agree that your contributions are licensed under the [Apache License 2.0](LICENSE.md), the same license that covers this project.
 
-**Do not commit credentials or captured responses.** API keys and API response fixtures must never enter the repository - `.gitignore` excludes `craftedfury.json` to make that harder to do by accident, and that entry stays. A profiles response contains another player's full inventory, which is theirs and not yours to publish.
+**Do not commit credentials, and do not commit anyone else's capture.** An API key must never enter the repository. The two fixtures under `src/test/resources/` are the maintainer's own account and a public resource document, both published deliberately; a profiles response for any other account contains that player's full inventory, which is theirs and not yours to publish.
 
 Hypixel and SkyBlock are properties of Hypixel Inc. This library is an independent client for their public API and is not affiliated with, endorsed by, or sponsored by Hypixel Inc. or Mojang AB. Contributions must comply with the [Hypixel Public API terms](https://api.hypixel.net/).

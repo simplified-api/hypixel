@@ -1,9 +1,10 @@
 package api.simplified.hypixel.response.skyblock.member;
 
 import api.simplified.hypixel.common.NbtContent;
-import api.simplified.hypixel.profile_stats.data.AccessoryData;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
+import api.simplified.hypixel.response.skyblock.stats.ItemStack;
 import api.simplified.skyblock.SkyBlockData;
+import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.date.SkyBlockDate;
 import api.simplified.skyblock.model.Accessory;
 import api.simplified.skyblock.model.Power;
@@ -20,9 +21,11 @@ import lib.minecraft.nbt.tag.StringTag;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -56,9 +59,9 @@ public class AccessoryBag {
     private transient int abiphoneContacts;
 
     @Getter(AccessLevel.NONE)
-    private transient ConcurrentList<AccessoryData> detectedAccessories;
+    private transient ConcurrentList<DetectedAccessory> detectedAccessories;
     @Getter(AccessLevel.NONE)
-    private transient ConcurrentList<AccessoryData> accessories;
+    private transient ConcurrentList<DetectedAccessory> accessories;
 
     // Power
 
@@ -113,8 +116,9 @@ public class AccessoryBag {
      * Accessories parsed out of the talisman bag and resolved against the accessory repository,
      * empty for a bag decoded on its own.
      */
-    public @NotNull ConcurrentList<AccessoryData> getDetectedAccessories() {
+    public @NotNull ConcurrentList<DetectedAccessory> getDetectedAccessories() {
         if (this.detectedAccessories == null) {
+            // a bag with nothing to parse resolves nothing, so it never reaches the reference data
             this.detectedAccessories = this.contents.getRawData().isEmpty()
                 ? Concurrent.newUnmodifiableList()
                 : this.contents
@@ -127,10 +131,13 @@ public class AccessoryBag {
                             Accessory::getId,
                             compoundTag.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue()
                         )
-                        .map(accessory -> Pair.of(accessory, compoundTag))
+                        .map(accessory -> new DetectedAccessory(
+                            accessory,
+                            compoundTag,
+                            ItemStack.resolveRarity(accessory.getItem(), compoundTag)
+                        ))
                         .stream()
                     )
-                    .map(entry -> new AccessoryData(entry.getKey(), entry.getValue()))
                     .collect(Concurrent.toList());
         }
 
@@ -141,13 +148,16 @@ public class AccessoryBag {
      * The detected accessories that count toward magical power, with the lower-ranked members of each
      * family dropped.
      */
-    public @NotNull ConcurrentList<AccessoryData> getAccessories() {
-        if (this.accessories != null)
-            return this.accessories;
+    public @NotNull ConcurrentList<DetectedAccessory> getAccessories() {
+        return this.accessories != null
+            ? this.accessories
+            : this.dropOutrankedAccessories(this.getDetectedAccessories());
+    }
 
+    private @NotNull ConcurrentList<DetectedAccessory> dropOutrankedAccessories(@NotNull ConcurrentList<DetectedAccessory> detectedAccessories) {
         // Store Families
         ConcurrentMap<String, ConcurrentSet<Accessory>> familyAccessoryDataMap = Concurrent.newMap();
-        this.getDetectedAccessories()
+        detectedAccessories
             .stream()
             .filter(accessoryData -> accessoryData.getAccessory().getFamily().isPresent())
             .forEach(accessoryData -> {
@@ -162,7 +172,7 @@ public class AccessoryBag {
 
         // Store Non-Stackable Families
         ConcurrentSet<Accessory> processedAccessories = Concurrent.newSet();
-        this.accessories = this.getDetectedAccessories()
+        this.accessories = detectedAccessories
             .stream()
             .filter(accessoryData -> {
                 if (accessoryData.getAccessory().getFamily().isPresent()) {
@@ -224,13 +234,6 @@ public class AccessoryBag {
     }
 
     /**
-     * Tuning points the bag's magical power has earned, one for every ten.
-     */
-    public int getTuningPoints() {
-        return this.getMagicalPower() / 10;
-    }
-
-    /**
      * The diminishing curve magical power is fed through before it scales a power's stats.
      */
     public double getLogComponent() {
@@ -251,7 +254,7 @@ public class AccessoryBag {
                         .findFirstOrNull(Stat::getId, entry.getKey())
                         .getPowerCoefficient() * this.getLogComponent() * entry.getValue()
                 ))
-                .collect(Concurrent.toUnmodifiableMap());
+                .collect(Concurrent.toMap());
 
             this.getSelectedPower().ifPresent(power -> power.getBonuses()
                 .forEach((statId, value) -> stats.merge(
@@ -261,7 +264,7 @@ public class AccessoryBag {
                 ))
             );
 
-            this.selectedPowerStats = stats;
+            this.selectedPowerStats = stats.toUnmodifiable();
         }
 
         return this.selectedPowerStats;
@@ -273,7 +276,7 @@ public class AccessoryBag {
      */
     public @NotNull Optional<Power> getSelectedPower() {
         return this.getSelectedPowerId().flatMap(powerId -> SkyBlockData.getRepository(Power.class)
-            .findFirst(Power::getId, powerId)
+            .findFirst(Power::getId, powerId.toUpperCase(Locale.ROOT))
         );
     }
 
@@ -284,23 +287,51 @@ public class AccessoryBag {
         return this.getUnlockedPowerIds()
             .stream()
             .map(powerId -> SkyBlockData.getRepository(Power.class)
-                .findFirst(Power::getId, powerId)
+                .findFirst(Power::getId, powerId.toUpperCase(Locale.ROOT))
             )
             .flatMap(Optional::stream)
             .collect(Concurrent.toUnmodifiableList());
     }
 
-    private int handleMagicalPower(@NotNull AccessoryData accessoryData) {
-        int magicalPower = accessoryData.getRarity().getMagicPower();
+    private int handleMagicalPower(@NotNull DetectedAccessory detectedAccessory) {
+        int magicalPower = detectedAccessory.getRarity().getMagicPower();
 
         // TODO: Dynamic
-        if (accessoryData.getAccessory().getId().equals("HEGEMONY_ARTIFACT"))
+        if (detectedAccessory.getAccessory().getId().equals("HEGEMONY_ARTIFACT"))
             magicalPower *= 2;
 
-        if (accessoryData.getAccessory().getId().equals("ABICASE"))
+        if (detectedAccessory.getAccessory().getId().equals("ABICASE"))
             magicalPower += this.abiphoneContacts / 2;
 
         return magicalPower;
+    }
+
+    /**
+     * One item found in a member's accessory bag, resolved far enough to be counted and ranked.
+     * <p>
+     * This is what magical power and the family filter need and no more - neither reads a stat, so
+     * neither pays for one. Totalling what the accessory gives is a separate step, and the result of
+     * it belongs to the computation that asked rather than to the bag.
+     */
+    @Getter
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class DetectedAccessory {
+
+        /**
+         * Reference data for the accessory this instance is of.
+         */
+        private final @NotNull Accessory accessory;
+
+        /**
+         * The accessory's NBT tag exactly as it was decoded.
+         */
+        private final @NotNull CompoundTag compoundTag;
+
+        /**
+         * Rarity after every upgrade the instance carries, which may sit above the accessory's own.
+         */
+        private final @NotNull Rarity rarity;
+
     }
 
     /**

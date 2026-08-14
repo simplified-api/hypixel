@@ -1,6 +1,5 @@
-package api.simplified.hypixel.profile_stats.data;
+package api.simplified.hypixel.response.skyblock.stats;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -10,7 +9,6 @@ import lombok.Getter;
  * base alone - a reforge or an enchantment scales what the item itself provides, and folding the two
  * together first would scale the additions as well.
  */
-@AllArgsConstructor
 public class Data {
 
     /**
@@ -26,17 +24,7 @@ public class Data {
     /**
      * Constructs a new {@code Data} with both halves at zero.
      */
-    public Data() {
-        this(0, 0);
-    }
-
-    void addBase(double value) {
-        this.base += value;
-    }
-
-    void addBonus(double value) {
-        this.bonus += value;
-    }
+    public Data() { }
 
     /**
      * Both halves added together.

@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.skyblock;
 
-import api.simplified.hypixel.profile_stats.ProfileStats;
 import api.simplified.hypixel.response.skyblock.island.Banking;
 import api.simplified.hypixel.response.skyblock.island.CommunityUpgrades;
+import api.simplified.hypixel.response.skyblock.stats.ProfileStats;
 import api.simplified.skyblock.common.GameMode;
 import api.simplified.skyblock.common.Profile;
 import api.simplified.skyblock.date.SkyBlockDate;
@@ -150,7 +150,7 @@ public class SkyBlockIsland {
      * @return the member's stats on this island
      */
     public @NotNull ProfileStats getProfileStats(@NotNull SkyBlockMember member, boolean calculateBonus) {
-        return new ProfileStats(this, member, calculateBonus);
+        return ProfileStats.compute(this, member, calculateBonus);
     }
 
     /**

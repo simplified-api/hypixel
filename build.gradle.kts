@@ -35,7 +35,7 @@ dependencies {
     testImplementation(libs.junit.platform.launcher)
 
     // Sibling API modules (composite-build substitutes by project name)
-    api("com.github.simplified-api:skyblock") { version { strictly("48b270e") } }
+    api("com.github.simplified-api:skyblock") { version { strictly("7f4979d") } }
 
     // Simplified Libraries (github.com/simplified-dev)
     api("com.github.simplified-dev:collections") { version { strictly("7699a31") } }
@@ -65,5 +65,11 @@ idea {
 tasks {
     test {
         useJUnitPlatform()
+
+        // The characterisation harness reads the sibling skyblock-data checkout and, on request,
+        // rewrites its golden file. Neither reaches a forked test JVM unless it is handed over.
+        listOf("skyblock-data.root", "profile-stats.golden").forEach { key ->
+            System.getProperty(key)?.let { systemProperty(key, it) }
+        }
     }
 }

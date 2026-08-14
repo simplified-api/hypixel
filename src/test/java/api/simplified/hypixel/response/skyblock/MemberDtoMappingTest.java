@@ -182,7 +182,7 @@ class MemberDtoMappingTest {
 
         assertThat(populatedBag.getTuning().getSlots(), hasKey(0));
         assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats(), hasKey("critical_damage"));
-        assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats().get("critical_damage"), is(equalTo(211)));
+        assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats().get("critical_damage"), is(equalTo(213)));
         assertThat(populatedBag.getTuning().getSlot(0).orElseThrow().getStats(), not(hasKey("purchase_ts")));
         assertThat(sparseBag.getTuning().hasClaimedSecondRefund(), is(true));
         assertThat(sparseBag.getTuning().getSlot(1).orElseThrow().getPurchased().isPresent(), is(true));
@@ -196,7 +196,7 @@ class MemberDtoMappingTest {
         assertThat(loadouts.getArmorSets(), hasKey(1));
         assertThat(loadouts.getArmorSets().get(1).getBoots().getRawData().isEmpty(), is(false));
         assertThat(loadouts.getEquipmentSets().get(1).getNecklace().getRawData().isEmpty(), is(false));
-        assertThat(loadouts.getEquippedArmorSet().orElseThrow(), is(equalTo(10)));
+        assertThat(loadouts.getEquippedArmorSet().orElseThrow(), is(equalTo(4)));
         assertThat(loadouts.getLoadout(1).orElseThrow().getName(), is(equalTo("Dungeons LCM")));
         assertThat(loadouts.getLoadout(1).orElseThrow().getPowerStone().orElseThrow(), is(equalTo("silky")));
     }
@@ -264,8 +264,8 @@ class MemberDtoMappingTest {
         Statistics statistics = this.decode(populated, "player_stats", Statistics.class);
 
         assertThat(statistics.getAuctions().getTotalSold().size(), is(equalTo(8)));
-        assertThat(statistics.getAuctions().getTotalSold().get(Rarity.LEGENDARY), is(equalTo(3123)));
-        assertThat(statistics.getAuctions().getTotalSold().values(), not(hasItem(1174)));
+        assertThat(statistics.getAuctions().getTotalSold().get(Rarity.LEGENDARY), is(equalTo(3130)));
+        assertThat(statistics.getAuctions().getTotalSold().values(), not(hasItem(1184)));
     }
 
     @Test
@@ -329,7 +329,7 @@ class MemberDtoMappingTest {
     void mapsSkillTree() {
         SkillTree skillTree = this.decode(populated, "skill_tree", SkillTree.class);
 
-        assertThat(skillTree.getLastFreeTrialDay(), is(equalTo(66)));
+        assertThat(skillTree.getLastFreeTrialDay(), is(equalTo(69)));
         assertThat(skillTree.getSelectedSlot(), hasKey("foraging"));
     }
 
@@ -338,11 +338,11 @@ class MemberDtoMappingTest {
     void mapsStatistics() {
         Statistics statistics = this.decode(populated, "player_stats", Statistics.class);
 
-        assertThat(statistics.getUniqueShards(), is(equalTo(96)));
-        assertThat(statistics.getCombatShardHunts(), is(equalTo(2926)));
-        assertThat(statistics.getSaltShardHunts(), is(equalTo(302)));
-        assertThat(statistics.getItemsFished().getOutstanding(), is(equalTo(2)));
-        assertThat(statistics.getItemsFished().getTrophyFrog(), is(equalTo(263)));
+        assertThat(statistics.getUniqueShards(), is(equalTo(116)));
+        assertThat(statistics.getCombatShardHunts(), is(equalTo(4117)));
+        assertThat(statistics.getSaltShardHunts(), is(equalTo(350)));
+        assertThat(statistics.getItemsFished().getOutstanding(), is(equalTo(6)));
+        assertThat(statistics.getItemsFished().getTrophyFrog(), is(equalTo(1422)));
         assertThat(statistics.getEndIsland().getDragonFight().getEnderCrystalsDestroyed(), is(equalTo(168)));
         assertThat(statistics.getEndIsland().getDragonFight().getAmountSummoned().isEmpty(), is(false));
     }
@@ -559,11 +559,11 @@ class MemberDtoMappingTest {
         // both halves are typed and neither is lost
         assertThat((long) crimsonIsle.getQuests().getQuestRewards().size(), is(equalTo(expectedCounts)));
         assertThat((long) crimsonIsle.getQuests().getQuestItems().size(), is(equalTo(expectedItems)));
-        assertThat(crimsonIsle.getQuests().getQuestRewards(), hasKey("KADA_LEAD"));
-        assertThat(crimsonIsle.getQuests().getQuestItems(), hasKey("crimson_isle_kill_barbarian_duke_x_c"));
+        assertThat(crimsonIsle.getQuests().getQuestRewards(), hasKey("GAZING_PEARL"));
+        assertThat(crimsonIsle.getQuests().getQuestItems(), hasKey("crimson_isle_kill_mage_outlaw_b"));
         // selection without stripping - the quest id IS the key
-        assertThat(crimsonIsle.getQuests().getQuestItems().get("crimson_isle_kill_barbarian_duke_x_c"),
-            is(equalTo("KADA_LEAD")));
+        assertThat(crimsonIsle.getQuests().getQuestItems().get("crimson_isle_kill_mage_outlaw_b"),
+            is(equalTo("GAZING_PEARL")));
 
         JsonObject out = JsonParser.parseString(gson.toJson(crimsonIsle)).getAsJsonObject();
         JsonObject outRewards = out.getAsJsonObject("quests").getAsJsonObject("quest_rewards");
@@ -661,14 +661,20 @@ class MemberDtoMappingTest {
      * other test failure, while a wrong refusal costs a {@code null} that was already there. Every
      * sentinel-shaped constant in this module is either wire-named or shares a name with something
      * in that vocabulary, so adopting the marker means adding a new constant first.
+     * <p>
+     * The rule reaches the enums the wire can name and stops there. A constant only matters here if a
+     * value off the wire can bind to it, so an enum nothing deserializes cannot collapse an
+     * unrecognised value onto a real one however it is marked - which is the whole of the argument the
+     * rule rests on.
      */
     @Test
     @DisplayName("no @Fallback constant is reachable from the wire")
     void noMarkedConstantIsWireVisible() throws Exception {
         List<Class<?>> enums = responseEnums();
 
-        // guard the guard - a scan that silently found nothing would pass vacuously forever
-        assertThat(enums.size(), is(greaterThan(20)));
+        // guard the guard - a scan that silently found nothing would pass vacuously forever, and the
+        // floor is set against the wire enums alone so that the derived layer cannot satisfy it
+        assertThat(enums.size(), is(greaterThan(25)));
 
         Set<String> vocabulary = fixtureVocabulary();
 
@@ -695,15 +701,21 @@ class MemberDtoMappingTest {
     }
 
     /**
-     * Every enum compiled under the response package, loaded from the build output directory.
+     * Every enum the wire binds into, loaded from the build output directory.
+     * <p>
+     * The walk covers the response package and skips the stat subtree under it. Everything there is
+     * derived rather than bound - nothing under it carries a serialization annotation and no key on
+     * the wire pulls any of it in - so its enums are reached by a call a caller makes by name and
+     * never by a deserializer matching a string.
      */
     private static List<Class<?>> responseEnums() throws Exception {
         Path root = Path.of(Currencies.class.getProtectionDomain().getCodeSource().getLocation().toURI());
         Path pkg = root.resolve("api/simplified/hypixel/response");
+        Path derived = pkg.resolve("skyblock").resolve("stats");
         List<Class<?>> found = new ArrayList<>();
 
         try (Stream<Path> paths = Files.walk(pkg)) {
-            for (Path path : paths.filter(p -> p.toString().endsWith(".class")).toList()) {
+            for (Path path : paths.filter(p -> p.toString().endsWith(".class")).filter(p -> !p.startsWith(derived)).toList()) {
                 String name = root.relativize(path).toString()
                     .replace(java.io.File.separatorChar, '.')
                     .replaceAll("\\.class$", "");

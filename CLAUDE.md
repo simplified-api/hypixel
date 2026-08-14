@@ -24,15 +24,10 @@ declaration.
 `./gradlew test` is two classes, `MemberDtoMappingTest` and `ElectionMappingTest`, and they are the
 whole gate.
 
-**A fresh clone can run only one of them.** `MemberDtoMappingTest` reads
-`src/main/resources/craftedfury.json`, gitignored and untracked, so `@BeforeAll` throws
-`craftedfury.json is missing from the classpath` and every test in it fails together. It sits under
-`main/resources` rather than `test/resources`, so were it ever tracked it would ship inside the jar -
-which is the reason it is ignored rather than the reason it is misplaced.
-
-`ElectionMappingTest` reads `src/test/resources/elections.json`, which is **tracked**. It is an
-unauthenticated resource carrying mayors, perk text and public vote counts and no player data at all,
-so nothing argues for keeping it out, and under `test/resources` it never reaches the jar.
+**A fresh clone runs both.** `MemberDtoMappingTest` reads `src/test/resources/craftedfury.json`, a
+captured `GET /skyblock/profiles` response for the maintainer's own account, and `ElectionMappingTest`
+reads `src/test/resources/elections.json`, an unauthenticated resource carrying mayors, perk text and
+public vote counts. Both are **tracked**, and under `test/resources` neither reaches the jar.
 
 `MemberDtoMappingTest` reads two members out of its capture: the first member of `profiles[0]` as the sparse case, the
 first of `profiles[1]` as the populated one. Many assertions are pinned to that one capture - 792
@@ -59,6 +54,17 @@ Three layers, and telling them apart is most of debugging this module.
 observation: derivation used to run at bind time inside a swallowing catch, so a throw left
 `Bestiary.families` empty for every profile ever decoded and nothing anywhere said so.
 
+`response/**` is the tree the wire binds into and it holds all three layers, not just the first.
+`response.skyblock.stats` is where the derived layer keeps its own machinery: nothing under it binds,
+nothing under it carries a serialization annotation, and everything under it is reached by a call a
+caller makes by name. The line between the two halves is a field:
+
+**A `stats` type appears under `response/**` as a parameter or a return type, never as a field.**
+The decoded tree holds no stat, so no key on the wire pulls the stat layer in behind it and a session
+opens only because a caller asked for one. `SkyBlockIsland.getProfileStats` and
+`AccessoryBag.getDetectedAccessories` are what that looks like from the DTO side - a method the caller
+names, on an object that decoded without one.
+
 - `SkyBlockMember.getAccessoryBag()` calls `initialize` on every call, handing the bag the three
   member-scoped values it cannot reach from its own node. An `AccessoryBag` decoded standalone is
   never initialized and reads empty rather than throwing - both paths are asserted.
@@ -67,6 +73,8 @@ observation: derivation used to run at bind time inside a swallowing catch, so a
 - `Bestiary.getFamilies()` and `AccessoryBag.getDetectedAccessories()` are the repository boundary.
   `getKills()` is not, and the parse behind the families completes with no session - only the lookup
   needs one.
+- `ProfileStats.compute` is the top of the derived layer and the heaviest thing in it. It resolves
+  every id against a repository, so it needs a session and it is not cheap.
 
 ## Serialization is not symmetric
 
@@ -191,8 +199,8 @@ empty there and reads the flagged entry everywhere else.
 
 - `build/`, `.gradle/` - Gradle output and daemon state.
 - `.schema/` - generated JPA schema, excluded from the IDE module by `build.gradle.kts`.
-- `craftedfury.json` - the untracked fixture. Never track it; it is another player's inventory.
-  `src/test/resources/elections.json` is the opposite case and is tracked - public resource data.
+- `src/test/resources/craftedfury.json` - the profiles fixture, 1.6 MB over 26,940 lines. Tracked, but
+  read a slice through `scripts/json_dto_diff.py --section <node>` rather than opening it whole.
 - `notes/` - gitignored working notes on the gson-extras and json-annotations efforts. Read one when
   picking up a live effort; nothing downstream reads them, so do not cite a `notes/` path or a note's
   entry number from a tracked file - the directory resolves for nobody who clones this.
@@ -201,6 +209,9 @@ empty there and reads the flagged entry everywhere else.
 
 - Do not derive at bind time. It needs a repository the decoder has no reason to have, it puts the
   throw inside a swallowing catch, and it makes the DTO tree unusable without a database session.
+- Do not put a `stats` type in a field under `response/**`. A parameter or a return type charges the
+  compute to the caller that asked for it; a field puts it behind a decode, which is how derivation
+  reached bind time the first time.
 - Do not hand-write an adapter for a shape an annotation covers. The annotations round-trip back to
   the wire layout; a hand-written adapter has to be written twice and the write half is the one
   nobody tests.

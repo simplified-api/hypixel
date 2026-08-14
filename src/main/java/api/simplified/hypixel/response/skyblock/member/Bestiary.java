@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -161,7 +162,7 @@ public class Bestiary {
                 .map(family -> new Family(
                     family.getId(),
                     mobs.stream()
-                        .filter(mob -> mob.getFamily().equals(family))
+                        .filter(mob -> family.getMobs().contains(mob.getKey()))
                         .collect(Concurrent.toUnmodifiableList())
                 ))
                 .collect(Concurrent.toUnmodifiableList());
@@ -274,14 +275,25 @@ public class Bestiary {
         private final int deaths;
 
         /**
-         * Family whose own mob list names this mob at this level.
+         * How a family's own mob list spells this mob, which is its id and its level joined and
+         * lower-cased - the spelling the reference data uses, and the one the tally key arrived in
+         * before {@link #getId()} raised it to the module's own convention.
+         */
+        public @NotNull String getKey() {
+            return String.format("%s_%s", this.getId(), this.getLevel()).toLowerCase(Locale.ROOT);
+        }
+
+        /**
+         * Family whose own mob list names this mob, empty for a mob no family claims.
          *
          * <p>
-         * Resolved by scanning the repository rather than by a keyed lookup, so it needs a session.
+         * A tally key is whatever the member has fought, so it reaches mobs the bestiary does not
+         * rank; resolved by scanning the repository rather than by a keyed lookup, so it needs a
+         * session.
          */
-        public @NotNull BestiaryFamily getFamily() {
+        public @NotNull Optional<BestiaryFamily> getFamily() {
             return SkyBlockData.getRepository(BestiaryFamily.class)
-                .matchFirstOrNull(family -> family.getMobs().contains(String.format("%s_%s", this.getId(), this.getLevel())));
+                .matchFirst(family -> family.getMobs().contains(this.getKey()));
         }
 
     }

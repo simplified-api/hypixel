@@ -18,6 +18,8 @@ import java.util.Optional;
  *
  * <p>
  * Every accessor here is derived and recomputes on each call - nothing on this class memoises.
+ * {@link #getPetScore()} and {@link #getMilestone()} reach a repository for each pet's level cap and
+ * so need a connected session; the rest read the decoded tree alone.
  *
  * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Pets">Pets</a>
  */
@@ -64,12 +66,13 @@ public class Pets {
     }
 
     /**
-     * The member's pet score, summing the score of each distinct pet id.
+     * The member's pet score, summing what each distinct pet id is worth.
      * <p>
      * The owned pets are sorted by rarity descending before duplicates are dropped, so a pet the
-     * member holds twice contributes its highest-rarity copy, which is the in-game rule. The extra
-     * point the game awards a pet sitting at its level cap is not counted, so the figure here is a
-     * floor rather than the number shown in game.
+     * member holds twice contributes its highest-rarity copy - and since a pet at its level cap is
+     * worth a point more, it is that copy's level that decides the point.
+     *
+     * @see OwnedPet#getScore()
      */
     public int getPetScore() {
         return this.getPets()
