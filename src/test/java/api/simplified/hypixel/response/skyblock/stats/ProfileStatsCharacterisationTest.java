@@ -29,6 +29,7 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
@@ -171,27 +172,34 @@ class ProfileStatsCharacterisationTest {
         assertThat(seeded, is(greaterThan(40_000)));
         assertThat(String.format("%d cells written against %d seeded", written, seeded), written, is(lessThan(seeded / 20)));
     }
+    /**
+     * The world properties a compute reads off the clock, which are the only ones that can make one
+     * member's total differ between two runs.
+     */
+    private static final Set<Buff.Term.World> CLOCK_READ = Set.of(Buff.Term.World.HOUR, Buff.Term.World.SEASON);
     @Test
-    @DisplayName("no row gates on an hour, so no total depends on the time it is read")
-    void noRowGatesOnAnHourSoNoTotalDependsOnTheTimeItIsRead() {
-        // the buff table has rows now, so the property is checked rather than implied by emptiness -
-        // an hour-valued gate is what would make a total depend on when it was computed
+    @DisplayName("no row gates on the clock, so no total depends on when it is read")
+    void noRowGatesOnTheClockSoNoTotalDependsOnWhenItIsRead() {
+        // the hour and the season are both answered now, off the calendar, so a row gating on either
+        // makes a total depend on when it was taken - which is the one thing a baseline cannot
+        // survive. The capability is deliberate and the corpus is what is held still
         ConcurrentList<Buff> buffs = SkyBlockData.getRepository(Buff.class).findAll();
         assertThat("the rarity rows are missing", buffs.size(), is(equalTo(6)));
         for (Buff row : buffs)
-            assertThat(row.getId() + " gates on an hour", gatesOnAnHour(row), is(false));
+            assertThat(row.getId() + " gates on the clock", gatesOnTheClock(row), is(false));
     }
-    private static boolean gatesOnAnHour(Buff row) {
+    private static boolean gatesOnTheClock(Buff row) {
         return Stream.concat(row.getConditions().stream(), row.getRules().stream().flatMap(rule -> rule.getWhen().stream()))
-            .anyMatch(ProfileStatsCharacterisationTest::readsAnHour);
+            .anyMatch(ProfileStatsCharacterisationTest::readsTheClock);
     }
-    private static boolean readsAnHour(Buff.Condition condition) {
-        if (condition.getInput() != null && condition.getInput().getWorld() == Buff.Term.World.HOUR)
+    private static boolean readsTheClock(Buff.Condition condition) {
+        // a term that names no world property reads null here, and the set is null-hostile
+        if (condition.getInput() != null && condition.getInput().getWorld() != null && CLOCK_READ.contains(condition.getInput().getWorld()))
             return true;
-        if (condition.getNot() != null && readsAnHour(condition.getNot()))
+        if (condition.getNot() != null && readsTheClock(condition.getNot()))
             return true;
         return Stream.concat(condition.getAll().stream(), condition.getAny().stream())
-            .anyMatch(ProfileStatsCharacterisationTest::readsAnHour);
+            .anyMatch(ProfileStatsCharacterisationTest::readsTheClock);
     }
     private static int activeCenturyCakes() {
         return (int) member.getPlayerData()

@@ -86,14 +86,15 @@ public class ProfileStats {
 
         // --- Bonus Pass ---
         ConcurrentList<BuffEvaluator> program = PostProcess.program(this.context);
+        WorldFacts world = WorldFacts.of(this.context);
 
         if (calculateBonusStats)
-            PostProcess.run(this.sheet, this.variables, program);
+            PostProcess.run(this.sheet, this.variables, program, world);
 
         // --- Caps ---
         // resolved once the sheet is settled and never written back into it, because a ceiling is a
         // property of reading sources together rather than a contribution any one of them made
-        this.caps = PostProcess.capProgram(this.sheet, this.variables, program);
+        this.caps = PostProcess.capProgram(this.sheet, this.variables, program, world);
     }
 
     /**

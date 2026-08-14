@@ -56,9 +56,10 @@ final class PostProcess {
     public static void run(
         @NotNull StatSheet sheet,
         @NotNull ConcurrentMap<String, Double> variables,
-        @NotNull ConcurrentList<BuffEvaluator> program
+        @NotNull ConcurrentList<BuffEvaluator> program,
+        @NotNull WorldFacts world
     ) {
-        run(sheet, variables, program, STEPS);
+        run(sheet, variables, program, world, STEPS);
     }
 
     /**
@@ -73,9 +74,10 @@ final class PostProcess {
         @NotNull StatSheet sheet,
         @NotNull ConcurrentMap<String, Double> variables,
         @NotNull ConcurrentList<BuffEvaluator> program,
+        @NotNull WorldFacts world,
         @NotNull ConcurrentList<Step> steps
     ) {
-        steps.forEach(step -> step.round().run(sheet, variables, program, step.scope()));
+        steps.forEach(step -> step.round().run(sheet, variables, program, world, step.scope()));
     }
 
     /**
@@ -146,8 +148,8 @@ final class PostProcess {
         ITEM {
 
             @Override
-            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
-                scope.slots(sheet).forEach(slot -> applyItemBonuses(sheet, slot, variables));
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull WorldFacts world, @NotNull Scope scope) {
+                scope.slots(sheet).forEach(slot -> applyItemBonuses(sheet, slot, variables, world));
             }
 
         },
@@ -159,7 +161,7 @@ final class PostProcess {
         MULTIPLIER {
 
             @Override
-            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull WorldFacts world, @NotNull Scope scope) {
                 scope.slots(sheet).forEach(slot -> applyEnchantmentMultipliers(slot.stack(), sheet.getProfile()));
             }
 
@@ -172,7 +174,7 @@ final class PostProcess {
         REPUBLISH {
 
             @Override
-            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull WorldFacts world, @NotNull Scope scope) {
                 sheet.getProfile().publishTotals(variables::put);
                 sheet.getProfile().publishOriginTotals(variables::put);
             }
@@ -185,8 +187,8 @@ final class PostProcess {
         PET {
 
             @Override
-            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
-                fold(sheet, variables, program, scope, Buff.Rule.Stage.BONUS);
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull WorldFacts world, @NotNull Scope scope) {
+                fold(sheet, variables, program, world, scope, Buff.Rule.Stage.BONUS);
             }
 
         },
@@ -198,8 +200,8 @@ final class PostProcess {
         POST {
 
             @Override
-            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull Scope scope) {
-                fold(sheet, variables, program, scope, Buff.Rule.Stage.POST);
+            void run(@NotNull StatSheet sheet, @NotNull ConcurrentMap<String, Double> variables, @NotNull ConcurrentList<BuffEvaluator> program, @NotNull WorldFacts world, @NotNull Scope scope) {
+                fold(sheet, variables, program, world, scope, Buff.Rule.Stage.POST);
             }
 
         };
@@ -208,6 +210,7 @@ final class PostProcess {
             @NotNull StatSheet sheet,
             @NotNull ConcurrentMap<String, Double> variables,
             @NotNull ConcurrentList<BuffEvaluator> program,
+            @NotNull WorldFacts world,
             @NotNull Scope scope
         );
 
@@ -217,6 +220,7 @@ final class PostProcess {
         @NotNull StatSheet sheet,
         @NotNull ConcurrentMap<String, Double> variables,
         @NotNull ConcurrentList<BuffEvaluator> program,
+        @NotNull WorldFacts world,
         @NotNull Scope scope,
         @NotNull Buff.Rule.Stage stage
     ) {
@@ -224,13 +228,13 @@ final class PostProcess {
             return;
 
         if (scope == Scope.PROFILE) {
-            BuffEvaluator.Context profileContext = BuffEvaluator.Context.of(variables);
+            BuffEvaluator.Context profileContext = world.fill(BuffEvaluator.Context.of(variables));
             program.forEach(evaluator -> rewrite(sheet.getProfile(), evaluator, profileContext, stage));
             return;
         }
 
         scope.slots(sheet).forEach(slot -> {
-            BuffEvaluator.Context context = itemContext(slot, variables);
+            BuffEvaluator.Context context = itemContext(slot, variables, world);
             program.forEach(evaluator -> rewrite(slot.table(), evaluator, context, stage));
         });
     }
@@ -281,15 +285,16 @@ final class PostProcess {
     static @NotNull ConcurrentList<StatCap.Scoped> capProgram(
         @NotNull StatSheet sheet,
         @NotNull ConcurrentMap<String, Double> variables,
-        @NotNull ConcurrentList<BuffEvaluator> program
+        @NotNull ConcurrentList<BuffEvaluator> program,
+        @NotNull WorldFacts world
     ) {
         ConcurrentList<StatCap.Scoped> scoped = Concurrent.newList();
-        BuffEvaluator.Context profileContext = BuffEvaluator.Context.of(variables);
+        BuffEvaluator.Context profileContext = world.fill(BuffEvaluator.Context.of(variables));
 
         program.forEach(evaluator -> scoped.add(new StatCap.Scoped(evaluator, profileContext)));
 
         sheet.getSlots().forEach((address, slot) -> {
-            BuffEvaluator.Context context = itemContext(slot, variables);
+            BuffEvaluator.Context context = itemContext(slot, variables, world);
             rowsFor(slot).forEach(row -> scoped.add(new StatCap.Scoped(BuffEvaluator.compile(row), context)));
         });
 
@@ -312,13 +317,13 @@ final class PostProcess {
         return rows;
     }
 
-    private static void applyItemBonuses(@NotNull StatSheet sheet, @NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables) {
+    private static void applyItemBonuses(@NotNull StatSheet sheet, @NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables, @NotNull WorldFacts world) {
         ConcurrentList<Buff> rows = rowsFor(slot);
 
         if (rows.isEmpty())
             return;
 
-        BuffEvaluator.Context context = itemContext(slot, variables);
+        BuffEvaluator.Context context = itemContext(slot, variables, world);
 
         rows.stream().map(BuffEvaluator::compile).forEach(evaluator -> {
             // a carrier rule rewrites what the carrier itself contributed
@@ -337,10 +342,10 @@ final class PostProcess {
         });
     }
 
-    private static @NotNull BuffEvaluator.Context itemContext(@NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables) {
+    private static @NotNull BuffEvaluator.Context itemContext(@NotNull StatSheet.Slot slot, @NotNull ConcurrentMap<String, Double> variables, @NotNull WorldFacts world) {
         ItemStack itemStats = slot.stack();
 
-        return BuffEvaluator.Context.of(variables)
+        return world.fill(BuffEvaluator.Context.of(variables))
             .carrier(Buff.Term.Carrier.ID, itemStats.getItem().getId())
             .carrier(Buff.Term.Carrier.RARITY, itemStats.getRarity().name())
             .carrier(Buff.Term.Carrier.CATEGORY, itemStats.getItem().getCategory().getId())
