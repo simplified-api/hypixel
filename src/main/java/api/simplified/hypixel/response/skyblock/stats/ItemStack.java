@@ -3,8 +3,6 @@ package api.simplified.hypixel.response.skyblock.stats;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.Accessory;
-import api.simplified.skyblock.model.BonusItemStat;
-import api.simplified.skyblock.model.BonusReforgeStat;
 import api.simplified.skyblock.model.Enchantment;
 import api.simplified.skyblock.model.Gemstone;
 import api.simplified.skyblock.model.HotPotatoStat;
@@ -78,19 +76,9 @@ public final class ItemStack {
     private final @NotNull Rarity rarity;
 
     /**
-     * Conditional stat bonuses declared for this item, still to be evaluated.
-     */
-    private final @NotNull ConcurrentList<BonusItemStat> bonusItemStatModels;
-
-    /**
      * Reforge applied to the instance, empty when it carries none.
      */
     private final @NotNull Optional<Reforge> reforge;
-
-    /**
-     * Conditional bonus declared for the applied reforge, empty when it has none or none is applied.
-     */
-    private final @NotNull Optional<BonusReforgeStat> bonusReforgeStatModel;
 
     /**
      * Quality of each gemstone slotted into the instance, keyed by the gemstone.
@@ -164,11 +152,6 @@ public final class ItemStack {
         CompoundTag gemTag = compoundTag.getPathOrDefault("tag.ExtraAttributes.gems", CompoundTag.EMPTY);
         this.gemstones = Concurrent.newUnmodifiableMap(gemTag.notEmpty() ? findGemstones(SkyBlockData.getRepository(Gemstone.class).findAll(), gemTag) : Concurrent.newMap());
 
-        // Load Bonus Item Stat Model
-        this.bonusItemStatModels = SkyBlockData.getRepository(BonusItemStat.class)
-            .findAll(BonusItemStat::getItemId, itemModel.getId())
-            .collect(Concurrent.toUnmodifiableList());
-
         // Load Reforge Model
         // an accessory slot never contributes a reforge, so it never resolves one either - the field
         // stays because an accessory really can hold one, what goes is the lookup and the write
@@ -179,9 +162,6 @@ public final class ItemStack {
                 .getValue()
                 .toUpperCase()
             );
-
-        // Load Bonus Reforge Model
-        this.bonusReforgeStatModel = this.getReforge().flatMap(reforge -> SkyBlockData.getRepository(BonusReforgeStat.class).findFirst(BonusReforgeStat::getReforgeId, reforge.getId()));
 
         // Load Enrichment - look up stat by enrichment key from NBT
         this.enrichmentStat = SkyBlockData.getRepository(Stat.class).findFirst(Stat::getId, compoundTag

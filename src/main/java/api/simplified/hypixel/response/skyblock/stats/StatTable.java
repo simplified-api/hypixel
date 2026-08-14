@@ -184,6 +184,23 @@ final class StatTable {
         this.toMap().forEach((statModel, data) -> sink.put(String.format("STAT_%s", statModel.getId()), data.getTotal()));
     }
 
+    /**
+     * Publishes what each origin gave on its own under {@code STAT_<origin>_<statId>}, so a rule can
+     * name one source's contribution rather than the member's whole number.
+     * <p>
+     * Only a written cell is published. A stat an origin never touched is absent rather than zero,
+     * which is what lets a rule reading one be left unevaluated instead of folding in a contribution
+     * that origin never made.
+     *
+     * @param sink where the variables are written
+     */
+    void publishOriginTotals(@NotNull VariableSink sink) {
+        this.entries.forEach((origin, statEntries) -> statEntries.forEach((statModel, data) -> sink.put(
+            String.format("STAT_%s_%s", origin.name(), statModel.getId()),
+            data.getTotal()
+        )));
+    }
+
     private @NotNull ConcurrentLinkedMap<Stat, Data> seed() {
         return SkyBlockData.getRepository(Stat.class).findAll()
             .stream()

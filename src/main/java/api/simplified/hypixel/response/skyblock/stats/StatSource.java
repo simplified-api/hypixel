@@ -5,11 +5,12 @@ import api.simplified.hypixel.response.skyblock.member.CenturyCake;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.dungeon.DungeonData;
 import api.simplified.hypixel.response.skyblock.member.pet.Pets;
+import api.simplified.hypixel.response.skyblock.stats.buff.BuffEvaluator;
 import api.simplified.skyblock.SkyBlockData;
+import api.simplified.skyblock.model.Buff;
 import api.simplified.skyblock.model.HotmPerk;
 import api.simplified.skyblock.model.Item;
 import api.simplified.skyblock.model.MelodySong;
-import api.simplified.skyblock.model.PetItem;
 import api.simplified.skyblock.model.Potion;
 import api.simplified.skyblock.model.ShopPerk;
 import api.simplified.skyblock.model.Skill;
@@ -114,25 +115,26 @@ public enum StatSource implements StatOrigin {
 
             String heldItemId = resolvedPet.getHeldItemId();
 
-            // Handle Static Pet Item Bonuses
+            // Handle Pet Item Bonuses
+            // one lookup where there were two, because what split them was a flag saying whether the
+            // amount was a percentage - and that is the operation, which a row now carries
             if (!heldItemId.isEmpty()) {
-                SkyBlockData.getRepository(PetItem.class).findFirst(PetItem::getId, heldItemId)
-                    .filter(PetItem::notPercentage)
-                    .ifPresent(petItem -> petItem.getStats().forEach(sub ->
-                        sub.getStat().ifPresent(stat -> bonuses.merge(stat, sub.getValues().getOrDefault(1, 0.0), Double::sum))
-                    ));
-            }
+                BuffEvaluator.Context petContext = BuffEvaluator.Context.of(Concurrent.newMap())
+                    .carrier(Buff.Term.Carrier.ID, heldItemId)
+                    .carrier(Buff.Term.Carrier.HOLDER, resolvedPet.getPet().getId())
+                    .carrier(Buff.Term.Carrier.RARITY, resolvedPet.getRarity().name())
+                    .carrier(Buff.Term.Carrier.LEVEL, resolvedPet.getLevel());
 
-            // Handle Percentage Pet Item Bonuses
-            if (!heldItemId.isEmpty()) {
-                SkyBlockData.getRepository(PetItem.class).findFirst(PetItem::getId, heldItemId)
-                    .filter(PetItem::isPercentage)
-                    .ifPresent(petItem -> petItem.getStats().forEach(sub ->
-                        sub.getStat().ifPresent(stat -> bonuses.put(
-                            stat,
-                            bonuses.getOrDefault(stat, 0.0) * (1 + (sub.getValues().getOrDefault(1, 0.0) / 100.0))
-                        ))
-                    ));
+                BuffEvaluator.select(Buff.Subject.Kind.PET_ITEM, heldItemId, null)
+                    .stream()
+                    .map(BuffEvaluator::compile)
+                    .forEach(evaluator -> bonuses.replaceAll((statModel, value) -> evaluator.apply(
+                        statModel,
+                        Buff.Channel.VALUE,
+                        Buff.Rule.Stage.BONUS,
+                        value,
+                        petContext
+                    )));
             }
 
             bonuses.forEach((statModel, value) -> sink.add(this, statModel, StatHalf.BONUS, value));

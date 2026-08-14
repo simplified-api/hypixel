@@ -75,14 +75,10 @@ public class ProfileStats {
         sources.forEach(source -> source.contribute(this.context, this.sheet));
         this.sheet.getProfile().publishTotals(this.variables::put);
 
-        // the pet's contribution is named on its own as well, off the cells it wrote rather than
-        // part-way through writing them
-        this.sheet.getProfile()
-            .getEntries(StatSource.ACTIVE_PET)
-            .forEach((statModel, data) -> this.variables.put(
-                String.format("STAT_PET_%s", statModel.getId()),
-                data.getTotal()
-            ));
+        // each source's own contribution is named as well, off the cells it wrote rather than
+        // part-way through writing them - the pet's among them, which is what a rule scaling a stat
+        // by what the pet gave for it reads
+        this.sheet.getProfile().publishOriginTotals(this.variables::put);
 
         // --- Bonus Pass ---
         if (calculateBonusStats)
