@@ -103,21 +103,6 @@ public final class ItemStack {
     private final @NotNull Optional<Stat> enrichmentStat;
 
     /**
-     * Hot potato books applied, counting both hot potato books and fuming potato books.
-     */
-    private final int hotPotatoBooks;
-
-    /**
-     * Whether a recombobulator has raised the instance one rarity.
-     */
-    private final boolean recombobulated;
-
-    /**
-     * Whether a tier boost has raised the instance one rarity.
-     */
-    private final boolean tierBoosted;
-
-    /**
      * When the instance was obtained, empty for anything old enough to predate the stamp.
      */
     private final @NotNull Optional<Long> timestamp;
@@ -142,10 +127,7 @@ public final class ItemStack {
         this.accessory = accessory;
         this.compoundTag = compoundTag;
         this.timestamp = readTimestamp(compoundTag.getPath("tag.ExtraAttributes.timestamp"));
-        this.recombobulated = compoundTag.getPathOrDefault("tag.ExtraAttributes.rarity_upgrades", IntTag.EMPTY).getValue() > 0;
-        this.tierBoosted = compoundTag.getPathOrDefault("tag.ExtraAttributes.baseStatBoostPercentage", IntTag.EMPTY).getValue() > 0;
         this.rarity = resolveRarity(itemModel, compoundTag);
-        this.hotPotatoBooks = compoundTag.getPathOrDefault("tag.ExtraAttributes.hot_potato_count", IntTag.EMPTY).getValue();
         this.hasArtOfWar = compoundTag.containsPath("tag.ExtraAttributes.art_of_war_count");
         this.hasArtOfPeace = compoundTag.containsPath("tag.ExtraAttributes.artOfPeaceApplied");
 
