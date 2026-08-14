@@ -661,14 +661,20 @@ class MemberDtoMappingTest {
      * other test failure, while a wrong refusal costs a {@code null} that was already there. Every
      * sentinel-shaped constant in this module is either wire-named or shares a name with something
      * in that vocabulary, so adopting the marker means adding a new constant first.
+     * <p>
+     * The rule reaches the enums the wire can name and stops there. A constant only matters here if a
+     * value off the wire can bind to it, so an enum nothing deserializes cannot collapse an
+     * unrecognised value onto a real one however it is marked - which is the whole of the argument the
+     * rule rests on.
      */
     @Test
     @DisplayName("no @Fallback constant is reachable from the wire")
     void noMarkedConstantIsWireVisible() throws Exception {
         List<Class<?>> enums = responseEnums();
 
-        // guard the guard - a scan that silently found nothing would pass vacuously forever
-        assertThat(enums.size(), is(greaterThan(20)));
+        // guard the guard - a scan that silently found nothing would pass vacuously forever, and the
+        // floor is set against the wire enums alone so that the derived layer cannot satisfy it
+        assertThat(enums.size(), is(greaterThan(25)));
 
         Set<String> vocabulary = fixtureVocabulary();
 
@@ -695,15 +701,21 @@ class MemberDtoMappingTest {
     }
 
     /**
-     * Every enum compiled under the response package, loaded from the build output directory.
+     * Every enum the wire binds into, loaded from the build output directory.
+     * <p>
+     * The walk covers the response package and skips the stat subtree under it. Everything there is
+     * derived rather than bound - nothing under it carries a serialization annotation and no key on
+     * the wire pulls any of it in - so its enums are reached by a call a caller makes by name and
+     * never by a deserializer matching a string.
      */
     private static List<Class<?>> responseEnums() throws Exception {
         Path root = Path.of(Currencies.class.getProtectionDomain().getCodeSource().getLocation().toURI());
         Path pkg = root.resolve("api/simplified/hypixel/response");
+        Path derived = pkg.resolve("skyblock").resolve("stats");
         List<Class<?>> found = new ArrayList<>();
 
         try (Stream<Path> paths = Files.walk(pkg)) {
-            for (Path path : paths.filter(p -> p.toString().endsWith(".class")).toList()) {
+            for (Path path : paths.filter(p -> p.toString().endsWith(".class")).filter(p -> !p.startsWith(derived)).toList()) {
                 String name = root.relativize(path).toString()
                     .replace(java.io.File.separatorChar, '.')
                     .replaceAll("\\.class$", "");
