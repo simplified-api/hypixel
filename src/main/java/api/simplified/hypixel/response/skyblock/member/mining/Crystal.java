@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.skyblock.member.mining;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**

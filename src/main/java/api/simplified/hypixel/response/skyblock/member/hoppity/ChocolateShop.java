@@ -1,9 +1,9 @@
 package api.simplified.hypixel.response.skyblock.member.hoppity;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**

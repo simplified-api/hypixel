@@ -1,6 +1,6 @@
 package api.simplified.hypixel.response.skyblock.stats;
 
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 
 /**
  * One stat's value on one source, kept as a base and a bonus rather than a single number.

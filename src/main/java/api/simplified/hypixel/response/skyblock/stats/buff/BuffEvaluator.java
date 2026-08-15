@@ -3,6 +3,9 @@ package api.simplified.hypixel.response.skyblock.stats.buff;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Buff;
 import api.simplified.skyblock.model.Stat;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -50,16 +53,17 @@ import java.util.stream.Stream;
  * it settles with the rank-one rules and a scale sees it, which is what makes the shorthand say
  * exactly what a rule would.
  */
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class BuffEvaluator {
 
     private static final @NotNull Comparator<Buff.Rule> BY_RANK = Comparator.comparingInt(rule -> rule.getOperation().getRank());
 
+    /**
+     * The row this folds.
+     */
+    @Getter
     private final @NotNull Buff row;
     private final @NotNull ConcurrentMap<String, Expression> compiled = Concurrent.newMap();
-
-    private BuffEvaluator(@NotNull Buff row) {
-        this.row = row;
-    }
 
     /**
      * Prepares one row to be folded.
@@ -103,13 +107,6 @@ public final class BuffEvaluator {
      */
     public static @NotNull ConcurrentList<Buff> selectAll(@NotNull Buff.Subject.Kind kind) {
         return select(kind, null, null);
-    }
-
-    /**
-     * The row this folds.
-     */
-    public @NotNull Buff getRow() {
-        return this.row;
     }
 
     /**
@@ -658,8 +655,13 @@ public final class BuffEvaluator {
      * {@code STAT_<origin>_<statId>} for a term naming one origin, which is the convention the pass
      * boundary publishes them by.
      */
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class Context {
 
+        /**
+         * Every variable, which is what an expression is built against.
+         */
+        @Getter
         private final @NotNull ConcurrentMap<String, Double> variables;
         private final @NotNull ConcurrentMap<Buff.Term.Carrier, String> carrierKeys = Concurrent.newMap();
         private final @NotNull ConcurrentMap<Buff.Term.Carrier, Double> carrierNumbers = Concurrent.newMap();
@@ -668,10 +670,6 @@ public final class BuffEvaluator {
         private final @NotNull ConcurrentMap<Buff.Term.Player, Double> playerNumbers = Concurrent.newMap();
         private final @NotNull ConcurrentMap<String, Integer> groupCounts = Concurrent.newMap();
         private @Nullable CompoundTag tag;
-
-        private Context(@NotNull ConcurrentMap<String, Double> variables) {
-            this.variables = variables;
-        }
 
         /**
          * Opens a context over the expression variables a compute has published.
@@ -779,13 +777,6 @@ public final class BuffEvaluator {
         public @NotNull OptionalDouble variable(@NotNull String name) {
             Double value = this.variables.get(name);
             return value == null ? OptionalDouble.empty() : OptionalDouble.of(value);
-        }
-
-        /**
-         * Every variable, which is what an expression is built against.
-         */
-        public @NotNull ConcurrentMap<String, Double> getVariables() {
-            return this.variables;
         }
 
         /**

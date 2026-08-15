@@ -1,6 +1,8 @@
 package api.simplified.hypixel.response.hypixel;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -9,8 +11,6 @@ import dev.simplified.gson.annotation.SerializedPath;
 import dev.simplified.util.RegexUtil;
 import dev.simplified.util.StringUtil;
 import lib.minecraft.text.ChatColor;
-import lombok.AccessLevel;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
@@ -238,19 +238,20 @@ public class HypixelPlayer {
         HypixelRank.Type type = HypixelRank.Type.NONE;
 
         if (StringUtil.isNotEmpty(this.packageRank))
-            type = HypixelRank.Type.of(this.packageRank);
+            type = HypixelRank.Type.findByName(this.packageRank).orElse(HypixelRank.Type.NONE);
 
         if (StringUtil.isNotEmpty(this.newPackageRank) && !"NONE".equals(this.newPackageRank))
-            type = HypixelRank.Type.of(this.newPackageRank);
+            type = HypixelRank.Type.findByName(this.newPackageRank).orElse(HypixelRank.Type.NONE);
 
         if (StringUtil.isNotEmpty(this.monthlyPackageRank) && !"NONE".equals(this.monthlyPackageRank))
-            type = HypixelRank.Type.of(this.monthlyPackageRank);
+            type = HypixelRank.Type.findByName(this.monthlyPackageRank).orElse(HypixelRank.Type.NONE);
 
         if (StringUtil.isNotEmpty(this.rank) && !"NORMAL".equals(this.rank))
-            type = HypixelRank.Type.of(this.rank);
+            type = HypixelRank.Type.findByName(this.rank).orElse(HypixelRank.Type.NONE);
 
         if (StringUtil.isNotEmpty(this.prefix))
-            type = HypixelRank.Type.of(RegexUtil.strip(this.prefix, RegexUtil.VANILLA_PATTERN).replaceAll("[\\W]", ""));
+            type = HypixelRank.Type.findByName(RegexUtil.strip(this.prefix, RegexUtil.VANILLA_PATTERN).replaceAll("[\\W]", ""))
+                .orElse(HypixelRank.Type.NONE);
 
         ChatColor rankFormat = type.getColor();
         ChatColor plusFormat = type.getColor();

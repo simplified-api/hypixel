@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.skyblock.member.rift;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
-import lombok.experimental.Accessors;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
 
 /**
  * A member's progress in the Stillgore Château, the Rift's castle and the home of the vampire
@@ -26,7 +26,7 @@ public class StillgoreChateau {
      * Whether the Photon Pathway can be skipped on later visits, bound from
      * {@code unlocked_pathway_skip}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("unlocked_pathway_skip")
     private boolean hasUnlockedPathwaySkip;
 

@@ -2,15 +2,15 @@ package api.simplified.hypixel.response.skyblock.election;
 
 import api.simplified.skyblock.date.Season;
 import api.simplified.skyblock.date.SkyBlockDate;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.AllArgsConstructor;
+import dev.simplified.annotations.EqualsAndHashCode;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 /**
  * One turn of the SkyBlock mayor calendar, identified by the year it runs in.
@@ -32,6 +32,8 @@ import java.util.Objects;
  */
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class MayorTerm {
 
     /**
@@ -43,15 +45,6 @@ public class MayorTerm {
      * SkyBlock year this term runs in, and the whole of its identity.
      */
     private int year;
-
-    /**
-     * Constructs a new {@code MayorTerm} for the given SkyBlock year.
-     *
-     * @param year the SkyBlock year the term runs in
-     */
-    public MayorTerm(int year) {
-        this.year = year;
-    }
 
     /**
      * Window in which this term's votes are cast, opening late summer 27 of its year and closing
@@ -118,20 +111,6 @@ public class MayorTerm {
             terms.add(new MayorTerm(year));
 
         return terms;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-
-        MayorTerm mayorTerm = (MayorTerm) o;
-
-        return this.getYear() == mayorTerm.getYear();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.getYear());
     }
 
     @Override

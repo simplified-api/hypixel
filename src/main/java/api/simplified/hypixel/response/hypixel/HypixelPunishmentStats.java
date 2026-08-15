@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.hypixel;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 
 /**
  * Network-wide punishment counts, split between the automated Watchdog anticheat and the staff team.

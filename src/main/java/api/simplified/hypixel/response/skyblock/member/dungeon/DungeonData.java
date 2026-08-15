@@ -1,9 +1,9 @@
 package api.simplified.hypixel.response.skyblock.member.dungeon;
 
-import api.simplified.hypixel.common.EnumLookup;
+import dev.simplified.annotations.EnumLookup;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.util.StringUtil;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -66,12 +66,12 @@ public class DungeonData implements DungeonWeighted {
      * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Dungeons">Dungeons</a>
      */
     @Getter
-    @RequiredArgsConstructor
+    @EnumLookup
     public enum Type {
 
         /**
-         * No dungeon this table names - the lookup fallback, and the key an empty record answers
-         * to.
+         * No dungeon this table names - the sentinel an unmatched name resolves to, and the key an
+         * empty record answers to.
          */
         UNKNOWN,
 
@@ -87,20 +87,6 @@ public class DungeonData implements DungeonWeighted {
          */
         public @NotNull String getName() {
             return StringUtil.capitalizeFully(this.name().replace("_", " "));
-        }
-
-        /**
-         * Reads the dungeon a wire name refers to.
-         * <p>
-         * The vocabulary is {@code CATACOMBS} and nothing else - {@code master_catacombs} is not a
-         * member of it. The master prefix is stripped before the lookup runs, which is the only
-         * reason a master node pairs onto its normal floor instead of resolving here.
-         *
-         * @param name the wire spelling of the dungeon, matched case-insensitively
-         * @return the matching dungeon, or {@link #UNKNOWN} when no constant carries that name
-         */
-        public static @NotNull Type of(@NotNull String name) {
-            return EnumLookup.of(values(), name, UNKNOWN);
         }
 
     }

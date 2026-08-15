@@ -1,16 +1,15 @@
 package api.simplified.hypixel.response.skyblock.island;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.EnumLookup;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.StreamUtil;
 import dev.simplified.collection.tuple.pair.Pair;
 import dev.simplified.util.StringUtil;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Optional;
 
 /**
  * The names a profile can be given, each shown in game with its own symbol.
@@ -23,6 +22,7 @@ import java.util.Optional;
  * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Fruit_Bowl">Fruit Bowl</a>
  */
 @Getter
+@EnumLookup
 @RequiredArgsConstructor
 public enum Profile {
 
@@ -185,18 +185,6 @@ public enum Profile {
      */
     public @NotNull String getName() {
         return StringUtil.capitalizeFully(this.name().replace("_", " "));
-    }
-
-    /**
-     * Finds the profile name matching a given string, ignoring case.
-     *
-     * @param name the profile name to match
-     * @return the matching name, empty when none does
-     */
-    public static @NotNull Optional<Profile> of(@NotNull String name) {
-        return StreamUtil.ofArrays(values())
-            .filter(profile -> profile.name().equalsIgnoreCase(name))
-            .findFirst();
     }
 
 }

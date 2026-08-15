@@ -2,8 +2,8 @@ package api.simplified.hypixel.response.skyblock.member.rift;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
-import lombok.experimental.Accessors;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +39,7 @@ public class RiftAccess {
      * Whether a Rift Prism has been consumed, bound from {@code consumed_prism}. This is lifetime
      * state on the member and is not the same fact as the per-pass {@code used_prism}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("consumed_prism")
     private boolean hasConsumedPrism;
 
@@ -71,7 +71,7 @@ public class RiftAccess {
          * Whether this pass was opened with the Rift Prism, bound from {@code used_prism} - a fact
          * about this one pass rather than about the member.
          */
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("used_prism")
         private boolean hasUsedPrism;
 

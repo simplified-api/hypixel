@@ -1,9 +1,9 @@
 package api.simplified.hypixel.response.skyblock.member.crimson;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
+import dev.simplified.annotations.NoArgsConstructor;
 
 /**
  * A member's progress through Edelis' quest, which the wire records as a single flag.
@@ -21,7 +21,7 @@ public class EdelisQuest {
      * Whether the member has heard the story told at the statue - fluent, so the accessor reads
      * {@code hasHeardStoryStatue()}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("heard_story_statue")
     private boolean hasHeardStoryStatue;
 

@@ -10,6 +10,8 @@ import api.simplified.skyblock.model.Gemstone;
 import api.simplified.skyblock.model.Item;
 import api.simplified.skyblock.model.Reforge;
 import api.simplified.skyblock.model.Stat;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -24,8 +26,6 @@ import lib.minecraft.nbt.tag.ListTag;
 import lib.minecraft.nbt.tag.NumericalTag;
 import lib.minecraft.nbt.tag.StringTag;
 import lib.minecraft.nbt.tag.Tag;
-import lombok.AccessLevel;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
@@ -369,7 +369,7 @@ public final class ItemStack {
 
         // the ladder has ends, and a row that walks off one of them is a row to fix rather than a
         // reason to throw at whichever member happened to be holding the item
-        return Rarity.of(Math.clamp((int) ordinal, 0, Rarity.values().length - 1));
+        return Rarity.findByOrdinal(Math.clamp((int) ordinal, 0, Rarity.size() - 1)).orElseThrow();
     }
 
     /**

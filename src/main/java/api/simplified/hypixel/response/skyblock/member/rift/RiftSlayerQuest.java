@@ -3,9 +3,9 @@ package api.simplified.hypixel.response.skyblock.member.rift;
 import api.simplified.hypixel.response.skyblock.member.slayer.SlayerQuest;
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**

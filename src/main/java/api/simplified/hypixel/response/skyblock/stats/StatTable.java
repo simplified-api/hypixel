@@ -2,11 +2,11 @@ package api.simplified.hypixel.response.skyblock.stats;
 
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Stat;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -23,7 +23,12 @@ import java.util.Arrays;
  */
 final class StatTable {
 
-    private final @NotNull ConcurrentMap<StatOrigin, ConcurrentLinkedMap<Stat, Data>> entries = Concurrent.newMap();
+    /**
+     * Every origin that wrote something, with the cells it wrote.
+     * <p>
+     * The cells are live, so a pass that rescales what is already there writes through this view.
+     */
+    @Getter private final @NotNull ConcurrentMap<StatOrigin, ConcurrentLinkedMap<Stat, Data>> entries = Concurrent.newMap();
 
     /**
      * Stat ids no {@link Stat} row matches, counted once per id rather than dropped in silence.
@@ -72,17 +77,6 @@ final class StatTable {
     public @NotNull Data getCell(@NotNull StatOrigin origin, @NotNull Stat statModel) {
         return this.entries.computeIfAbsent(origin, key -> Concurrent.newLinkedMap())
             .computeIfAbsent(statModel, key -> new Data());
-    }
-
-    /**
-     * Every origin that wrote something, with the cells it wrote.
-     * <p>
-     * The cells are live, so a pass that rescales what is already there writes through this view.
-     *
-     * @return the written cells, keyed by origin
-     */
-    public @NotNull ConcurrentMap<StatOrigin, ConcurrentLinkedMap<Stat, Data>> getEntries() {
-        return this.entries;
     }
 
     /**

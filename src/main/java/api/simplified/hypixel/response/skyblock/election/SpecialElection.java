@@ -1,14 +1,15 @@
 package api.simplified.hypixel.response.skyblock.election;
 
 import api.simplified.skyblock.date.SkyBlockDate;
+import dev.simplified.annotations.CallSuper;
+import dev.simplified.annotations.EqualsAndHashCode;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * A mayor election won by a special mayor - one of the recurring mayors that only stands
@@ -22,6 +23,7 @@ import java.util.Objects;
  * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Mayor_Election">Mayor Election</a>
  */
 @Getter
+@EqualsAndHashCode(callSuper = CallSuper.YES)
 public class SpecialElection extends MayorTerm {
 
     /**
@@ -127,21 +129,6 @@ public class SpecialElection extends MayorTerm {
         }
 
         return elections;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        SpecialElection that = (SpecialElection) o;
-
-        return Objects.equals(this.getSpecialMayorId(), that.getSpecialMayorId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), this.getSpecialMayorId());
     }
 
     @Override

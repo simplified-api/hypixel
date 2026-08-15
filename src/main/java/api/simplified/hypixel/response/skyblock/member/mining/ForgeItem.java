@@ -4,9 +4,9 @@ import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.date.SkyBlockDate;
 import api.simplified.skyblock.model.Item;
 import com.google.gson.annotations.SerializedName;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**

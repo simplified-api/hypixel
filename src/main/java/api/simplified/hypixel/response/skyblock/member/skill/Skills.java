@@ -2,11 +2,11 @@ package api.simplified.hypixel.response.skyblock.member.skill;
 
 import api.simplified.hypixel.common.WeightedGroup;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**

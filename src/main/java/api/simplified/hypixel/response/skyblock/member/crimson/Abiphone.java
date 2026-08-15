@@ -2,12 +2,12 @@ package api.simplified.hypixel.response.skyblock.member.crimson;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.SerializedPath;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -82,7 +82,7 @@ public class Abiphone {
      * Whether the Sirius personal phone number item has been consumed - fluent, so the accessor reads
      * {@code hasSiriusContact()}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("has_used_sirius_personal_phone_number_item")
     private boolean hasSiriusContact;
 
@@ -121,7 +121,7 @@ public class Abiphone {
          * Whether the member handed this NPC the items they asked for - fluent, so the accessor reads
          * {@code hasGivenItems()}.
          */
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("items_given")
         private boolean hasGivenItems;
 

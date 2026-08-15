@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.skyblock.member.mining;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 
 /**
  * One powder balance on the Heart of the Mountain.

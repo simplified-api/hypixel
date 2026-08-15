@@ -16,13 +16,13 @@ import api.simplified.skyblock.model.ShopPerk;
 import api.simplified.skyblock.model.Skill;
 import api.simplified.skyblock.model.Slayer;
 import api.simplified.skyblock.model.Stat;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.StringTag;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;

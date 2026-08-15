@@ -1,11 +1,10 @@
 package api.simplified.hypixel.response.hypixel;
 
+import dev.simplified.annotations.EnumLookup;
+import dev.simplified.annotations.Getter;
 import dev.simplified.util.StringUtil;
 import lib.minecraft.text.ChatColor;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 /**
  * A rank a player holds on the Hypixel network, together with the two colours it renders in - one
@@ -60,6 +59,7 @@ public class HypixelRank {
      * purchasable ranks, then the one-off ranks, then no rank at all.
      */
     @Getter
+    @EnumLookup
     public enum Type {
 
         /**
@@ -170,19 +170,6 @@ public class HypixelRank {
             this.color = color;
             this.name = (StringUtil.isEmpty(name) ? name() : name).replace("_", " ");
             this.plusCount = plusCount;
-        }
-
-        /**
-         * Looks a rank type up by the name the wire spells it with, ignoring case.
-         *
-         * @param name the rank name as it appears on the wire
-         * @return the matching type, or {@link #NONE} when no constant matches
-         */
-        public static @NotNull Type of(@NotNull String name) {
-            return Arrays.stream(values())
-                .filter(type -> type.name().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(NONE);
         }
 
     }

@@ -2,8 +2,8 @@ package api.simplified.hypixel.response.skyblock.garden;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 
 /**
  * The Garden composter's stored inputs, its finished compost and its upgrade levels.

@@ -3,7 +3,7 @@ package api.simplified.hypixel.response.skyblock.member.attribute;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Region;
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;

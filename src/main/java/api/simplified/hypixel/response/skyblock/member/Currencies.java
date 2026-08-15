@@ -1,10 +1,10 @@
 package api.simplified.hypixel.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Flatten;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**

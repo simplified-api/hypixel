@@ -1,10 +1,10 @@
 package api.simplified.hypixel.response.skyblock.member.rift;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +23,7 @@ public class EnigmasCrib {
     /**
      * Whether Enigma's cloak has been bought, bound from {@code bought_cloak}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("bought_cloak")
     private boolean hasBoughtCloak;
 

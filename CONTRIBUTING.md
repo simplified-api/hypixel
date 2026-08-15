@@ -68,7 +68,7 @@ Both test fixtures are in the repository, so a fresh clone runs the whole suite 
 
 1. Open the project root (the directory containing `settings.gradle.kts`). IntelliJ auto-imports the Gradle build.
 2. Ensure the **Project SDK** under **File > Project Structure** is set to a JDK 21 installation.
-3. Enable **annotation processing** - Lombok generates nearly every accessor in the response tree, and the IDE reports phantom errors until the processor runs.
+3. Enable **annotation processing** - the Simplified Annotations processor generates nearly every accessor in the response tree, and the IDE reports phantom errors until it runs.
 4. The build script excludes `.schema/` from the IDE module, so the generated JPA schema does not get indexed.
 5. Open the `Simplified-Api` parent instead when you need the `skyblock` sibling's unpublished models on the classpath.
 
@@ -85,7 +85,7 @@ git checkout -b feat/my-feature master
 
 ### Code Style
 
-The repository uses Lombok for boilerplate reduction and enforces a consistent Javadoc, exception, and control-flow style.
+The repository uses the Simplified Annotations for boilerplate reduction and enforces a consistent Javadoc, exception, and control-flow style.
 
 #### Javadoc
 
@@ -94,7 +94,7 @@ The repository uses Lombok for boilerplate reduction and enforces a consistent J
 - **Tags** - Always include `@param`, `@return`, `@throws` where applicable. Lowercase sentence fragments, no trailing period. Single space after the parameter name - never column-align.
 - **Cross-references** - Use `{@link}` / `{@linkplain}` / `@see`. Use `{@code}` for inline code. Import link targets so they render with short names.
 - **Overrides** - Use `/** {@inheritDoc} */` for methods that override library/framework types. Do not rewrite the parent doc.
-- **Field getters** - Field-like interface methods (no params, non-void return) use a noun-phrase fragment without `@return` and without "Gets"/"Returns". Lombok `@Getter` implementations carry their doc on the field, not a separate method Javadoc block.
+- **Field getters** - Field-like interface methods (no params, non-void return) use a noun-phrase fragment without `@return` and without "Gets"/"Returns". `@Getter` implementations carry their doc on the field, not a separate method Javadoc block.
 - **Structure** - `<p>` on its own line between paragraphs; `<ul>` / `<li>` for lists; `<b>` for emphasis inside list items.
 - **Forbidden tags** - Never use `@author` or `@since`.
 - **Document the wire, not the field** - a DTO field whose name already says what it holds needs no doc. A field whose *binding* is surprising - a path, a capture, a split, an id that carries colons - needs one, and it should state what the wire does rather than what the field is.

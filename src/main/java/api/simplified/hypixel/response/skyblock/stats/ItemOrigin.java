@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.skyblock.stats;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.RequiredArgsConstructor;
 
 /**
  * The eight sources an item's stats are split between.

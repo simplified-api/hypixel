@@ -3,9 +3,9 @@ package api.simplified.hypixel.response.resource;
 import api.simplified.skyblock.date.SkyBlockDate;
 import api.simplified.skyblock.model.Skill;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**

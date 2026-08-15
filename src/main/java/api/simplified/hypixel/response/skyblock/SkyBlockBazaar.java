@@ -1,9 +1,9 @@
 package api.simplified.hypixel.response.skyblock;
 
 import api.simplified.skyblock.date.SkyBlockDate;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
-import lombok.Getter;
 
 /**
  * A snapshot of every product traded on the Bazaar, each with both sides of its order book.
