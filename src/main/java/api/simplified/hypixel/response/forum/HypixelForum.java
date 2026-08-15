@@ -247,7 +247,6 @@ public class HypixelForum {
         /**
          * Whether the {@link #getValue() guid value} is a resolvable URL.
          */
-        @Getter(name = "{}")
         private boolean isPermaLink;
 
         /**
