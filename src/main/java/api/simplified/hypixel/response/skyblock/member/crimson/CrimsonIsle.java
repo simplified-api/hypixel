@@ -2,16 +2,16 @@ package api.simplified.hypixel.response.skyblock.member.crimson;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
+import dev.simplified.annotations.NoArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.annotation.SerializedPath;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -158,39 +158,39 @@ public class CrimsonIsle {
         private int lastReset;
         @SerializedName("chicken_quest_handed_in")
         private @NotNull Optional<SkyBlockDate.RealTime> chickenQuestHandedIn = Optional.empty();
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("paid_bruuh")
         private boolean hasPaidBruuh;
         @SerializedName("miniboss_data")
         private @NotNull ConcurrentMap<String, Boolean> minibossData = Concurrent.newMap();
 
         // Kuudra Discovery
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("found_kuudra_book")
         private boolean hasFoundKuudraBook;
         @SerializedName("last_kuudra_relic")
         private @NotNull Optional<SkyBlockDate.RealTime> lastKuudraRelic = Optional.empty();
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("found_kuudra_leggings")
         private boolean hasFoundKuudraLeggings;
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("kuudra_loremaster")
         private boolean isKuudraLoremaster;
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("found_kuudra_chestplate")
         private boolean hasFoundKuudraChestplate;
         @SerializedName("last_believer_blessing")
         private @NotNull Optional<SkyBlockDate.RealTime> lastBelieverBlessing = Optional.empty();
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("weird_sailor")
         private boolean hasMetWeirdSailor;
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("fished_wet_napkin")
         private boolean hasFishedWetNapkin;
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("found_kuudra_helmet")
         private boolean hasFoundKuudraHelmet;
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("found_kuudra_boots")
         private boolean hasFoundKuudraBoots;
 

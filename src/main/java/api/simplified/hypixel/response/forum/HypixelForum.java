@@ -12,13 +12,13 @@ import com.rometools.rome.feed.synd.SyndEntryImpl;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.feed.synd.SyndFeedImpl;
 import com.rometools.rome.io.SyndFeedOutput;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 import dev.simplified.client.codec.XmlDecoder;
 import dev.simplified.client.codec.XmlEncoder;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.gson.adapter.Rfc822InstantAdapter;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
@@ -247,6 +247,7 @@ public class HypixelForum {
         /**
          * Whether the {@link #getValue() guid value} is a resolvable URL.
          */
+        @Getter(name = "{}")
         private boolean isPermaLink;
 
         /**

@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 
 /**
  * A member's fairy soul collection and exchange progress.

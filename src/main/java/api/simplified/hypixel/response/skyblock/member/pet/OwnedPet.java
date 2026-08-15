@@ -5,13 +5,13 @@ import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import api.simplified.skyblock.model.Pet;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.Pair;
 import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.util.StringUtil;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -136,8 +136,11 @@ public class OwnedPet implements Experience {
      * base rarity and never resolves past the rarities the experience table covers.
      */
     public @NotNull Rarity getRarity() {
+        int ordinal = this.getBaseRarity().ordinal() + (this.isTierBoosted() ? 1 : 0);
+
         return this.getBaseRarity().ordinal() < Rarity.LEGENDARY.ordinal()
-            ? Rarity.of(this.getBaseRarity().ordinal() + (this.isTierBoosted() ? 1 : 0))
+            ? Rarity.findByOrdinal(ordinal)
+                .orElseThrow(() -> new IllegalArgumentException("No rarity with ordinal " + ordinal))
             : this.getBaseRarity();
     }
 

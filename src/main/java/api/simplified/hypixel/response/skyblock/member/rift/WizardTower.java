@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.skyblock.member.rift;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 
 /**
  * A member's progress in the Rift's Wizard Tower, where the portal from the Hub arrives.

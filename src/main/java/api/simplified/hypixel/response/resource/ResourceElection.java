@@ -3,9 +3,9 @@ package api.simplified.hypixel.response.resource;
 import api.simplified.hypixel.response.skyblock.election.Election;
 import api.simplified.hypixel.response.skyblock.election.Mayor;
 import com.google.gson.annotations.SerializedName;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;

@@ -1,6 +1,6 @@
 package api.simplified.hypixel.response.hypixel;
 
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 
 import java.util.Optional;
 

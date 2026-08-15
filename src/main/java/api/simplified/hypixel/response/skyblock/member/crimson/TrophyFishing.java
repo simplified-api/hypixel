@@ -1,14 +1,14 @@
 package api.simplified.hypixel.response.skyblock.member.crimson;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.collection.tuple.pair.PairOptional;
 import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Split;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**

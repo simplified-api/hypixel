@@ -2,8 +2,8 @@ package api.simplified.hypixel.response.skyblock.member;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
-import lombok.AccessLevel;
-import lombok.Getter;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;

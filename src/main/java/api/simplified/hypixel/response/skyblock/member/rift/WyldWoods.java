@@ -1,10 +1,10 @@
 package api.simplified.hypixel.response.skyblock.member.rift;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +39,7 @@ public class WyldWoods {
      * Whether Sirius's question-and-answer chain has been started, bound from
      * {@code sirius_started_q_a}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("sirius_started_q_a")
     private boolean hasStartedSiriusQA;
 
@@ -55,7 +55,7 @@ public class WyldWoods {
      * Whether Sirius's question-and-answer chain has been completed, bound from
      * {@code sirius_completed_q_a}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("sirius_completed_q_a")
     private boolean hasCompletedSiriusQA;
 
@@ -63,7 +63,7 @@ public class WyldWoods {
      * Whether the doubloon Sirius's chain ends in has been claimed, bound from
      * {@code sirius_claimed_doubloon}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("sirius_claimed_doubloon")
     private boolean hasClaimedSiriusDoubloon;
 

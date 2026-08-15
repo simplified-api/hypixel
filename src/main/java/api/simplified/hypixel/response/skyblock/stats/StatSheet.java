@@ -1,6 +1,8 @@
 package api.simplified.hypixel.response.skyblock.stats;
 
 import api.simplified.skyblock.model.Stat;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentList;
@@ -97,13 +99,10 @@ final class StatSheet implements StatSink {
      * Opening from here opens on the sheet that answered it, so a slot is reached by its address
      * rather than by whichever face a source happens to be holding.
      */
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     private final class SlotSink implements StatSink {
 
         private final @NotNull StatTable table;
-
-        private SlotSink(@NotNull StatTable table) {
-            this.table = table;
-        }
 
         /**
          * {@inheritDoc}

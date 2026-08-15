@@ -2,13 +2,13 @@ package api.simplified.hypixel.response.skyblock.member.dungeon;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.util.NumberUtil;
 import lib.minecraft.text.ChatFormat;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -120,7 +120,7 @@ public class DungeonRun {
          */
         public @NotNull DungeonClass.Type getClassType() {
             return this.matchDisplayName()
-                .map(matcher -> DungeonClass.Type.of(matcher.group(3)))
+                .flatMap(matcher -> DungeonClass.Type.findByName(matcher.group(3)))
                 .orElse(DungeonClass.Type.UNKNOWN);
         }
 

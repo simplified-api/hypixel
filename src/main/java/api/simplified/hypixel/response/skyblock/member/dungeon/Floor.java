@@ -1,9 +1,11 @@
 package api.simplified.hypixel.response.skyblock.member.dungeon;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.EnumLookup;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.KeyField;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.util.StringUtil;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Catacombs">Catacombs</a>
  */
 @Getter
+@EnumLookup
 @RequiredArgsConstructor
 public enum Floor {
 
@@ -77,6 +80,7 @@ public enum Floor {
     /**
      * The floor number the wire uses as a map key, {@code 0} through {@code 7}.
      */
+    @KeyField(strictKeys = true)
     private final int value;
 
     /**
@@ -88,25 +92,6 @@ public enum Floor {
      * The boss the floor ends on.
      */
     private final @NotNull Boss boss;
-
-    /**
-     * Reads the floor carrying a given number.
-     * <p>
-     * Not the path gson takes - a floor key binds through the case-insensitive enum adapter against
-     * the serialized digits instead.
-     *
-     * @param value the floor number, {@code 0} through {@code 7}
-     * @return the matching floor, falling back to {@link #ENTRANCE} rather than throwing on a number
-     * no floor carries
-     */
-    public static @NotNull Floor of(int value) {
-        for (Floor floor : values()) {
-            if (floor.getValue() == value)
-                return floor;
-        }
-
-        return ENTRANCE;
-    }
 
     /**
      * The boss that ends a Catacombs floor.

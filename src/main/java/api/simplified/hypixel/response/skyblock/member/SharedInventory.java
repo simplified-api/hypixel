@@ -2,7 +2,7 @@ package api.simplified.hypixel.response.skyblock.member;
 
 import api.simplified.hypixel.common.NbtContent;
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 
 /**
  * Item stores that persist across all of a member's profiles rather than living on one of them.

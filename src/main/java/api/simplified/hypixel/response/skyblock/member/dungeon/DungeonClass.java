@@ -1,12 +1,11 @@
 package api.simplified.hypixel.response.skyblock.member.dungeon;
 
-import api.simplified.hypixel.common.EnumLookup;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.AllArgsConstructor;
+import dev.simplified.annotations.EnumLookup;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 import dev.simplified.util.StringUtil;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -43,12 +42,12 @@ public class DungeonClass implements DungeonWeighted {
      *
      * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Classes">Classes</a>
      */
-    @RequiredArgsConstructor
+    @EnumLookup
     public enum Type {
 
         /**
-         * No class the wire named - the lookup fallback, and what a member who has never picked one
-         * reads as.
+         * No class the wire named - the sentinel an unmatched name resolves to, and what a member who
+         * has never picked one reads as.
          */
         UNKNOWN,
 
@@ -83,16 +82,6 @@ public class DungeonClass implements DungeonWeighted {
          */
         public @NotNull String getName() {
             return StringUtil.capitalizeFully(this.name());
-        }
-
-        /**
-         * Reads the class a wire name refers to.
-         *
-         * @param name the wire spelling of the class, matched case-insensitively
-         * @return the matching class, or {@link #UNKNOWN} when no constant carries that name
-         */
-        public static @NotNull Type of(@NotNull String name) {
-            return EnumLookup.of(values(), name, UNKNOWN);
         }
 
     }

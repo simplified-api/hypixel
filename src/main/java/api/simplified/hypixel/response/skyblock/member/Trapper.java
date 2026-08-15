@@ -2,7 +2,7 @@ package api.simplified.hypixel.response.skyblock.member;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 
 /**
  * A member's progress on Trevor the Trapper's quest.

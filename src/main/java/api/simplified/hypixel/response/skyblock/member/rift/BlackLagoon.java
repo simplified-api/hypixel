@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.skyblock.member.rift;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
-import lombok.experimental.Accessors;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
 
 /**
  * A member's progress in the Black Lagoon, entered from the Wyld Woods for 4:00 of Rift Time.
@@ -21,21 +21,21 @@ public class BlackLagoon {
     /**
      * Whether Edwin has been spoken to, bound from {@code talked_to_edwin}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("talked_to_edwin")
     private boolean hasTalkedToEdwin;
 
     /**
      * Whether the science paper has been received, bound from {@code received_science_paper}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("received_science_paper")
     private boolean hasReceivedSciencePaper;
 
     /**
      * Whether the science paper has been delivered, bound from {@code delivered_science_paper}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("delivered_science_paper")
     private boolean hasDeliveredSciencePaper;
 

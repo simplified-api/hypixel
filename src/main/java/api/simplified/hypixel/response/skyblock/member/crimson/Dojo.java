@@ -1,15 +1,15 @@
 package api.simplified.hypixel.response.skyblock.member.crimson;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.EnumLookup;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.KeyField;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Extract;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 /**
  * A member's scores across Master Tao's seven tests.
@@ -56,23 +56,24 @@ public class Dojo {
      * and time total.
      * <p>
      * Every real test carries its wire name twice, once as a {@link SerializedName} and once as a
-     * constructor component, and both are needed: {@link #of(String)} reads the component, while the
-     * enum adapter that binds these as map keys only ever sees names.
+     * constructor component, and both are needed: {@code findByInternalName(String)} reads the
+     * component, while the enum adapter that binds these as map keys only ever sees names.
      *
      * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Dojo">Dojo</a>
      */
     @Getter
+    @EnumLookup
     @RequiredArgsConstructor
     public enum Type {
 
         /**
-         * Not a test - the value {@link #of(String)} falls through to when a name matches nothing. Its
-         * wire name is the empty string, so nothing on the wire reaches it directly.
+         * Not a test - the sentinel a name matching nothing resolves to. Its wire name is the empty
+         * string, so nothing on the wire reaches it directly.
          */
         UNKNOWN(""),
-        // the wire name has to be a @SerializedName as well as a constructor component: of() reads
-        // the component, but the enum adapter that binds these as @Capture map keys only ever sees
-        // names, so without this every dojo entry misses and is diverted as unmatched
+        // the wire name has to be a @SerializedName as well as a constructor component: the key
+        // lookup reads the component, but the enum adapter that binds these as @Capture map keys
+        // only ever sees names, so without this every dojo entry misses and is diverted as unmatched
 
         /**
          * The Test of Force, which asks the member to knock mobs into the lava - some of them worth
@@ -125,23 +126,10 @@ public class Dojo {
         TENACITY("lock_head");
 
         /**
-         * The name the wire spells this test with, matched case-insensitively alongside the constant's
-         * own name.
+         * The name the wire spells this test with, a second key alongside the constant's own name.
          */
+        @KeyField(strictKeys = true)
         private final @NotNull String internalName;
-
-        /**
-         * Looks a test up by either the constant's name or the wire's, ignoring case.
-         *
-         * @param name the name to match
-         * @return the matching test, or {@link #UNKNOWN} when neither name matches
-         */
-        public static @NotNull Dojo.Type of(@NotNull String name) {
-            return Arrays.stream(values())
-                .filter(type -> type.name().equalsIgnoreCase(name) || type.getInternalName().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(UNKNOWN);
-        }
 
     }
 

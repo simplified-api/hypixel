@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.skyblock;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**

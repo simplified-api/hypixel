@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.skyblock.member.hoppity;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import dev.simplified.annotations.AllArgsConstructor;
+import dev.simplified.annotations.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**

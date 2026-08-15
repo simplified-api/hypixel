@@ -2,7 +2,7 @@ package api.simplified.hypixel.response.skyblock;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 
 /**
  * One cosmetic offered in a fire sale, sold for gems in limited stock over a fixed window.

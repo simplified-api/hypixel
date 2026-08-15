@@ -2,6 +2,9 @@ package api.simplified.hypixel.response.skyblock.member.dungeon;
 
 import api.simplified.hypixel.common.Weight;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -9,9 +12,6 @@ import dev.simplified.collection.ConcurrentSet;
 import dev.simplified.collection.tuple.pair.Pair;
 import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.annotation.SerializedPath;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
@@ -150,7 +150,7 @@ public class Dungeons {
 
             this.dungeons = floors.stream()
                 .filterKey(key -> !key.startsWith(MASTER_PREFIX))
-                .mapKey(DungeonData.Type::of)
+                .mapKey(key -> DungeonData.Type.findByName(key).orElse(DungeonData.Type.UNKNOWN))
                 .map((type, floorData) -> Pair.of(type, new DungeonData(
                     floorData,
                     floors.getOrDefault(MASTER_PREFIX + type.name(), new FloorData())
@@ -250,7 +250,7 @@ public class Dungeons {
         private @NotNull Optional<String> selectedRace = Optional.empty();
         @SerializedName("selected_setting")
         private @NotNull Optional<String> selectedSetting = Optional.empty();
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         private boolean runback;
 
     }

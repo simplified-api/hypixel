@@ -3,11 +3,10 @@ package api.simplified.hypixel.response.skyblock.stats;
 import api.simplified.hypixel.response.skyblock.stats.buff.BuffEvaluator;
 import api.simplified.skyblock.model.Buff;
 import api.simplified.skyblock.model.Stat;
+import dev.simplified.annotations.UtilityClass;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * over tables the {@code BONUS} round has settled. Two steps over disjoint tables commute, and most
  * pairs here are disjoint.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 final class PostProcess {
 
     /**

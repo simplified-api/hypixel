@@ -1,17 +1,17 @@
 package api.simplified.hypixel.response.skyblock.member;
 
-import api.simplified.hypixel.common.EnumLookup;
 import api.simplified.skyblock.common.Rarity;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.EnumLookup;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.annotation.SerializedPath;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -457,6 +457,7 @@ public class Statistics {
              * The kind of ender dragon a counter belongs to, plus the aggregate rows the wire
              * mixes in.
              */
+            @EnumLookup
             public enum Type {
 
                 /**
@@ -507,11 +508,7 @@ public class Statistics {
                 /**
                  * The Young Dragon.
                  */
-                YOUNG;
-
-                public static @NotNull Type of(@NotNull String name) {
-                    return EnumLookup.of(values(), name, UNKNOWN);
-                }
+                YOUNG
 
             }
 

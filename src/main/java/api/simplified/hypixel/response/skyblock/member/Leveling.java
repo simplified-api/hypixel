@@ -1,11 +1,11 @@
 package api.simplified.hypixel.response.skyblock.member;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,7 +43,7 @@ public class Leveling {
     /**
      * Hypixel-side bookkeeping flag for a data migration.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("migrated_completions")
     private boolean hasMigratedCompletions;
 
@@ -86,14 +86,14 @@ public class Leveling {
     /**
      * A third Hypixel-side bookkeeping flag for a data migration.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("migrated_completions_2")
     private boolean hasMigratedCompletions2;
 
     /**
      * Whether the accessory rewarded for levelling has been taken.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("claimed_talisman")
     private boolean hasClaimedTalisman;
 

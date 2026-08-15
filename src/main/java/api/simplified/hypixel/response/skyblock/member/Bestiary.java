@@ -3,6 +3,10 @@ package api.simplified.hypixel.response.skyblock.member;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.BestiaryFamily;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -10,10 +14,6 @@ import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.annotation.SerializedPath;
 import dev.simplified.util.NumberUtil;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
@@ -82,7 +82,7 @@ public class Bestiary {
      * Whether milestone chat notifications are switched on, read out of the wire's
      * {@code miscellaneous} node.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedPath("miscellaneous.milestones_notifications")
     private boolean hasNotificationsEnabled;
 

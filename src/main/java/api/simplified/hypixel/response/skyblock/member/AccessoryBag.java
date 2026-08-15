@@ -10,6 +10,11 @@ import api.simplified.skyblock.model.Accessory;
 import api.simplified.skyblock.model.Power;
 import api.simplified.skyblock.model.Stat;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
+import dev.simplified.annotations.NoArgsConstructor;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -18,11 +23,6 @@ import dev.simplified.collection.tuple.pair.Pair;
 import dev.simplified.gson.annotation.Capture;
 import lib.minecraft.nbt.tag.CompoundTag;
 import lib.minecraft.nbt.tag.StringTag;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
@@ -353,14 +353,14 @@ public class AccessoryBag {
          * Whether the first tuning point refund has been claimed.
          */
         @SerializedName("refund_1")
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         private boolean hasClaimedRefund;
 
         /**
          * Whether the second tuning point refund has been claimed.
          */
         @SerializedName("refund_2")
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         private boolean hasClaimedSecondRefund;
 
         /**

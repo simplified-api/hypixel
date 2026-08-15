@@ -1,7 +1,7 @@
 package api.simplified.hypixel.response.skyblock.member.dungeon;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
+import dev.simplified.annotations.Getter;
 
 /**
  * A day-scoped counter of completed dungeon runs, reset when the stamped day rolls over.

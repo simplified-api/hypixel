@@ -1,12 +1,12 @@
 package api.simplified.hypixel.response.hypixel;
 
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import lib.minecraft.text.ChatColor;
-import lombok.AccessLevel;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
@@ -229,6 +229,7 @@ public class HypixelGuild {
         /**
          * Whether a newly joined member is given this rank.
          */
+        @Getter(name = "{}")
         @SerializedName("default")
         private boolean isDefault;
 

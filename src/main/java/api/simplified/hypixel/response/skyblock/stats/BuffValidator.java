@@ -3,12 +3,11 @@ package api.simplified.hypixel.response.skyblock.stats;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Buff;
 import api.simplified.skyblock.model.Stat;
+import dev.simplified.annotations.UtilityClass;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentSet;
 import dev.simplified.expression.Expression;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -46,7 +45,7 @@ import java.util.function.Consumer;
  * the whole stat table, and resolving a repository from inside a decoder is what the bound layer
  * forbids.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 final class BuffValidator {
 
     /**

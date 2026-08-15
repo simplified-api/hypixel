@@ -1,8 +1,8 @@
 package api.simplified.hypixel.response.skyblock;
 
 import com.google.gson.annotations.SerializedName;
-import lombok.AccessLevel;
-import lombok.Getter;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
 
 import java.net.MalformedURLException;
 import java.net.URI;

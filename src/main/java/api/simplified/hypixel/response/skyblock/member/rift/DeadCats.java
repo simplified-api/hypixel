@@ -2,10 +2,10 @@ package api.simplified.hypixel.response.skyblock.member.rift;
 
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -27,7 +27,7 @@ public class DeadCats {
      * Whether the hunt has been accepted from Sad Jacquelle, bound from
      * {@code talked_to_jacquelle}.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("talked_to_jacquelle")
     private boolean hasTalkedToJacquelle;
 

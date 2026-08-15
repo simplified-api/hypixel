@@ -6,9 +6,9 @@ import api.simplified.hypixel.common.Weighted;
 import api.simplified.hypixel.response.skyblock.SkyBlockMember;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Skill;
+import dev.simplified.annotations.Getter;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.util.NumberUtil;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**

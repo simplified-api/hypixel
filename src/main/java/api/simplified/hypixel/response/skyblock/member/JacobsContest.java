@@ -2,6 +2,11 @@ package api.simplified.hypixel.response.skyblock.member;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.AccessLevel;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NamingStyle;
+import dev.simplified.annotations.NoArgsConstructor;
+import dev.simplified.annotations.RequiredArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
@@ -10,11 +15,6 @@ import dev.simplified.gson.annotation.Key;
 import dev.simplified.gson.annotation.SerializedPath;
 import dev.simplified.util.NumberUtil;
 import dev.simplified.util.StringUtil;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -55,14 +55,14 @@ public class JacobsContest {
     /**
      * Whether the personal-bests perk is owned, read out of the wire's {@code perks} node.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedPath("perks.personal_bests")
     private boolean hasPersonalBestsPerk;
 
     /**
      * Whether the member has spoken to Jacob.
      */
-    @Accessors(fluent = true)
+    @Getter(style = NamingStyle.FLUENT)
     @SerializedName("talked")
     private boolean hasTalked;
 
@@ -213,7 +213,7 @@ public class JacobsContest {
         /**
          * Whether the contest's reward has been taken.
          */
-        @Accessors(fluent = true)
+        @Getter(style = NamingStyle.FLUENT)
         @SerializedName("claimed_rewards")
         private boolean hasClaimedRewards;
 

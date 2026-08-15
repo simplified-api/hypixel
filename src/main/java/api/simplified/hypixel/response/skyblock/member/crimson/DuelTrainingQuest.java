@@ -2,8 +2,8 @@ package api.simplified.hypixel.response.skyblock.member.crimson;
 
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
