@@ -25,7 +25,7 @@ Feign contracts and a fully typed response tree for the [Hypixel Public API v2](
 - [Gradle Tasks](#gradle-tasks)
   - [Build and Test](#build-and-test)
 - [Package Structure](#package-structure)
-- [Developer Scripts](#developer-scripts)
+- [Coverage Audit](#coverage-audit)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -49,7 +49,7 @@ Feign contracts and a fully typed response tree for the [Hypixel Public API v2](
 | [Gradle](https://gradle.org/) | 8.x | Wrapper is bundled (`./gradlew`) |
 | [Git](https://git-scm.com/) | 2.x+ | For cloning the repository |
 | Hypixel API key | - | Required for player, guild, profile and museum endpoints |
-| [Python](https://www.python.org/) | 3.x | Optional, for `scripts/json_dto_diff.py` |
+| [toolsmith](https://github.com/simplified-dev/toolsmith) | - | Optional, for the `java json_diff` coverage audit |
 
 ### Installation
 
@@ -284,21 +284,23 @@ hypixel/
 │   ├── main/resources/META-INF/services/    # GsonContributor SPI registration
 │   ├── test/java/                           # member DTO mapping + round-trip suite
 │   └── test/resources/                      # craftedfury.json (profiles), elections.json
-├── scripts/json_dto_diff.py                 # wire-vs-DTO coverage audit
 ├── build.gradle.kts  settings.gradle.kts  gradle/libs.versions.toml
 └── LICENSE.md  CONTRIBUTING.md  CLAUDE.md
 ```
 
-## Developer Scripts
+## Coverage Audit
 
-`scripts/json_dto_diff.py` walks a captured API response and the DTO class graph in parallel and reports every wire key no field maps to. It understands the binding annotations, so a key reached through `@SerializedPath` or swept up by `@Capture` counts as covered.
+`toolsmith java json_diff` walks a captured API response and the DTO class graph in parallel and reports every wire key no field maps to. It understands the binding annotations, so a key reached through `@SerializedPath` or swept up by `@Capture` counts as covered.
 
 ```bash
-python scripts/json_dto_diff.py                       # audit every member in the fixture
-python scripts/json_dto_diff.py --section dungeons    # one member subtree
-python scripts/json_dto_diff.py --root SkyBlockIsland --node profile
-python scripts/json_dto_diff.py --show-mapped         # also list the covered keys
+J=src/test/resources/craftedfury.json; S=src/main/java/api/simplified/hypixel
+toolsmith java json_diff --json $J --src $S --root SkyBlockMember --union 'profiles.[].members.{}'
+toolsmith java json_diff --json $J --src $S --root SkyBlockMember --union 'profiles.[].members.{}' --section dungeons
+toolsmith java json_diff --json $J --src $S --root SkyBlockIsland --node profiles.0
+toolsmith java json_diff --json $J --src $S --root SkyBlockMember --union 'profiles.[].members.{}' --show-mapped
 ```
+
+The first audits every member of every profile at once, so a key one account happens not to send is still covered; the rest narrow it to one member subtree, to a single island, and to a run that also lists the keys a field does map.
 
 It exits non-zero when unmapped keys are found, so it works as a gate. Run it after every Hypixel update - a new subtree is silent otherwise, because Gson drops keys nothing declares without a word.
 

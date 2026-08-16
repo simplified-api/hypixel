@@ -27,7 +27,7 @@ Thank you for your interest in contributing! This document explains how to get s
 | JDK | **21+** | Required |
 | Gradle | 8.x | Wrapper is bundled (`./gradlew`) |
 | Git | 2.x+ | For cloning and contributing |
-| Python | 3.x | For `scripts/json_dto_diff.py` |
+| toolsmith | - | For the `java json_diff` coverage audit |
 | Hypixel API key | - | To verify a change against the live API |
 | IDE | Any | IntelliJ IDEA is the recommended editor |
 
@@ -200,8 +200,9 @@ between them would have cancelled out there rather than showing up.
 - **Coverage audit** - required when your change touches the response tree. Every Hypixel update adds keys, and Gson drops what nothing declares without a word:
 
   ```bash
-  python scripts/json_dto_diff.py
-  python scripts/json_dto_diff.py --section dungeons
+  J=src/test/resources/craftedfury.json; S=src/main/java/api/simplified/hypixel
+  toolsmith java json_diff --json $J --src $S --root SkyBlockMember --union 'profiles.[].members.{}'
+  toolsmith java json_diff --json $J --src $S --root SkyBlockMember --union 'profiles.[].members.{}' --section dungeons
   ```
 
   It exits non-zero when unmapped keys remain, so it doubles as a gate.
@@ -225,7 +226,7 @@ between them would have cancelled out there rather than showing up.
 
 3. **In the PR description**, include:
    - A summary of the changes and the motivation behind them.
-   - The `json_dto_diff.py` output before and after, if the response tree moved.
+   - The `toolsmith java json_diff` output before and after, if the response tree moved.
    - Whether you verified against the live API, and against which endpoint.
    - Any fixture-pinned assertion you had to change, and why the new value is right.
 

@@ -35,10 +35,21 @@ objectives, 810 Jacob's contests, 100 collections, 29 rift counters, a `CATACOMB
 `200.0 / 2.03`, a `HEALER` weight of `90.6`. A different fixture breaks them by design; each is a
 value captured from behaviour before a change, so they are updated deliberately and never loosened.
 
-`python scripts/json_dto_diff.py` walks a capture against the DTO source and exits 1 on unmapped
-keys. It parses Java with regex and knows `@SerializedName`, `@SerializedPath`, `@Extract`,
-`@Capture`, `@Collapse`, `@Key` and `@Split` - **not `@Flatten` and not `@Lenient`**, so a field
-using either reports its keys unmapped and that report is noise rather than a gap.
+`toolsmith java json_diff` walks a capture against the DTO source and exits 1 on unmapped keys:
+
+```bash
+J=src/test/resources/craftedfury.json; S=src/main/java/api/simplified/hypixel
+toolsmith java json_diff --json $J --src $S --root SkyBlockMember --union 'profiles.[].members.{}'
+```
+
+The union is what makes that one report over every member of every profile, so a key one account
+happens not to send is still audited; `--root SkyBlockIsland --node profiles.0` reads a single island
+instead. It parses Java with regex and knows `@SerializedName`, `@SerializedPath`, `@Capture`,
+`@Key`, `@Collapse`, `@Extract` and `@Flatten`. `@Lenient`, `@Split` and `@Fallback` go unparsed
+because each changes a value rather than which key claims it - a field carrying one binds under its
+own name and its keys read mapped, which is the honest answer. The stricter reading of every
+annotation it does know sits behind `--strict <name>` - `names`, `extract`, `capture`, `collapse`,
+`flatten` or `all` - and each is off by default.
 
 ## Bound, derived, resolved
 
@@ -188,7 +199,7 @@ empty there and reads the flagged entry everywhere else.
 ## Debugging a mismatch
 
 1. Decide which layer it is - bound, derived, or resolved - before reading any code.
-2. `python scripts/json_dto_diff.py --section <node>` for a bound value that is simply absent.
+2. Add `--section <node>` to the audit command under Gates for a bound value that is simply absent.
 3. Decode the one subtree in a scratch test rather than the whole member; that is what every test
    here does and it is why they are readable.
 4. Read the expectation from a pristine `deepCopy()`, never from the tree you decoded.
@@ -200,7 +211,8 @@ empty there and reads the flagged entry everywhere else.
 - `build/`, `.gradle/` - Gradle output and daemon state.
 - `.schema/` - generated JPA schema, excluded from the IDE module by `build.gradle.kts`.
 - `src/test/resources/craftedfury.json` - the profiles fixture, 1.6 MB over 26,940 lines. Tracked, but
-  read a slice through `scripts/json_dto_diff.py --section <node>` rather than opening it whole.
+  read a slice through the audit command under Gates with `--section <node>` rather than opening it
+  whole.
 - `notes/` - gitignored working notes on the gson-extras and json-annotations efforts. Read one when
   picking up a live effort; nothing downstream reads them, so do not cite a `notes/` path or a note's
   entry number from a tracked file - the directory resolves for nobody who clones this.
