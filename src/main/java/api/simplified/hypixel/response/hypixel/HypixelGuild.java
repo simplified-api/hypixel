@@ -229,7 +229,6 @@ public class HypixelGuild {
         /**
          * Whether a newly joined member is given this rank.
          */
-        @Getter(name = "{}")
         @SerializedName("default")
         private boolean isDefault;
 
