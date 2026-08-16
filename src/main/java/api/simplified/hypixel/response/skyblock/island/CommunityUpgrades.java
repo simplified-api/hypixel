@@ -117,7 +117,7 @@ public class CommunityUpgrades {
         /**
          * Real time the tier was started.
          */
-        @SerializedName("start_ms")
+        @SerializedName("started_ms")
         private SkyBlockDate.RealTime started;
 
         /**
