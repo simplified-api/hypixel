@@ -76,23 +76,10 @@ public class CommunityUpgrades {
     public static class Upgraded extends Upgrading {
 
         /**
-         * Real time the finished tier was claimed.
-         */
-        @SerializedName("claimed_ms")
-        private SkyBlockDate.RealTime claimed;
-
-        /**
          * Universally unique id of the member that claimed the finished tier.
          */
         @SerializedName("claimed_by")
         private String claimedBy;
-
-        /**
-         * Whether the tier's wait was fast tracked with gems, bound from the one-word
-         * {@code fasttracked}.
-         */
-        @SerializedName("fasttracked")
-        private boolean fastTracked;
 
     }
 
