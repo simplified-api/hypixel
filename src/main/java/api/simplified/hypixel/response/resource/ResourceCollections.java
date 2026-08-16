@@ -24,7 +24,7 @@ public class ResourceCollections {
      * When the resource was last regenerated.
      */
     @SerializedName("lastUpdated")
-    private @NotNull SkyBlockDate.SkyBlockTime lastUpdated;
+    private @NotNull SkyBlockDate.RealTime lastUpdated;
 
     /**
      * SkyBlock version the resource was generated against.
