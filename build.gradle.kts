@@ -32,7 +32,7 @@ dependencies {
     testImplementation(libs.junit.platform.launcher)
 
     // Sibling API modules (composite-build substitutes by project name)
-    api("com.github.simplified-api:skyblock") { version { strictly("095e057") } }
+    api("com.github.simplified-api:skyblock") { version { strictly("2c6ddc6") } }
 
     // Simplified Libraries (github.com/simplified-dev)
     api("com.github.simplified-dev:collections") { version { strictly("8ca6cb8") } }
@@ -44,8 +44,8 @@ dependencies {
     api("com.github.simplified-dev:expression") { version { strictly("03220ce") } }
 
     // Minecraft-Library (github.com/minecraft-library)
-    api("com.github.minecraft-library:text") { version { strictly("117775e") } }
-    api("com.github.minecraft-library:nbt-factory") { version { strictly("f8b5f52") } }
+    api("com.github.minecraft-library:text") { version { strictly("929dab6") } }
+    api("com.github.minecraft-library:nbt-factory") { version { strictly("1fee2e2") } }
 
     // Gson - @GsonType-annotated inner classes plus direct Deserializer/TypeAdapter usage
     api(libs.gson)
