@@ -1,4 +1,4 @@
-package api.simplified.hypixel.response.skyblock.member.attribute;
+package api.simplified.hypixel.response.skyblock.member.hunting;
 
 import com.google.gson.annotations.SerializedName;
 import dev.simplified.annotations.Getter;

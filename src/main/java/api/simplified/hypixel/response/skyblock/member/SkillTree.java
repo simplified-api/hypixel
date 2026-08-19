@@ -79,6 +79,17 @@ public class SkillTree {
     private int lastFreeTrialDay;
 
     /**
+     * Settings the member has put on a tree slot, keyed the same way as the perks.
+     *
+     * <p>
+     * The catch-all is what makes a slot key readable at all - a slot sits beside the declared keys
+     * rather than inside a node of its own, so every key this class does not declare is one, and each
+     * entry binds whole rather than being split on an affix.
+     */
+    @Capture(grouping = Capture.Grouping.ENTRY)
+    private @NotNull ConcurrentMap<String, Slot> slots = Concurrent.newMap();
+
+    /**
      * Reads a tree's experience.
      *
      * @param tree the tree to read
@@ -137,6 +148,28 @@ public class SkillTree {
      */
     public int getSpentTokens(@NotNull Tree tree, int slot) {
         return this.getSpentTokens().getOrDefault(slotKey(tree.getTokenKey(), slot), 0);
+    }
+
+    /**
+     * Reads the label a member gave a tree's active slot.
+     *
+     * @param tree the tree to read
+     * @return the label, empty for a slot the member never named
+     */
+    public @NotNull Optional<String> getCustomName(@NotNull Tree tree) {
+        return this.getCustomName(tree, this.getSelectedSlot(tree));
+    }
+
+    /**
+     * Reads the label a member gave one saved slot of a tree.
+     *
+     * @param tree the tree to read
+     * @param slot the saved slot, counting from one
+     * @return the label, empty for a slot the member never named
+     */
+    public @NotNull Optional<String> getCustomName(@NotNull Tree tree, int slot) {
+        return Optional.ofNullable(this.getSlots().get(slotKey(tree.getPerkKey(), slot)))
+            .map(Slot::getCustomName);
     }
 
     /**
@@ -200,6 +233,22 @@ public class SkillTree {
          * How the tree is spelled in the token ledger alone.
          */
         private final @NotNull String tokenKey;
+
+    }
+
+    /**
+     * The settings a member has put on one tree slot.
+     */
+    @Getter
+    @NoArgsConstructor
+    public static class Slot {
+
+        /**
+         * Label the member gave the slot, which is free text and answers to nothing else here - the
+         * slot holding {@code Fishing} is still a slot of the foraging tree. Null until one is set.
+         */
+        @SerializedName("custom_name")
+        private String customName;
 
     }
 

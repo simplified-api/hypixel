@@ -3,10 +3,13 @@ package api.simplified.hypixel.response.skyblock.member;
 import api.simplified.hypixel.common.IdTiers;
 import api.simplified.skyblock.date.SkyBlockDate;
 import com.google.gson.annotations.SerializedName;
+import dev.simplified.annotations.AccessLevel;
 import dev.simplified.annotations.Getter;
+import dev.simplified.annotations.NoArgsConstructor;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
+import dev.simplified.gson.annotation.Capture;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -40,11 +43,9 @@ public class PlayerData {
     @SerializedName("fishing_treasure_caught")
     private int fishingTreasureCaught;
 
-    /**
-     * Experience earned in each skill, keyed by the skill id, and the only source of skill levels.
-     */
+    @Getter(AccessLevel.NONE)
     @SerializedName("experience")
-    private @NotNull ConcurrentMap<String, Double> skillExperience = Concurrent.newMap();
+    private @NotNull SkillExperience experience = new SkillExperience();
 
     // Unlockables
 
@@ -53,6 +54,18 @@ public class PlayerData {
      */
     @SerializedName("reaper_peppers_eaten")
     private int reaperPeppersEaten;
+
+    /**
+     * Bee saliva eaten, each granting a permanent health bonus.
+     */
+    @SerializedName("bee_saliva_eaten")
+    private int beeSalivaEaten;
+
+    /**
+     * Isopod husks eaten, each granting a permanent stat bonus.
+     */
+    @SerializedName("isopod_husks_eaten")
+    private int isopodHusksEaten;
 
     /**
      * Level bought for each community shop perk, keyed by the perk id.
@@ -128,6 +141,26 @@ public class PlayerData {
     private @NotNull ConcurrentList<CenturyCake> centuryCakes = Concurrent.newList();
 
     /**
+     * Experience earned in each skill, keyed by the skill id the wire spells, and the only source of
+     * skill levels.
+     *
+     * @return the experience per skill, empty for a member the wire sends none for
+     */
+    public @NotNull ConcurrentMap<String, Double> getSkillExperience() {
+        return this.experience.getEntries();
+    }
+
+    /**
+     * Levels added to the foraging cap on top of the repository maximum, bought one at a time from
+     * Agatha.
+     *
+     * @return the extra levels bought, zero for a member who has bought none
+     */
+    public int getForagingExtraLevelCap() {
+        return this.experience.getForagingExtraLevelCap();
+    }
+
+    /**
      * Reads the tiers crafted for one minion type, lowest first.
      *
      * @param itemId the minion's item id
@@ -137,6 +170,33 @@ public class PlayerData {
         return IdTiers.group(this.getCraftedMinions())
             .getOrDefault(itemId, Concurrent.newList())
             .sorted(Comparator.naturalOrder());
+    }
+
+    /**
+     * The {@code experience} node, which carries one counter that is not experience at all.
+     *
+     * <p>
+     * Every key here is a skill id but one, and the odd one out is a level cap sharing the map with
+     * the totals. Declaring it keeps it out of the catch-all, so an id no skill answers to never
+     * reaches the skill levels derived from that map.
+     */
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class SkillExperience {
+
+        /**
+         * Levels added to the foraging cap on top of the repository maximum, bought one at a time
+         * from Agatha.
+         */
+        @SerializedName("SKILL_FORAGING_extra_level_cap")
+        private int foragingExtraLevelCap;
+
+        /**
+         * Experience earned in each skill, keyed by the skill id the wire spells.
+         */
+        @Capture
+        private @NotNull ConcurrentMap<String, Double> entries = Concurrent.newMap();
+
     }
 
 }

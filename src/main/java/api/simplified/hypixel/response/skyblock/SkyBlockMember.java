@@ -3,13 +3,15 @@ package api.simplified.hypixel.response.skyblock;
 import api.simplified.hypixel.common.IdTiers;
 import api.simplified.hypixel.common.Weight;
 import api.simplified.hypixel.response.skyblock.member.*;
-import api.simplified.hypixel.response.skyblock.member.attribute.AttributeShards;
 import api.simplified.hypixel.response.skyblock.member.crimson.CrimsonIsle;
 import api.simplified.hypixel.response.skyblock.member.crimson.TrophyFishing;
 import api.simplified.hypixel.response.skyblock.member.dungeon.Dungeons;
 import api.simplified.hypixel.response.skyblock.member.foraging.Foraging;
 import api.simplified.hypixel.response.skyblock.member.foraging.HeartOfTheForest;
 import api.simplified.hypixel.response.skyblock.member.hoppity.ChocolateFactory;
+import api.simplified.hypixel.response.skyblock.member.hunting.ActiveTrap;
+import api.simplified.hypixel.response.skyblock.member.hunting.AttributeShard;
+import api.simplified.hypixel.response.skyblock.member.hunting.Safari;
 import api.simplified.hypixel.response.skyblock.member.mining.ForgeItem;
 import api.simplified.hypixel.response.skyblock.member.mining.GlaciteTunnels;
 import api.simplified.hypixel.response.skyblock.member.mining.HeartOfTheMountain;
@@ -267,22 +269,53 @@ public class SkyBlockMember {
     private @NotNull ItemSettings itemSettings = new ItemSettings();
 
     /**
-     * Attribute shards absorbed, the foraging-era replacement for attribute levelling.
-     */
-    @SerializedName("shards")
-    private @NotNull AttributeShards attributes = new AttributeShards();
-
-    /**
-     * Attribute stacks currently built up, keyed by attribute id.
-     */
-    @SerializedPath("attributes.stacks")
-    private @NotNull ConcurrentMap<String, Integer> attributeStacks = Concurrent.newMap();
-
-    /**
      * Saved equipment loadouts the player can switch between.
      */
     @SerializedName("loadout")
     private @NotNull Loadouts loadouts = new Loadouts();
+
+    // Hunting
+
+    /**
+     * Traps the member currently has placed in the world, each set for one shard and each waiting on
+     * the catch that fires it.
+     */
+    @SerializedPath("shards.traps.active_traps")
+    private @NotNull ConcurrentList<ActiveTrap> activeTraps = Concurrent.newList();
+
+    /**
+     * Every attribute shard stacked in the Hunting Box, one entry per shard the member has caught.
+     * <p>
+     * A shard is the item a caught attribute lands as. It can be fused into another shard or
+     * syphoned into the attribute it belongs to, and both spend it out of this box.
+     *
+     * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Hunting_Box">Hunting Box</a>
+     */
+    @SerializedPath("shards.owned")
+    private @NotNull ConcurrentList<AttributeShard> huntingBox = Concurrent.newList();
+
+    /**
+     * Shards spent on fusion, counted across every attribute rather than per shard.
+     */
+    @SerializedPath("shards.fused")
+    private int fusedAttributes;
+
+    /**
+     * Level reached in each attribute, keyed by attribute id.
+     * <p>
+     * An attribute is a passive buff raised by syphoning its shard, ten levels at most. The wire
+     * calls these stacks; the count of distinct shards and the per-source hunt counters are on the
+     * member's statistics rather than here.
+     *
+     * @see <a href="https://hypixelskyblock.minecraft.wiki/w/Attributes">Attributes</a>
+     */
+    @SerializedPath("attributes.stacks")
+    private @NotNull ConcurrentMap<String, Integer> unlockedAttributes = Concurrent.newMap();
+
+    /**
+     * Safari expeditions run, covering the critters discovered and the tickets left to spend.
+     */
+    private @NotNull Safari safari = new Safari();
 
     // Collection
 

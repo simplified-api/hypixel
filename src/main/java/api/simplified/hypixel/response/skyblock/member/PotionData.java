@@ -40,6 +40,11 @@ public class PotionData {
     private boolean infinite;
 
     /**
+     * The effect's flag bits, packed into one number.
+     */
+    private int flags;
+
+    /**
      * Modifiers applied on top of this effect.
      */
     private @NotNull ConcurrentList<Modifier> modifiers = Concurrent.newList();

@@ -9,11 +9,11 @@ import api.simplified.hypixel.response.skyblock.member.GardenCore;
 import api.simplified.hypixel.response.skyblock.member.JacobsContest;
 import api.simplified.hypixel.response.skyblock.member.Loadouts;
 import api.simplified.hypixel.response.skyblock.member.Objective;
+import api.simplified.hypixel.response.skyblock.member.PlayerData;
 import api.simplified.hypixel.response.skyblock.member.SkillTree;
 import api.simplified.hypixel.response.skyblock.member.Statistics;
 import api.simplified.hypixel.response.skyblock.member.Toolkit;
 import api.simplified.hypixel.response.skyblock.member.WinterIsland;
-import api.simplified.hypixel.response.skyblock.member.attribute.AttributeShards;
 import api.simplified.hypixel.response.skyblock.member.crimson.CrimsonIsle;
 import api.simplified.hypixel.response.skyblock.member.crimson.Dojo;
 import api.simplified.hypixel.response.skyblock.member.crimson.Kuudra;
@@ -26,10 +26,12 @@ import api.simplified.hypixel.response.skyblock.member.dungeon.FloorData;
 import api.simplified.hypixel.response.skyblock.member.foraging.Foraging;
 import api.simplified.hypixel.response.skyblock.member.foraging.HeartOfTheForest;
 import api.simplified.hypixel.response.skyblock.member.hoppity.ChocolateFactory;
+import api.simplified.hypixel.response.skyblock.member.hunting.Safari;
 import api.simplified.hypixel.response.skyblock.member.mining.HeartOfTheMountain;
 import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.hypixel.response.skyblock.member.pet.Pets;
 import api.simplified.hypixel.response.skyblock.member.rift.Rift;
+import api.simplified.hypixel.response.skyblock.member.skill.SkillLevel;
 import api.simplified.skyblock.common.Rarity;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -196,7 +198,7 @@ class MemberDtoMappingTest {
         assertThat(loadouts.getArmorSets(), hasKey(1));
         assertThat(loadouts.getArmorSets().get(1).getBoots().getRawData().isEmpty(), is(false));
         assertThat(loadouts.getEquipmentSets().get(1).getNecklace().getRawData().isEmpty(), is(false));
-        assertThat(loadouts.getEquippedArmorSet().orElseThrow(), is(equalTo(4)));
+        assertThat(loadouts.getEquippedArmorSet().orElseThrow(), is(equalTo(12)));
         assertThat(loadouts.getLoadout(1).orElseThrow().getName(), is(equalTo("Dungeons LCM")));
         assertThat(loadouts.getLoadout(1).orElseThrow().getPowerStone().orElseThrow(), is(equalTo("silky")));
     }
@@ -755,13 +757,15 @@ class MemberDtoMappingTest {
     }
 
     @Test
-    @DisplayName("attribute stacks decode from the member attributes object")
-    void mapsAttributeStacks() {
-        JsonObject stacks = populated.getAsJsonObject("attributes").getAsJsonObject("stacks");
-        Map<?, ?> decoded = gson.fromJson(stacks, Map.class);
+    @DisplayName("unlocked attributes decode from the member attributes object")
+    void mapsUnlockedAttributes() {
+        JsonObject rawStacks = rawPristine("attributes").getAsJsonObject("stacks");
+        SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
 
-        assertThat(decoded.isEmpty(), is(false));
-        assertThat(decoded, hasKey("magic_find"));
+        assertThat(member.getUnlockedAttributes().size(), is(equalTo(rawStacks.size())));
+        assertThat(member.getUnlockedAttributes(), hasKey("magic_find"));
+        assertThat(member.getUnlockedAttributes().get("magic_find"),
+            is(equalTo(rawStacks.get("magic_find").getAsInt())));
     }
 
     @Test
@@ -896,6 +900,8 @@ class MemberDtoMappingTest {
             is(equalTo(rawHitman.get("rabbit_hitmen_slots").getAsInt())));
         assertThat(factory.getHitman().getEggSlotCooldownSum(),
             is(equalTo(rawHitman.get("egg_slot_cooldown_sum").getAsInt())));
+        assertThat(factory.getHitman().getEggFinderLastFound().toEpochMilli(),
+            is(equalTo(rawHitman.get("egg_finder_last_found").getAsLong())));
     }
 
     @Test
@@ -1017,23 +1023,34 @@ class MemberDtoMappingTest {
     }
 
     @Test
-    @DisplayName("the two holders with no forwarder become readable for the first time")
+    @DisplayName("the holder with no forwarder becomes readable for the first time")
     void exposesPreviouslyUnreachableHolderFields() {
         JsonObject rawBestiary = rawPristine("bestiary").getAsJsonObject("miscellaneous");
         Bestiary bestiary = decodePristine("bestiary", Bestiary.class);
-        AttributeShards shards = decodePristine("shards", AttributeShards.class);
 
-        // both holders kept the class-level @Getter, so Lombok emitted an accessor returning a
+        // the holder kept the class-level @Getter, so Lombok emitted an accessor returning a
         // private nested type - uncallable from anywhere outside the declaring class
         assertThat(bestiary.isMaxKillsVisible(),
             is(equalTo(rawBestiary.get("max_kills_visible").getAsBoolean())));
         assertThat(bestiary.hasNotificationsEnabled(),
             is(equalTo(rawBestiary.get("milestones_notifications").getAsBoolean())));
+    }
+
+    @Test
+    @DisplayName("the hunting box, its traps and the fusion count read off one shards prefix")
+    void mapsHuntingBox() {
+        JsonObject rawShards = rawPristine("shards");
+        SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
+
+        assertThat(member.getHuntingBox().size(),
+            is(equalTo(rawShards.getAsJsonArray("owned").size())));
+        assertThat(member.getHuntingBox().getFirst().getType(), is(equalTo("QUEEN_BEE")));
+        assertThat(member.getFusedAttributes(), is(equalTo(rawShards.get("fused").getAsInt())));
 
         // shards.traps is {} in the fixture, so the path is skipped and the default stands - the
-        // point is that an eleven-field ActiveTrap list now has a reader at all
-        assertThat(shards.getActiveTraps(), is(empty()));
-        assertThat(shards.getOwnedShards().isEmpty(), is(false));
+        // point is that an eleven-field ActiveTrap list has a reader at all
+        assertThat(rawShards.getAsJsonObject("traps").isEmpty(), is(true));
+        assertThat(member.getActiveTraps(), is(empty()));
     }
 
     @Test
@@ -1483,6 +1500,125 @@ class MemberDtoMappingTest {
         assertThat(rawQuests.getAsJsonObject("mollim_quest").has("last_completion"), is(false));
         assertThat(quests.getMollimQuest().getLastCompletion().isPresent(), is(false));
         assertThat(quests.getPomtairQuest().getLastToyDrop().isPresent(), is(false));
+    }
+
+    @Test
+    @DisplayName("safari keys its biomes and tickets by enum, and writes them back as constants")
+    void mapsSafari() {
+        JsonObject rawSafari = rawPristine("safari");
+        JsonObject rawCaptures = rawSafari.getAsJsonObject("biome_captures");
+        Safari safari = decodePristine("safari", Safari.class);
+
+        // the size equality is the diversion, executed: a key naming no constant converts to null
+        // without throwing, so every unmatched key would otherwise share one entry
+        assertThat(safari.getBiomeCaptures().size(), is(equalTo(rawCaptures.size())));
+        assertThat(safari.getBiomeCaptures().get(Safari.Biome.CAVERN),
+            is(equalTo(rawCaptures.get("cavern").getAsInt())));
+        assertThat(safari.getBiomeCaptures().get(Safari.Biome.ICY), is(equalTo(1654)));
+        assertThat(safari.getClaimedMilestoneTiers().get(Safari.Biome.HAUNTED), is(equalTo(10)));
+
+        // a grade held none of is sent as a zero, so it is a present entry rather than an absent one
+        assertThat(safari.getTickets().get(Safari.Ticket.FIRST_CLASS), is(equalTo(46)));
+        assertThat(safari.getTickets().get(Safari.Ticket.PREMIUM), is(equalTo(0)));
+        assertThat(safari.getTickets().size(), is(equalTo(4)));
+
+        assertThat(safari.getDiscoveredCritters().size(), is(equalTo(37)));
+        assertThat(safari.getDiscoveredSparklingCritters(), is(equalTo(List.of("SHUDDERSQUID"))));
+        assertThat(safari.getDiscoveredCritters(), hasItem("SHUDDERSQUID"));
+        assertThat(safari.getCapturedSparklingCritters(), is(equalTo(1)));
+
+        // an enum map key writes back as name(), so the wire's lowercase spelling does not survive
+        JsonObject out = JsonParser.parseString(gson.toJson(safari)).getAsJsonObject();
+
+        assertThat(out.getAsJsonObject("biome_captures").keySet(),
+            is(equalTo(Set.of("CAVERN", "FOREST", "HAUNTED", "ICY"))));
+        assertThat(lowercased(out.getAsJsonObject("biome_captures").keySet()),
+            is(equalTo(rawCaptures.keySet())));
+    }
+
+    @Test
+    @DisplayName("honey binds a refill time per hive and keeps the smeared trees typed")
+    void mapsHoneyHives() {
+        JsonObject rawRefills = rawPristine("foraging").getAsJsonObject("honey").getAsJsonObject("refill_times");
+        Foraging foraging = decodePristine("foraging", Foraging.class);
+
+        assertThat(foraging.getHoney().getRefillTimes().size(), is(equalTo(rawRefills.size())));
+        assertThat(foraging.getHoney().getRefillTimes().get("hive_8").toEpochMilli(),
+            is(equalTo(rawRefills.get("hive_8").getAsLong())));
+        assertThat(foraging.getHoney().getSmearedTrees(), is(anEmptyMap()));
+    }
+
+    @Test
+    @DisplayName("a skill tree slot carries the label the member gave it, keyed like its perks")
+    void mapsSkillTreeSlotNames() {
+        SkillTree skillTree = decodePristine("skill_tree", SkillTree.class);
+
+        // a label answers to nothing else here - slot two of the FORAGING tree is called Fishing
+        assertThat(skillTree.getCustomName(SkillTree.Tree.FORAGING, 1).orElseThrow(), is(equalTo("Foraging")));
+        assertThat(skillTree.getCustomName(SkillTree.Tree.FORAGING, 2).orElseThrow(), is(equalTo("Fishing")));
+        assertThat(skillTree.getCustomName(SkillTree.Tree.FORAGING).orElseThrow(), is(equalTo("Foraging")));
+        assertThat(skillTree.getCustomName(SkillTree.Tree.MINING).isPresent(), is(false));
+
+        // the catch-all takes only the keys this class does not declare, so the slot named
+        // foraging_2 and the perks named foraging_2 stay in different maps
+        assertThat(skillTree.getSlots().keySet(), is(equalTo(Set.of("foraging", "foraging_2"))));
+        assertThat(skillTree.getNodes(), hasKey("foraging_2"));
+        assertThat(skillTree.getExperience().isEmpty(), is(false));
+    }
+
+    @Test
+    @DisplayName("player data counts the new consumables and a potion carries its flag bits")
+    void mapsPlayerDataCounters() {
+        JsonObject rawPlayerData = rawPristine("player_data");
+        JsonObject rawEffect = rawPlayerData.getAsJsonArray("active_effects").get(0).getAsJsonObject();
+        PlayerData playerData = decodePristine("player_data", PlayerData.class);
+
+        assertThat(playerData.getBeeSalivaEaten(),
+            is(equalTo(rawPlayerData.get("bee_saliva_eaten").getAsInt())));
+        assertThat(playerData.getIsopodHusksEaten(),
+            is(equalTo(rawPlayerData.get("isopod_husks_eaten").getAsInt())));
+        assertThat(playerData.getActivePotions().getFirst().getFlags(),
+            is(equalTo(rawEffect.get("flags").getAsInt())));
+    }
+
+    @Test
+    @DisplayName("the foraging level cap binds beside the skill totals instead of among them")
+    void keepsTheLevelCapOutOfSkillExperience() {
+        JsonObject rawExperience = rawPristine("player_data").getAsJsonObject("experience");
+        PlayerData playerData = decodePristine("player_data", PlayerData.class);
+
+        assertThat(rawExperience.has("SKILL_FORAGING_extra_level_cap"), is(true));
+        assertThat(playerData.getForagingExtraLevelCap(),
+            is(equalTo(rawExperience.get("SKILL_FORAGING_extra_level_cap").getAsInt())));
+
+        // its value is a whole number in a map of doubles, which is compatible - so nothing about the
+        // type keeps it out, and the declared field is the only thing that does
+        assertThat(playerData.getSkillExperience(), not(hasKey("SKILL_FORAGING_extra_level_cap")));
+        assertThat(playerData.getSkillExperience(), hasKey("SKILL_FORAGING"));
+        assertThat(playerData.getSkillExperience().size(), is(equalTo(rawExperience.size() - 1)));
+
+        // and it goes back inside experience rather than beside it
+        JsonObject out = JsonParser.parseString(gson.toJson(playerData)).getAsJsonObject();
+
+        assertThat(out.has("SKILL_FORAGING_extra_level_cap"), is(false));
+        assertThat(out.getAsJsonObject("experience").keySet(), is(equalTo(rawExperience.keySet())));
+    }
+
+    @Test
+    @DisplayName("no skill level is built from a key that names no skill")
+    void skillsCarryOnlySkillKeys() {
+        SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
+        List<String> ids = member.getSkills()
+            .getSkillLevels()
+            .stream()
+            .map(SkillLevel::getId)
+            .toList();
+
+        // an id no skill answers to resolves to a null repository row, and every accessor reached
+        // through it fails on that null - getWeighted() reads isCosmetic() on every one of these
+        assertThat(ids, hasItem("FORAGING"));
+        assertThat(ids, not(hasItem("FORAGING_extra_level_cap")));
+        assertThat(ids.size(), is(equalTo(12)));
     }
 
 }

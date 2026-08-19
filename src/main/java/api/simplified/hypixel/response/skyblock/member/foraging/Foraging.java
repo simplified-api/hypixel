@@ -13,13 +13,16 @@ import dev.simplified.gson.annotation.Lenient;
 import dev.simplified.gson.annotation.SerializedPath;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Instant;
+
 /**
  * A member's state on Galatea, the Foraging archipelago that opens at Foraging XII.
  *
  * <p>
  * Bound from {@code foraging}, it gathers the island's features rather than the skill itself:
  * contest and log-cutting personal bests, the Fish Family fish found so far, the hunting toolkit,
- * tree gifts opened per species, Hina's task list and the harp in front of Melody.
+ * tree gifts opened per species, the honey hives and smeared trees, Hina's task list and the harp in
+ * front of Melody.
  *
  * <p>
  * The whole node is absent for a member who has never been to Galatea, which leaves every field on
@@ -86,6 +89,13 @@ public class Foraging {
     @Extract("treeGifts.milestone_tier_claimed")
     private @NotNull ConcurrentMap<String, Integer> claimedMilestoneTiers = Concurrent.newMap();
 
+    // Honey
+
+    /**
+     * The hives the member draws honey from and the trees they have smeared it on.
+     */
+    private @NotNull Honey honey = new Honey();
+
     // Hina
 
     /**
@@ -101,6 +111,34 @@ public class Foraging {
      */
     @SerializedPath("songs.harp")
     private @NotNull MelodyHarp melodyHarp = new MelodyHarp();
+
+    /**
+     * The honey a member gathers on Galatea - which hives are on a refill timer, and which trees are
+     * currently smeared.
+     *
+     * <p>
+     * Honey is drawn from a numbered hive, which then refills on a timer, and smearing it on a tree
+     * draws the bees that pollinate it.
+     */
+    @Getter
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Honey {
+
+        /**
+         * When each hive next refills, keyed by hive id.
+         */
+        @SerializedName("refill_times")
+        private @NotNull ConcurrentMap<String, Instant> refillTimes = Concurrent.newMap();
+
+        /**
+         * When each smeared tree was smeared, keyed by tree id. An entry the declared value type
+         * cannot take is diverted to overflow rather than failing the decode.
+         */
+        @Lenient
+        @SerializedName("smeared_trees")
+        private @NotNull ConcurrentMap<String, Instant> smearedTrees = Concurrent.newMap();
+
+    }
 
     /**
      * A member's progress through Hina's task list.

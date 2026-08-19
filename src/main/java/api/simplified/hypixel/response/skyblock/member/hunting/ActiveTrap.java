@@ -1,4 +1,4 @@
-package api.simplified.hypixel.response.skyblock.member.attribute;
+package api.simplified.hypixel.response.skyblock.member.hunting;
 
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Region;

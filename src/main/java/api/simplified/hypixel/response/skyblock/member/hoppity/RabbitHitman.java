@@ -47,4 +47,10 @@ public class RabbitHitman {
     @SerializedName("egg_slot_cooldown_sum")
     private int eggSlotCooldownSum;
 
+    /**
+     * When the hitman last recovered an egg for the member.
+     */
+    @SerializedName("egg_finder_last_found")
+    private Instant eggFinderLastFound;
+
 }
