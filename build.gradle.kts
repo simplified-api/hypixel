@@ -32,20 +32,20 @@ dependencies {
     testImplementation(libs.junit.platform.launcher)
 
     // Sibling API modules (composite-build substitutes by project name)
-    api("com.github.simplified-api:skyblock") { version { strictly("f0be258") } }
+    api("com.github.simplified-api:skyblock") { version { strictly("d566734") } }
 
     // Simplified Libraries (github.com/simplified-dev)
-    api("com.github.simplified-dev:collections") { version { strictly("8ca6cb8") } }
-    api("com.github.simplified-dev:utils") { version { strictly("821499b") } }
-    api("com.github.simplified-dev:reflection") { version { strictly("6c3b7c5") } }
-    api("com.github.simplified-dev:gson-extras") { version { strictly("f143dc1") } }
-    api("com.github.simplified-dev:persistence") { version { strictly("8ba3942") } }
-    api("com.github.simplified-dev:client") { version { strictly("1ca9934") } }
-    api("com.github.simplified-dev:expression") { version { strictly("03220ce") } }
+    api("com.github.simplified-dev:collections") { version { strictly("9696ca5") } }
+    api("com.github.simplified-dev:utils") { version { strictly("3d8af56") } }
+    api("com.github.simplified-dev:reflection") { version { strictly("158edbc") } }
+    api("com.github.simplified-dev:gson-extras") { version { strictly("ed1d77e") } }
+    api("com.github.simplified-dev:persistence") { version { strictly("2d6b0e7") } }
+    api("com.github.simplified-dev:client") { version { strictly("2ced9a4") } }
+    api("com.github.simplified-dev:expression") { version { strictly("2092f2e") } }
 
     // Minecraft-Library (github.com/minecraft-library)
-    api("com.github.minecraft-library:text") { version { strictly("929dab6") } }
-    api("com.github.minecraft-library:nbt-factory") { version { strictly("1fee2e2") } }
+    api("com.github.minecraft-library:text") { version { strictly("84f8f1a") } }
+    api("com.github.minecraft-library:nbt-factory") { version { strictly("c2f5f8c") } }
 
     // Gson - @GsonType-annotated inner classes plus direct Deserializer/TypeAdapter usage
     api(libs.gson)
