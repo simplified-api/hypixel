@@ -149,7 +149,9 @@ class ProfileStatsCharacterisationTest {
     @DisplayName("the golden file covers the sources the fixture drives")
     void theGoldenFileCoversTheSourcesTheFixtureDrives() {
         Map<String, Double> actual = collect();
-        assertThat(actual.size(), is(greaterThan(200)));
+        // century cakes run out, so the floor counts what does not expire - including them would fail on a date rather than on a defect
+        int lasting = (int) actual.keySet().stream().filter(path -> !path.startsWith(CENTURY_CAKE_CELLS)).count();
+        assertThat(lasting, is(greaterThan(180)));
         assertThat(actual, hasKey("damageMultiplier"));
         // one per source the fixture is known to feed, so a source that quietly stops contributing fails here
         for (String source : new String[] { "BASE_STATS", "SKILLS", "SLAYERS", "DUNGEONS", "SKYBLOCK_LEVELS", "BESTIARY", "PET_SCORE", "MELODYS_HARP", "JACOBS_FARMING", "BOOSTER_COOKIE", "ESSENCE", "ACCESSORY_POWER", "ACTIVE_PET" })
