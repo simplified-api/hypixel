@@ -6,7 +6,6 @@ import api.simplified.skyblock.model.Item;
 import com.google.gson.Gson;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
-import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.GsonSettings;
 import dev.simplified.persistence.JpaCacheProvider;
 import dev.simplified.persistence.JpaConfig;
@@ -15,7 +14,6 @@ import dev.simplified.persistence.JpaSession;
 import dev.simplified.persistence.RepositoryFactory;
 import dev.simplified.persistence.driver.H2MemoryDriver;
 import dev.simplified.persistence.exception.JpaException;
-import dev.simplified.persistence.store.EntityStore;
 import dev.simplified.persistence.store.FileFetcher;
 import dev.simplified.persistence.store.ManifestIndex;
 import org.jetbrains.annotations.NotNull;
@@ -121,23 +119,10 @@ final class LocalSkyBlockData {
         Supplier<ManifestIndex> indexProvider = () -> readManifest(root);
         FileFetcher fileFetcher = path -> read(root.resolve(path), path);
 
-        ConcurrentList<Class<JpaModel>> models = RepositoryFactory.resolveModels(Item.class);
-        ConcurrentMap<Class<?>, EntityStore<?>> stores = Concurrent.newMap();
-
-        for (Class<JpaModel> model : models)
-            stores.put(model, SkyBlockFactory.documentStore(SOURCE_ID, indexProvider, fileFetcher, model));
-
-        RepositoryFactory factory = new RepositoryFactory() {
-            @Override
-            public @NotNull ConcurrentList<Class<JpaModel>> getModels() {
-                return models;
-            }
-
-            @Override
-            public @NotNull ConcurrentMap<Class<?>, EntityStore<?>> getStores() {
-                return stores.toUnmodifiable();
-            }
-        };
+        RepositoryFactory factory = RepositoryFactory.of(
+            Item.class,
+            SkyBlockFactory.documentSource(SOURCE_ID, indexProvider, fileFetcher, SkyBlockFactory.corpusGson())
+        );
 
         return SkyBlockData.getSessionManager().connect(
             JpaConfig.common(new H2MemoryDriver(), SCHEMA)
