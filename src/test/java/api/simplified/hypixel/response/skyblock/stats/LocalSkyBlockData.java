@@ -1,5 +1,6 @@
 package api.simplified.hypixel.response.skyblock.stats;
 
+import api.simplified.github.ManifestIndex;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.SkyBlockFactory;
 import api.simplified.skyblock.model.Item;
@@ -12,8 +13,7 @@ import dev.simplified.persistence.JpaModel;
 import dev.simplified.persistence.JpaSession;
 import dev.simplified.persistence.RepositoryFactory;
 import dev.simplified.persistence.exception.JpaException;
-import dev.simplified.persistence.store.FileFetcher;
-import dev.simplified.persistence.store.ManifestIndex;
+import dev.simplified.persistence.store.DocumentOrigin;
 import dev.simplified.persistence.store.Source;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,12 +110,7 @@ final class LocalSkyBlockData {
      * @return the registered session, which the caller owns and must shut down
      */
     static @NotNull JpaSession connect(@NotNull Path root) {
-        FileFetcher fetcher = path -> read(root.resolve(path), path);
-        Source source = Source.documents(
-            () -> readManifest(root),
-            fetcher,
-            SkyBlockFactory.corpusSettings().create()
-        );
+        Source source = Source.documents(new Checkout(root), SkyBlockFactory.corpusSettings().create());
 
         return SkyBlockData.getSessionManager().connect(
             JpaConfig.builder()
@@ -146,6 +141,27 @@ final class LocalSkyBlockData {
         } catch (IOException exception) {
             throw new JpaException(exception, "Unable to read '%s' from the local corpus", reported);
         }
+    }
+
+    /**
+     * A checkout answering the same two questions a published corpus does.
+     */
+    private record Checkout(@NotNull Path root) implements DocumentOrigin {
+
+        @Override
+        public @NotNull ConcurrentList<String> layersOf(@NotNull String name) {
+            return readManifest(this.root())
+                .layersOf(name)
+                .stream()
+                .map(ManifestIndex.Layer::path)
+                .collect(Concurrent.toUnmodifiableList());
+        }
+
+        @Override
+        public @NotNull String read(@NotNull String path) {
+            return LocalSkyBlockData.read(this.root().resolve(path), path);
+        }
+
     }
 
 }
