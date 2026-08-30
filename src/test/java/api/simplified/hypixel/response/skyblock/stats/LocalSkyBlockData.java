@@ -7,12 +7,9 @@ import com.google.gson.Gson;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.gson.GsonSettings;
-import dev.simplified.persistence.JpaCacheProvider;
 import dev.simplified.persistence.JpaConfig;
-import dev.simplified.persistence.JpaModel;
 import dev.simplified.persistence.JpaSession;
 import dev.simplified.persistence.RepositoryFactory;
-import dev.simplified.persistence.driver.H2MemoryDriver;
 import dev.simplified.persistence.exception.JpaException;
 import dev.simplified.persistence.store.FileFetcher;
 import dev.simplified.persistence.store.ManifestIndex;
@@ -125,8 +122,7 @@ final class LocalSkyBlockData {
         );
 
         return SkyBlockData.getSessionManager().connect(
-            JpaConfig.common(new H2MemoryDriver(), SCHEMA)
-                .withCacheProvider(JpaCacheProvider.EHCACHE)
+            JpaConfig.builder()
                 .withRepositoryFactory(factory)
                 .withGsonSettings(
                     GsonSettings.defaults()
