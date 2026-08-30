@@ -1,8 +1,8 @@
 {
   "header": {
     "fixtureSha256": "8176432e985e61d4798a8a7e1e377af417579138ed0cb795a67e88bffbe9f2ee",
-    "corpusCommitSha": "c1caa219e63affdd07bcb2874fceb607bcb8257b",
-    "activeCenturyCakes": 20
+    "corpusCommitSha": "16c942b5cf091fe7d33f9471aa6bfdacbaeed7b4",
+    "activeCenturyCakes": 0
   },
   "cells": {
     "accessory/000:PARTY_HAT_CRAB/ENRICHMENTS/SEA_CREATURE_CHANCE/bonus": 0.3,
@@ -146,26 +146,6 @@
     "profile/BOOSTER_COOKIE/RUNECRAFTING_WISDOM/base": 25.0,
     "profile/BOOSTER_COOKIE/SOCIAL_WISDOM/base": 25.0,
     "profile/BOOSTER_COOKIE/TAMING_WISDOM/base": 25.0,
-    "profile/CENTURY_CAKES/COLD_RESISTANCE/bonus": 1.0,
-    "profile/CENTURY_CAKES/DEFENSE/bonus": 3.0,
-    "profile/CENTURY_CAKES/FARMING_FORTUNE/bonus": 10.0,
-    "profile/CENTURY_CAKES/FEROCITY/bonus": 2.0,
-    "profile/CENTURY_CAKES/FORAGING_FORTUNE/bonus": 5.0,
-    "profile/CENTURY_CAKES/HEALTH/bonus": 10.0,
-    "profile/CENTURY_CAKES/HUNTER_FORTUNE/bonus": 1.0,
-    "profile/CENTURY_CAKES/INTELLIGENCE/bonus": 5.0,
-    "profile/CENTURY_CAKES/MAGIC_FIND/bonus": 1.0,
-    "profile/CENTURY_CAKES/MINING_FORTUNE/bonus": 5.0,
-    "profile/CENTURY_CAKES/PET_LUCK/bonus": 1.0,
-    "profile/CENTURY_CAKES/RIFT_TIME/bonus": 10.0,
-    "profile/CENTURY_CAKES/SEA_CREATURE_CHANCE/bonus": 1.0,
-    "profile/CENTURY_CAKES/STRENGTH/bonus": 2.0,
-    "profile/CENTURY_CAKES/SWEEP/bonus": 5.0,
-    "profile/CENTURY_CAKES/TRACKING/bonus": 1.0,
-    "profile/CENTURY_CAKES/TREASURE_CHANCE/bonus": 1.0,
-    "profile/CENTURY_CAKES/TRUE_DEFENSE/bonus": 1.0,
-    "profile/CENTURY_CAKES/VITALITY/bonus": 1.0,
-    "profile/CENTURY_CAKES/WALK_SPEED/bonus": 10.0,
     "profile/DUNGEONS/HEALTH/base": 100.0,
     "profile/ESSENCE/COLD_RESISTANCE/bonus": 10.0,
     "profile/ESSENCE/COMBAT_WISDOM/bonus": 27.0,

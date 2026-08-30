@@ -8,11 +8,13 @@ import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.gson.GsonSettings;
 import dev.simplified.persistence.JpaConfig;
+import dev.simplified.persistence.JpaModel;
 import dev.simplified.persistence.JpaSession;
 import dev.simplified.persistence.RepositoryFactory;
 import dev.simplified.persistence.exception.JpaException;
 import dev.simplified.persistence.store.FileFetcher;
 import dev.simplified.persistence.store.ManifestIndex;
+import dev.simplified.persistence.store.Source;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +22,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * A SkyBlock session whose reference corpus is a checkout on disk rather than the GitHub Contents
@@ -45,8 +46,6 @@ final class LocalSkyBlockData {
     static final @NotNull String ROOT_PROPERTY = "skyblock.corpus.root";
 
     private static final @NotNull String MANIFEST_PATH = "data/v1/index.json";
-    private static final @NotNull String SOURCE_ID = "skyblock-data-local";
-    private static final @NotNull String SCHEMA = "skyblock_local";
 
     private LocalSkyBlockData() {
     }
@@ -73,36 +72,34 @@ final class LocalSkyBlockData {
     }
 
     /**
-     * The commit the corpus manifest was generated against, which is half of what makes a golden
-     * file reproducible.
+     * The revision the corpus catalogue was taken at, which is half of what makes a golden file
+     * reproducible.
      *
      * @param root the checkout root
-     * @return the manifest's commit sha, empty when it declares none
+     * @return the catalogue's revision, empty when it declares none
      */
     static @NotNull Optional<String> corpusCommitSha(@NotNull Path root) {
-        return Optional.ofNullable(readManifest(root).getCommitSha());
+        String revision = readManifest(root).getRevision();
+        return revision.isEmpty() ? Optional.empty() : Optional.of(revision);
     }
 
     /**
-     * Models this build declares that the checkout's manifest carries no file for.
+     * Models this build declares that the checkout's catalogue carries no document for.
      * <p>
-     * Every source is read during the connect, so one uncovered model fails the whole thing. It
-     * means the reference models and the corpus are of different vintages - normally a
-     * {@code skyblock} pin behind the corpus - which no amount of local setup fixes.
+     * Every type is read during the connect, so one uncovered model fails the whole thing. It means
+     * the reference models and the corpus are of different vintages - normally a {@code skyblock}
+     * pin behind the corpus - which no amount of local setup fixes.
      *
      * @param root the checkout root
-     * @return the uncovered model names, empty when the two agree
+     * @return the uncovered document names, empty when the two agree
      */
     static @NotNull ConcurrentList<String> uncoveredModels(@NotNull Path root) {
-        ConcurrentList<String> covered = readManifest(root).getFiles()
-            .stream()
-            .map(ManifestIndex.Entry::getModelClass)
-            .collect(Concurrent.toList());
+        ManifestIndex manifest = readManifest(root);
 
         return RepositoryFactory.resolveModels(Item.class)
             .stream()
-            .map(Class::getName)
-            .filter(name -> !covered.contains(name))
+            .map(JpaModel::documentOf)
+            .filter(name -> manifest.layersOf(name).isEmpty())
             .collect(Concurrent.toList());
     }
 
@@ -113,23 +110,17 @@ final class LocalSkyBlockData {
      * @return the registered session, which the caller owns and must shut down
      */
     static @NotNull JpaSession connect(@NotNull Path root) {
-        Supplier<ManifestIndex> indexProvider = () -> readManifest(root);
-        FileFetcher fileFetcher = path -> read(root.resolve(path), path);
-
-        RepositoryFactory factory = RepositoryFactory.of(
-            Item.class,
-            SkyBlockFactory.documentSource(SOURCE_ID, indexProvider, fileFetcher, SkyBlockFactory.corpusGson())
+        FileFetcher fetcher = path -> read(root.resolve(path), path);
+        Source source = Source.documents(
+            () -> readManifest(root),
+            fetcher,
+            SkyBlockFactory.corpusSettings().create()
         );
 
         return SkyBlockData.getSessionManager().connect(
             JpaConfig.builder()
-                .withRepositoryFactory(factory)
-                .withGsonSettings(
-                    GsonSettings.defaults()
-                        .mutate()
-                        .withStringType(GsonSettings.StringType.DEFAULT)
-                        .build()
-                )
+                .withRepositoryFactory(RepositoryFactory.of(Item.class, source))
+                .withGsonSettings(SkyBlockFactory.corpusSettings())
                 .build()
         );
     }
