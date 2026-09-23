@@ -13,8 +13,9 @@ import dev.simplified.persistence.JpaModel;
 import dev.simplified.persistence.JpaSession;
 import dev.simplified.persistence.RepositoryFactory;
 import dev.simplified.persistence.exception.JpaException;
-import dev.simplified.persistence.store.DocumentOrigin;
-import dev.simplified.persistence.store.Source;
+import dev.simplified.persistence.source.DocumentOrigin;
+import dev.simplified.persistence.source.DocumentSource;
+import dev.simplified.persistence.source.Source;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,7 +111,7 @@ final class LocalSkyBlockData {
      * @return the registered session, which the caller owns and must shut down
      */
     static @NotNull JpaSession connect(@NotNull Path root) {
-        Source source = Source.documents(new Checkout(root), SkyBlockFactory.corpusSettings().create());
+        Source source = new DocumentSource(new Checkout(root), SkyBlockFactory.corpusSettings().create());
 
         return SkyBlockData.getSessionManager().connect(
             JpaConfig.builder()
