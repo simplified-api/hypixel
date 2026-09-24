@@ -2,7 +2,6 @@ package api.simplified.hypixel.response.skyblock.stats;
 
 import api.simplified.github.ManifestIndex;
 import api.simplified.skyblock.SkyBlockData;
-import api.simplified.skyblock.SkyBlockFactory;
 import api.simplified.skyblock.model.Item;
 import com.google.gson.Gson;
 import dev.simplified.collection.Concurrent;
@@ -11,11 +10,9 @@ import dev.simplified.gson.GsonSettings;
 import dev.simplified.persistence.JpaConfig;
 import dev.simplified.persistence.JpaModel;
 import dev.simplified.persistence.JpaSession;
-import dev.simplified.persistence.RepositoryFactory;
 import dev.simplified.persistence.exception.JpaException;
 import dev.simplified.persistence.source.DocumentOrigin;
 import dev.simplified.persistence.source.DocumentSource;
-import dev.simplified.persistence.source.Source;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +25,7 @@ import java.util.Optional;
  * A SkyBlock session whose reference corpus is a checkout on disk rather than the GitHub Contents
  * API.
  * <p>
- * The production factory is bound to GitHub and cannot be repointed, so this builds its own
+ * The production connect is bound to GitHub and cannot be repointed, so this builds its own
  * {@link JpaConfig} and registers it with the same process-wide manager
  * {@link SkyBlockData#getRepository(Class)} resolves against - which is what lets the whole
  * {@code stats} package run unchanged with no request leaving the machine. Unauthenticated
@@ -97,7 +94,7 @@ final class LocalSkyBlockData {
     static @NotNull ConcurrentList<String> uncoveredModels(@NotNull Path root) {
         ManifestIndex manifest = readManifest(root);
 
-        return RepositoryFactory.resolveModels(Item.class)
+        return JpaModel.resolveModels(Item.class)
             .stream()
             .map(JpaModel::documentOf)
             .filter(name -> manifest.layersOf(name).isEmpty())
@@ -111,14 +108,10 @@ final class LocalSkyBlockData {
      * @return the registered session, which the caller owns and must shut down
      */
     static @NotNull JpaSession connect(@NotNull Path root) {
-        Source source = new DocumentSource(new Checkout(root), SkyBlockFactory.corpusSettings().create());
-
-        return SkyBlockData.getSessionManager().connect(
-            JpaConfig.builder()
-                .withRepositoryFactory(RepositoryFactory.of(Item.class, source))
-                .withGsonSettings(SkyBlockFactory.corpusSettings())
-                .build()
-        );
+        return SkyBlockData.getSessionManager().connect(new JpaConfig(
+            JpaModel.resolveModels(Item.class),
+            new DocumentSource(new Checkout(root), SkyBlockData.corpusSettings().create())
+        ));
     }
 
     /**
