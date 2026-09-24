@@ -29,7 +29,7 @@ import java.util.Optional;
  * {@link JpaConfig} and registers it with the same process-wide manager
  * {@link SkyBlockData#getRepository(Class)} resolves against - which is what lets the whole
  * {@code stats} package run unchanged with no request leaving the machine. Unauthenticated
- * GitHub reads are capped at sixty an hour and one connect spends about forty-two of them, so a
+ * GitHub reads are capped at sixty an hour and one connect makes thirty-six of them, so a
  * suite that connects at all has to connect to disk.
  * <p>
  * The manager is static, so a session opened here is visible to every other test class in the same
