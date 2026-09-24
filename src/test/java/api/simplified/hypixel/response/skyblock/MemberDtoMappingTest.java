@@ -72,17 +72,18 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anEmptyMap;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Verifies the member DTO field mappings against the bundled API response.
@@ -136,6 +137,25 @@ class MemberDtoMappingTest {
 
     private static Set<String> lowercased(Set<String> keys) {
         return keys.stream().map(key -> key.toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
+    }
+
+    /**
+     * Runs an accessor that joins onto a SkyBlock repository, and returns what it raised.
+     * <p>
+     * Whether the join answers depends on whether a suite earlier in this JVM connected the corpus,
+     * which then stays held for the JVM's life. A caller asserts only that nothing escapes but the
+     * repository's refusal, which is raised in a JVM where no suite has connected.
+     *
+     * @param join the accessor
+     * @return what the accessor raised, null when it answered
+     */
+    private static RuntimeException joining(Runnable join) {
+        try {
+            join.run();
+            return null;
+        } catch (RuntimeException exception) {
+            return exception;
+        }
     }
 
     private static JsonObject firstMember(JsonObject root, int profileIndex) {
@@ -1389,26 +1409,27 @@ class MemberDtoMappingTest {
     }
 
     /**
-     * Pins where the bestiary join stops in a session-less test.
+     * Pins that the bestiary's mob parse completes before its family join reaches the repository.
      * <p>
      * The mob parse used to throw {@link IllegalStateException} on the very first key, because the
      * matcher that ran {@code matches()} and the matcher the groups were read from were two different
      * objects - and it ran at bind time, so the throw landed in a swallowing catch and left
-     * {@code families} empty for every profile ever decoded. It is now reached only on demand, so the
-     * parse completes and the repository is the honest boundary for a test that stands up no session.
+     * {@code families} empty for every profile ever decoded. It is now reached only on demand, inside
+     * {@link Bestiary#getFamilies()} and ahead of the join, so the repository's refusal is the only
+     * failure left to it.
      */
     @Test
     @DisplayName("bestiary parses every mob key before it reaches the family repository")
     void bestiaryParsesEveryMobKey() {
         Bestiary bestiary = decodePristine("bestiary", Bestiary.class);
 
-        // decoding no longer touches the repository at all
+        // decoding does not touch the repository at all
         assertThat(bestiary.getKills().isEmpty(), is(false));
-        assertThrows(JpaException.class, bestiary::getFamilies);
+        assertThat(joining(bestiary::getFamilies), is(anyOf(nullValue(), instanceOf(JpaException.class))));
     }
 
     @Test
-    @DisplayName("a whole member decodes with no session, and wires the accessory bag on access")
+    @DisplayName("a whole member decodes, and wires the accessory bag on access")
     void decodesWholeMember() {
         SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
         String talismanBag = member.getInventory().getBags().getAccessories().getRawData();
@@ -1419,8 +1440,8 @@ class MemberDtoMappingTest {
         // parsed the empty default and threw on the first statement of every member's postInit
         assertThat(member.getAccessoryBag().getContents().getRawData(), is(equalTo(talismanBag)));
 
-        // the parse behind it is the only part that still needs a repository, and only on demand
-        assertThrows(JpaException.class, () -> member.getAccessoryBag().getDetectedAccessories());
+        // the parse behind it is the only part that needs a repository, and only on demand
+        assertThat(joining(() -> member.getAccessoryBag().getDetectedAccessories()), is(anyOf(nullValue(), instanceOf(JpaException.class))));
 
         assertThat(member.getSkills(), is(notNullValue()));
     }

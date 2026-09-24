@@ -10,11 +10,10 @@ import dev.simplified.gson.GsonSettings;
 import dev.simplified.persistence.JpaConfig;
 import dev.simplified.persistence.JpaModel;
 import dev.simplified.persistence.JpaSession;
+import dev.simplified.persistence.SessionManager;
 import dev.simplified.persistence.exception.JpaException;
 import dev.simplified.persistence.source.DocumentOrigin;
-import dev.simplified.persistence.source.DocumentSource;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,18 +21,19 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 /**
- * A SkyBlock session whose reference corpus is a checkout on disk rather than the GitHub Contents
+ * A SkyBlock corpus whose reference documents are a checkout on disk rather than the GitHub Contents
  * API.
  * <p>
- * The production connect is bound to GitHub and cannot be repointed, so this builds its own
- * {@link JpaConfig} and registers it with the same process-wide manager
- * {@link SkyBlockData#getRepository(Class)} resolves against - which is what lets the whole
- * {@code stats} package run unchanged with no request leaving the machine. Unauthenticated
- * GitHub requests are capped at sixty an hour and one connect makes thirty-seven of them, so a
- * suite that connects at all has to connect to disk.
+ * {@link SkyBlockData#connect(DocumentOrigin)} reads every layer from the origin it is handed, so this
+ * hands it a checkout, and {@link SkyBlockData#getRepository(Class)} resolves against the session
+ * that connect holds - which is what lets the whole {@code stats} package run unchanged with no
+ * request leaving the machine. Unauthenticated GitHub requests are capped at sixty an hour and one
+ * connect makes thirty-seven of them, so a suite that connects at all has to connect to disk.
  * <p>
- * The manager is static, so a session opened here is visible to every other test class in the same
- * JVM. Whoever connects must {@link #disconnect(JpaSession)} before yielding.
+ * The corpus connects once per JVM and the first connect wins. Every suite here connects the same
+ * checkout, so whichever runs first reads it and every later connect returns that session. A test
+ * whose assertions depend on performing a connect itself builds a {@link SessionManager} of its own
+ * with a {@link JpaConfig} over the checkout.
  */
 final class LocalSkyBlockData {
 
@@ -102,26 +102,14 @@ final class LocalSkyBlockData {
     }
 
     /**
-     * Opens a session reading every reference table out of the checkout.
+     * Connects the corpus over the checkout, or returns the session an earlier connect in this JVM
+     * holds.
      *
-     * @param root the checkout root
-     * @return the registered session, which the caller owns and must shut down
+     * @param root the checkout root, read only when this call is the one that connects
+     * @return the corpus session
      */
     static @NotNull JpaSession connect(@NotNull Path root) {
-        return SkyBlockData.getSessionManager().connect(new JpaConfig(
-            JpaModel.resolveModels(Item.class),
-            new DocumentSource(new Checkout(root), SkyBlockData.corpusSettings().create())
-        ));
-    }
-
-    /**
-     * Closes a session and unregisters it, so a later test class sees no active session.
-     *
-     * @param session the session to close, null when the connect never happened
-     */
-    static void disconnect(@Nullable JpaSession session) {
-        if (session != null)
-            SkyBlockData.getSessionManager().shutdown(session);
+        return SkyBlockData.connect(new Checkout(root));
     }
 
     private static @NotNull ManifestIndex readManifest(@NotNull Path root) {

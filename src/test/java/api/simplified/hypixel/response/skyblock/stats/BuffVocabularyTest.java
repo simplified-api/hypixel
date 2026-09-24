@@ -3,8 +3,6 @@ package api.simplified.hypixel.response.skyblock.stats;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Buff;
 import dev.simplified.collection.ConcurrentList;
-import dev.simplified.persistence.JpaSession;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,7 +34,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 class BuffVocabularyTest {
 
-    private static JpaSession session;
     private static ConcurrentList<Buff> rows;
 
     @BeforeAll
@@ -47,15 +44,8 @@ class BuffVocabularyTest {
         ConcurrentList<String> uncovered = LocalSkyBlockData.uncoveredModels(corpus.get());
         assumeTrue(uncovered.isEmpty(), "the reference models and the corpus are of different vintages - the corpus carries no file for " + uncovered);
 
-        session = LocalSkyBlockData.connect(corpus.get());
+        LocalSkyBlockData.connect(corpus.get());
         rows = SkyBlockData.getRepository(Buff.class).findAll();
-    }
-
-    @AfterAll
-    static void releaseSession() {
-        LocalSkyBlockData.disconnect(session);
-        session = null;
-        rows = null;
     }
 
     @Test
