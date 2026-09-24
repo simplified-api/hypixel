@@ -32,6 +32,7 @@ import api.simplified.hypixel.response.skyblock.member.pet.OwnedPet;
 import api.simplified.hypixel.response.skyblock.member.pet.Pets;
 import api.simplified.hypixel.response.skyblock.member.rift.Rift;
 import api.simplified.hypixel.response.skyblock.member.skill.SkillLevel;
+import api.simplified.hypixel.response.skyblock.stats.LocalSkyBlockData;
 import api.simplified.skyblock.common.Rarity;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -47,12 +48,14 @@ import dev.simplified.gson.annotation.Capture;
 import dev.simplified.gson.annotation.Extract;
 import dev.simplified.gson.annotation.Fallback;
 import dev.simplified.gson.annotation.SerializedPath;
-import dev.simplified.persistence.exception.JpaException;
 import dev.simplified.util.Range;
+import lib.minecraft.nbt.tag.CompoundTag;
+import lib.minecraft.nbt.tag.StringTag;
 import lib.minecraft.text.ChatFormat;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
@@ -66,32 +69,33 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anEmptyMap;
-import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Verifies the member DTO field mappings against the bundled API response.
  * <p>
  * Most tests decode a subtree because that is the smallest thing that carries the mapping under
- * test. A whole {@link SkyBlockMember} decodes here too: binding no longer runs any derivation, so
- * the SkyBlock model repositories are reached only by the accessors that need them, and only when
- * something asks.
+ * test. A whole {@link SkyBlockMember} decodes here too: binding runs no derivation, so the SkyBlock
+ * model repositories are reached only by the accessors that need them, and only when something asks.
+ * The cases that ask are in {@link CorpusJoins}, which connects the local corpus checkout and skips
+ * when there is none.
  */
 class MemberDtoMappingTest {
 
@@ -137,25 +141,6 @@ class MemberDtoMappingTest {
 
     private static Set<String> lowercased(Set<String> keys) {
         return keys.stream().map(key -> key.toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
-    }
-
-    /**
-     * Runs an accessor that joins onto a SkyBlock repository, and returns what it raised.
-     * <p>
-     * Whether the join answers depends on whether a suite earlier in this JVM connected the corpus,
-     * which then stays held for the JVM's life. A caller asserts only that nothing escapes but the
-     * repository's refusal, which is raised in a JVM where no suite has connected.
-     *
-     * @param join the accessor
-     * @return what the accessor raised, null when it answered
-     */
-    private static RuntimeException joining(Runnable join) {
-        try {
-            join.run();
-            return null;
-        } catch (RuntimeException exception) {
-            return exception;
-        }
     }
 
     private static JsonObject firstMember(JsonObject root, int profileIndex) {
@@ -1409,41 +1394,134 @@ class MemberDtoMappingTest {
     }
 
     /**
-     * Pins that the bestiary's mob parse completes before its family join reaches the repository.
+     * The member accessors that join onto the SkyBlock reference data, run against the local corpus
+     * checkout.
      * <p>
-     * The mob parse used to throw {@link IllegalStateException} on the very first key, because the
-     * matcher that ran {@code matches()} and the matcher the groups were read from were two different
-     * objects - and it ran at bind time, so the throw landed in a swallowing catch and left
-     * {@code families} empty for every profile ever decoded. It is now reached only on demand, inside
-     * {@link Bestiary#getFamilies()} and ahead of the join, so the repository's refusal is the only
-     * failure left to it.
+     * The corpus connects once per JVM and the first connect wins, and every suite in this module
+     * connects the same checkout, so these cases see the same rows whichever class runs first. With
+     * no checkout beside this module they skip, as every suite that needs one does, and the rest of
+     * this class runs without one.
      */
-    @Test
-    @DisplayName("bestiary parses every mob key before it reaches the family repository")
-    void bestiaryParsesEveryMobKey() {
-        Bestiary bestiary = decodePristine("bestiary", Bestiary.class);
+    @Nested
+    class CorpusJoins {
 
-        // decoding does not touch the repository at all
-        assertThat(bestiary.getKills().isEmpty(), is(false));
-        assertThat(joining(bestiary::getFamilies), is(anyOf(nullValue(), instanceOf(JpaException.class))));
-    }
+        @BeforeAll
+        static void connectCorpus() {
+            Optional<Path> corpus = LocalSkyBlockData.findCorpus();
+            assumeTrue(corpus.isPresent(), "no skyblock checkout beside this module, and none named by -D" + LocalSkyBlockData.ROOT_PROPERTY);
+            ConcurrentList<String> uncovered = LocalSkyBlockData.uncoveredModels(corpus.get());
+            assumeTrue(uncovered.isEmpty(), "the reference models and the corpus are of different vintages - the corpus carries no file for " + uncovered);
+            LocalSkyBlockData.connect(corpus.get());
+        }
 
-    @Test
-    @DisplayName("a whole member decodes, and wires the accessory bag on access")
-    void decodesWholeMember() {
-        SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
-        String talismanBag = member.getInventory().getBags().getAccessories().getRawData();
+        /**
+         * Pins that the bestiary's mob parse completes, and that each parsed mob joins onto the
+         * family whose own mob list names it.
+         * <p>
+         * The mob parse used to throw {@link IllegalStateException} on the very first key, because
+         * the matcher that ran {@code matches()} and the matcher the groups were read from were two
+         * different objects - and it ran at bind time, so the throw landed in a swallowing catch and
+         * left {@code families} empty for every profile ever decoded. It is reached only on demand,
+         * inside {@link Bestiary#getFamilies()} and ahead of the join onto the family repository.
+         */
+        @Test
+        @DisplayName("bestiary parses every mob key and joins each mob onto the family that names it")
+        void bestiaryParsesEveryMobKey() {
+            Bestiary bestiary = decodePristine("bestiary", Bestiary.class);
 
-        assertThat(talismanBag.isEmpty(), is(false));
+            // decoding does not touch the repository at all
+            assertThat(bestiary.getKills().isEmpty(), is(false));
 
-        // initialize() ran at bind time and read `contents` eighty lines before assigning it, so it
-        // parsed the empty default and threw on the first statement of every member's postInit
-        assertThat(member.getAccessoryBag().getContents().getRawData(), is(equalTo(talismanBag)));
+            ConcurrentList<Bestiary.Family> families = bestiary.getFamilies();
 
-        // the parse behind it is the only part that needs a repository, and only on demand
-        assertThat(joining(() -> member.getAccessoryBag().getDetectedAccessories()), is(anyOf(nullValue(), instanceOf(JpaException.class))));
+            // one family per corpus row, fought or not, and 710 of the member's 1083 parsed mobs
+            // named by one of them - the rest are mobs no family ranks
+            assertThat(families.size(), is(equalTo(252)));
+            assertThat(families.stream().mapToInt(family -> family.getMobs().size()).sum(), is(equalTo(710)));
 
-        assertThat(member.getSkills(), is(notNullValue()));
+            // a family takes only the levels the member has a tally against, each with its own counts
+            assertThat(tallies(families, "ZOMBIE"), is(equalTo(Map.of(
+                "zombie_1", List.of(2238, 49),
+                "zombie_15", List.of(3701, 0)
+            ))));
+
+            // a level with only a death tally joins beside the ones with kills
+            assertThat(tallies(families, "WANDERING_BLAZE"), is(equalTo(Map.of(
+                "wandering_blaze_100", List.of(93, 36),
+                "wandering_blaze_200", List.of(0, 1),
+                "wandering_blaze_300", List.of(509, 3),
+                "wandering_blaze_400", List.of(0, 24),
+                "wandering_blaze_500", List.of(1436, 26)
+            ))));
+
+            // blaze_15 carries a kill tally, but BLAZE names only levels 25 and 70 and no other family
+            // names it at all, so it joins none
+            List<String> joined = families.stream()
+                .flatMap(family -> family.getMobs().stream())
+                .map(Bestiary.Mob::getKey)
+                .toList();
+
+            assertThat(bestiary.getKills(), hasKey("blaze_15"));
+            assertThat(joined, not(hasItem("blaze_15")));
+        }
+
+        @Test
+        @DisplayName("a whole member decodes, and its accessory bag detects each item the corpus has an accessory row for")
+        void decodesWholeMember() {
+            SkyBlockMember member = gson.fromJson(pristine.deepCopy(), SkyBlockMember.class);
+            String talismanBag = member.getInventory().getBags().getAccessories().getRawData();
+
+            assertThat(talismanBag.isEmpty(), is(false));
+
+            // initialize() ran at bind time and read `contents` eighty lines before assigning it, so it
+            // parsed the empty default and threw on the first statement of every member's postInit
+            assertThat(member.getAccessoryBag().getContents().getRawData(), is(equalTo(talismanBag)));
+
+            // every item the bag holds, in slot order, read off the bag's own nbt
+            List<String> carried = member.getAccessoryBag()
+                .getContents()
+                .getNbtData()
+                .<CompoundTag>getListTag("i")
+                .stream()
+                .filter(CompoundTag::notEmpty)
+                .map(item -> item.getPathOrDefault("tag.ExtraAttributes.id", StringTag.EMPTY).getValue())
+                .toList();
+
+            // items the bag holds that the corpus has no accessory row for
+            Set<String> uncatalogued = Set.of(
+                "ACCRETION_ARTIFACT", "ANGUISH_ARTIFACT", "BIOANALYSIS_ARTIFACT", "BLOOD_GOD_SIGIL",
+                "CENTURY_ARTIFACT", "COPPER_ARTIFACT", "FRESHLY_BAKED_HEIRLOOM", "GRATITUDE_ARTIFACT",
+                "HELIANTHUS_RELIC", "HONEYCOMB_ARTIFACT", "KUUDRAS_HEART", "LUMBERJACK_ARTIFACT",
+                "MASTER_THESIS", "MOONLIGHT_CRYSTAL", "ORGAN_DONOR_ARTIFACT", "PESTHUNTER_RELIC",
+                "POTATO_RING", "SAFETY_BADGE", "SPEED_RELIC", "SUNSHINE_CRYSTAL", "VOTER_BADGE_SUPREME",
+                "WITCH_ARTIFACT"
+            );
+
+            List<String> detected = member.getAccessoryBag()
+                .getDetectedAccessories()
+                .stream()
+                .map(accessory -> accessory.getAccessory().getId())
+                .toList();
+
+            // each detected row is the one its own item names, in slot order, and an item with no row
+            // is dropped rather than joined onto another - 145 held, 22 of them uncatalogued
+            assertThat(carried.size(), is(equalTo(145)));
+            assertThat(detected.size(), is(equalTo(123)));
+            assertThat(detected, is(equalTo(carried.stream().filter(id -> !uncatalogued.contains(id)).toList())));
+
+            assertThat(member.getSkills(), is(notNullValue()));
+        }
+
+        private static Map<String, List<Integer>> tallies(ConcurrentList<Bestiary.Family> families, String familyId) {
+            return families.stream()
+                .filter(family -> family.getFamilyId().equals(familyId))
+                .findFirst()
+                .orElseThrow()
+                .getMobs()
+                .stream()
+                .collect(Collectors.toMap(Bestiary.Mob::getKey, mob -> List.of(mob.getKills(), mob.getDeaths())));
+        }
+
     }
 
     @Test

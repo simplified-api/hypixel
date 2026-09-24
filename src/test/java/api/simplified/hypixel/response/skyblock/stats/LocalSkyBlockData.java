@@ -26,22 +26,23 @@ import java.util.Optional;
  * <p>
  * {@link SkyBlockData#connect(DocumentOrigin)} reads every layer from the origin it is handed, so this
  * hands it a checkout, and {@link SkyBlockData#getRepository(Class)} resolves against the session
- * that connect holds - which is what lets the whole {@code stats} package run unchanged with no
- * request leaving the machine. Unauthenticated GitHub requests are capped at sixty an hour and one
- * connect makes thirty-seven of them, so a suite that connects at all has to connect to disk.
+ * that connect holds - which is what lets the whole {@code stats} package, and the member accessors
+ * that join onto the reference data, run unchanged with no request leaving the machine.
+ * Unauthenticated GitHub requests are capped at sixty an hour and one connect makes thirty-seven of
+ * them, so a suite that connects at all has to connect to disk.
  * <p>
- * The corpus connects once per JVM and the first connect wins. Every suite here connects the same
- * checkout, so whichever runs first reads it and every later connect returns that session. A test
- * whose assertions depend on performing a connect itself builds a {@link SessionManager} of its own
- * with a {@link JpaConfig} over the checkout.
+ * The corpus connects once per JVM and the first connect wins. Every suite in this module connects
+ * the same checkout, so whichever runs first reads it and every later connect returns that session.
+ * A test whose assertions depend on performing a connect itself builds a {@link SessionManager} of
+ * its own with a {@link JpaConfig} over the checkout.
  */
-final class LocalSkyBlockData {
+public final class LocalSkyBlockData {
 
     /**
      * System property naming the {@code skyblock} checkout, for a runner whose working directory is
      * not the module.
      */
-    static final @NotNull String ROOT_PROPERTY = "skyblock.corpus.root";
+    public static final @NotNull String ROOT_PROPERTY = "skyblock.corpus.root";
 
     private static final @NotNull String MANIFEST_PATH = "data/v1/index.json";
 
@@ -57,7 +58,7 @@ final class LocalSkyBlockData {
      *
      * @return the checkout root, empty when no manifest is readable under either candidate
      */
-    static @NotNull Optional<Path> findCorpus() {
+    public static @NotNull Optional<Path> findCorpus() {
         String declared = System.getProperty(ROOT_PROPERTY);
 
         Path root = (declared == null || declared.isBlank())
@@ -91,7 +92,7 @@ final class LocalSkyBlockData {
      * @param root the checkout root
      * @return the uncovered document names, empty when the two agree
      */
-    static @NotNull ConcurrentList<String> uncoveredModels(@NotNull Path root) {
+    public static @NotNull ConcurrentList<String> uncoveredModels(@NotNull Path root) {
         ManifestIndex manifest = readManifest(root);
 
         return JpaModel.resolveModels(Item.class)
@@ -108,7 +109,7 @@ final class LocalSkyBlockData {
      * @param root the checkout root, read only when this call is the one that connects
      * @return the corpus session
      */
-    static @NotNull JpaSession connect(@NotNull Path root) {
+    public static @NotNull JpaSession connect(@NotNull Path root) {
         return SkyBlockData.connect(new Checkout(root));
     }
 
