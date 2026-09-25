@@ -11,9 +11,7 @@ import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.GsonSettings;
-import dev.simplified.persistence.JpaSession;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,7 +47,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 class FlatPassOrderTest {
 
-    private static JpaSession session;
     private static byte[] fixture;
 
     @BeforeAll
@@ -58,7 +55,7 @@ class FlatPassOrderTest {
         assumeTrue(corpus.isPresent(), "no skyblock checkout beside this module, and none named by -D" + LocalSkyBlockData.ROOT_PROPERTY);
         ConcurrentList<String> uncovered = LocalSkyBlockData.uncoveredModels(corpus.get());
         assumeTrue(uncovered.isEmpty(), "the reference models and the corpus are of different vintages - the corpus carries no file for " + uncovered);
-        session = LocalSkyBlockData.connect(corpus.get());
+        LocalSkyBlockData.connect(corpus.get());
 
         try (InputStream stream = FlatPassOrderTest.class.getResourceAsStream("/craftedfury.json")) {
             if (stream == null)
@@ -66,12 +63,6 @@ class FlatPassOrderTest {
 
             fixture = stream.readAllBytes();
         }
-    }
-
-    @AfterAll
-    static void releaseCorpus() {
-        LocalSkyBlockData.disconnect(session);
-        session = null;
     }
 
     @Test

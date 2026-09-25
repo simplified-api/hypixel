@@ -1,26 +1,19 @@
 package api.simplified.hypixel.response.skyblock.stats;
 
+import api.simplified.github.ManifestIndex;
 import api.simplified.skyblock.SkyBlockData;
 import api.simplified.skyblock.model.Item;
 import com.google.gson.Gson;
 import dev.simplified.collection.Concurrent;
 import dev.simplified.collection.ConcurrentList;
-import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.GsonSettings;
-import dev.simplified.persistence.JpaCacheProvider;
 import dev.simplified.persistence.JpaConfig;
 import dev.simplified.persistence.JpaModel;
 import dev.simplified.persistence.JpaSession;
-import dev.simplified.persistence.RepositoryFactory;
-import dev.simplified.persistence.driver.H2MemoryDriver;
+import dev.simplified.persistence.SessionManager;
 import dev.simplified.persistence.exception.JpaException;
-import dev.simplified.persistence.source.FileFetcher;
-import dev.simplified.persistence.source.IndexProvider;
-import dev.simplified.persistence.source.ManifestIndex;
-import dev.simplified.persistence.source.RemoteJsonSource;
-import dev.simplified.persistence.source.Source;
+import dev.simplified.persistence.source.DocumentOrigin;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,30 +21,30 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 /**
- * A SkyBlock session whose reference corpus is a checkout on disk rather than the GitHub Contents
+ * A SkyBlock corpus whose reference documents are a checkout on disk rather than the GitHub Contents
  * API.
  * <p>
- * The production factory is bound to GitHub and cannot be repointed, so this builds its own
- * {@link JpaConfig} and registers it with the same process-wide manager
- * {@link SkyBlockData#getRepository(Class)} resolves against - which is what lets the whole
- * {@code stats} package run unchanged with no request leaving the machine. Unauthenticated
- * GitHub reads are capped at sixty an hour and one connect spends about forty-two of them, so a
- * suite that connects at all has to connect to disk.
+ * {@link SkyBlockData#connect(DocumentOrigin)} reads every layer from the origin it is handed, so this
+ * hands it a checkout, and {@link SkyBlockData#getRepository(Class)} resolves against the session
+ * that connect holds - which is what lets the whole {@code stats} package, and the member accessors
+ * that join onto the reference data, run unchanged with no request leaving the machine.
+ * Unauthenticated GitHub requests are capped at sixty an hour and one connect makes thirty-seven of
+ * them, so a suite that connects at all has to connect to disk.
  * <p>
- * The manager is static, so a session opened here is visible to every other test class in the same
- * JVM. Whoever connects must {@link #disconnect(JpaSession)} before yielding.
+ * The corpus connects once per JVM and the first connect wins. Every suite in this module connects
+ * the same checkout, so whichever runs first reads it and every later connect returns that session.
+ * A test whose assertions depend on performing a connect itself builds a {@link SessionManager} of
+ * its own with a {@link JpaConfig} over the checkout.
  */
-final class LocalSkyBlockData {
+public final class LocalSkyBlockData {
 
     /**
      * System property naming the {@code skyblock} checkout, for a runner whose working directory is
      * not the module.
      */
-    static final @NotNull String ROOT_PROPERTY = "skyblock.corpus.root";
+    public static final @NotNull String ROOT_PROPERTY = "skyblock.corpus.root";
 
     private static final @NotNull String MANIFEST_PATH = "data/v1/index.json";
-    private static final @NotNull String SOURCE_ID = "skyblock-data-local";
-    private static final @NotNull String SCHEMA = "skyblock_local";
 
     private LocalSkyBlockData() {
     }
@@ -65,7 +58,7 @@ final class LocalSkyBlockData {
      *
      * @return the checkout root, empty when no manifest is readable under either candidate
      */
-    static @NotNull Optional<Path> findCorpus() {
+    public static @NotNull Optional<Path> findCorpus() {
         String declared = System.getProperty(ROOT_PROPERTY);
 
         Path root = (declared == null || declared.isBlank())
@@ -78,89 +71,46 @@ final class LocalSkyBlockData {
     }
 
     /**
-     * The commit the corpus manifest was generated against, which is half of what makes a golden
-     * file reproducible.
+     * The revision the corpus catalogue was taken at, which is half of what makes a golden file
+     * reproducible.
      *
      * @param root the checkout root
-     * @return the manifest's commit sha, empty when it declares none
+     * @return the catalogue's revision, empty when it declares none
      */
     static @NotNull Optional<String> corpusCommitSha(@NotNull Path root) {
-        return Optional.ofNullable(readManifest(root).getCommitSha());
+        String revision = readManifest(root).getRevision();
+        return revision.isEmpty() ? Optional.empty() : Optional.of(revision);
     }
 
     /**
-     * Models this build declares that the checkout's manifest carries no file for.
+     * Models this build declares that the checkout's catalogue carries no document for.
      * <p>
-     * Every source is read during the connect, so one uncovered model fails the whole thing. It
-     * means the reference models and the corpus are of different vintages - normally a
-     * {@code skyblock} pin behind the corpus - which no amount of local setup fixes.
+     * Every type is read during the connect, so one uncovered model fails the whole thing. It means
+     * the reference models and the corpus are of different vintages - normally a {@code skyblock}
+     * pin behind the corpus - which no amount of local setup fixes.
      *
      * @param root the checkout root
-     * @return the uncovered model names, empty when the two agree
+     * @return the uncovered document names, empty when the two agree
      */
-    static @NotNull ConcurrentList<String> uncoveredModels(@NotNull Path root) {
-        ConcurrentList<String> covered = readManifest(root).getFiles()
-            .stream()
-            .map(ManifestIndex.Entry::getModelClass)
-            .collect(Concurrent.toList());
+    public static @NotNull ConcurrentList<String> uncoveredModels(@NotNull Path root) {
+        ManifestIndex manifest = readManifest(root);
 
-        return RepositoryFactory.resolveModels(Item.class)
+        return JpaModel.resolveModels(Item.class)
             .stream()
-            .map(Class::getName)
-            .filter(name -> !covered.contains(name))
+            .map(JpaModel::documentOf)
+            .filter(name -> manifest.layersOf(name).isEmpty())
             .collect(Concurrent.toList());
     }
 
     /**
-     * Opens a session reading every reference table out of the checkout.
+     * Connects the corpus over the checkout, or returns the session an earlier connect in this JVM
+     * holds.
      *
-     * @param root the checkout root
-     * @return the registered session, which the caller owns and must shut down
+     * @param root the checkout root, read only when this call is the one that connects
+     * @return the corpus session
      */
-    static @NotNull JpaSession connect(@NotNull Path root) {
-        IndexProvider indexProvider = () -> readManifest(root);
-        FileFetcher fileFetcher = path -> read(root.resolve(path), path);
-
-        ConcurrentList<Class<JpaModel>> models = RepositoryFactory.resolveModels(Item.class);
-        ConcurrentMap<Class<?>, Source<?>> sources = Concurrent.newMap();
-
-        for (Class<JpaModel> model : models)
-            sources.put(model, new RemoteJsonSource<>(SOURCE_ID, indexProvider, fileFetcher, model));
-
-        RepositoryFactory factory = new RepositoryFactory() {
-            @Override
-            public @NotNull ConcurrentList<Class<JpaModel>> getModels() {
-                return models;
-            }
-
-            @Override
-            public @NotNull ConcurrentMap<Class<?>, Source<?>> getSources() {
-                return sources.toUnmodifiable();
-            }
-        };
-
-        return SkyBlockData.getSessionManager().connect(
-            JpaConfig.common(new H2MemoryDriver(), SCHEMA)
-                .withCacheProvider(JpaCacheProvider.EHCACHE)
-                .withRepositoryFactory(factory)
-                .withGsonSettings(
-                    GsonSettings.defaults()
-                        .mutate()
-                        .withStringType(GsonSettings.StringType.DEFAULT)
-                        .build()
-                )
-                .build()
-        );
-    }
-
-    /**
-     * Closes a session and unregisters it, so a later test class sees no active session.
-     *
-     * @param session the session to close, null when the connect never happened
-     */
-    static void disconnect(@Nullable JpaSession session) {
-        if (session != null)
-            SkyBlockData.getSessionManager().shutdown(session);
+    public static @NotNull JpaSession connect(@NotNull Path root) {
+        return SkyBlockData.connect(new Checkout(root));
     }
 
     private static @NotNull ManifestIndex readManifest(@NotNull Path root) {
@@ -174,6 +124,27 @@ final class LocalSkyBlockData {
         } catch (IOException exception) {
             throw new JpaException(exception, "Unable to read '%s' from the local corpus", reported);
         }
+    }
+
+    /**
+     * A checkout answering the same two questions a published corpus does.
+     */
+    private record Checkout(@NotNull Path root) implements DocumentOrigin {
+
+        @Override
+        public @NotNull ConcurrentList<String> layersOf(@NotNull String name) {
+            return readManifest(this.root())
+                .layersOf(name)
+                .stream()
+                .map(ManifestIndex.Layer::path)
+                .collect(Concurrent.toUnmodifiableList());
+        }
+
+        @Override
+        public @NotNull String read(@NotNull String path) {
+            return LocalSkyBlockData.read(this.root().resolve(path), path);
+        }
+
     }
 
 }

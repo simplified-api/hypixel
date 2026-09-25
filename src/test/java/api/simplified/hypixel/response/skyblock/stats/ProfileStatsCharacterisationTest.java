@@ -13,8 +13,6 @@ import dev.simplified.collection.ConcurrentLinkedMap;
 import dev.simplified.collection.ConcurrentList;
 import dev.simplified.collection.ConcurrentMap;
 import dev.simplified.gson.GsonSettings;
-import dev.simplified.persistence.JpaSession;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,7 +65,6 @@ class ProfileStatsCharacterisationTest {
      * so reproducing a number bit for bit is not a property this design guarantees.
      */
     private static final double EPSILON = 1.0e-9;
-    private static JpaSession session;
     private static ProfileStats profileStats;
     private static SkyBlockMember member;
     private static String fixtureSha256;
@@ -79,7 +76,7 @@ class ProfileStatsCharacterisationTest {
         ConcurrentList<String> uncovered = LocalSkyBlockData.uncoveredModels(corpus.get());
         assumeTrue(uncovered.isEmpty(), "the reference models and the corpus are of different vintages - the corpus carries no file for " + uncovered);
         corpusCommitSha = LocalSkyBlockData.corpusCommitSha(corpus.get()).orElse("");
-        session = LocalSkyBlockData.connect(corpus.get());
+        LocalSkyBlockData.connect(corpus.get());
         byte[] fixture;
         try (InputStream stream = ProfileStatsCharacterisationTest.class.getResourceAsStream("/craftedfury.json")) {
             if (stream == null)
@@ -92,11 +89,6 @@ class ProfileStatsCharacterisationTest {
         SkyBlockIsland island = gson.fromJson(root.getAsJsonArray("profiles").get(1), SkyBlockIsland.class);
         member = island.getMembers().stream().values().findFirst().orElseThrow();
         profileStats = ProfileStats.compute(island, member);
-    }
-    @AfterAll
-    static void releaseSession() {
-        LocalSkyBlockData.disconnect(session);
-        session = null;
     }
     @Test
     @DisplayName("every written cell matches the golden file")
@@ -149,7 +141,9 @@ class ProfileStatsCharacterisationTest {
     @DisplayName("the golden file covers the sources the fixture drives")
     void theGoldenFileCoversTheSourcesTheFixtureDrives() {
         Map<String, Double> actual = collect();
-        assertThat(actual.size(), is(greaterThan(200)));
+        // century cakes run out, so the floor counts what does not expire - including them would fail on a date rather than on a defect
+        int lasting = (int) actual.keySet().stream().filter(path -> !path.startsWith(CENTURY_CAKE_CELLS)).count();
+        assertThat(lasting, is(greaterThan(180)));
         assertThat(actual, hasKey("damageMultiplier"));
         // one per source the fixture is known to feed, so a source that quietly stops contributing fails here
         for (String source : new String[] { "BASE_STATS", "SKILLS", "SLAYERS", "DUNGEONS", "SKYBLOCK_LEVELS", "BESTIARY", "PET_SCORE", "MELODYS_HARP", "JACOBS_FARMING", "BOOSTER_COOKIE", "ESSENCE", "ACCESSORY_POWER", "ACTIVE_PET" })
