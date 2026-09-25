@@ -12,7 +12,7 @@ import dev.simplified.persistence.JpaModel;
 import dev.simplified.persistence.JpaSession;
 import dev.simplified.persistence.SessionManager;
 import dev.simplified.persistence.exception.JpaException;
-import dev.simplified.persistence.source.DocumentOrigin;
+import dev.simplified.persistence.source.DocumentSource;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -24,10 +24,11 @@ import java.util.Optional;
  * A SkyBlock corpus whose reference documents are a checkout on disk rather than the GitHub Contents
  * API.
  * <p>
- * {@link SkyBlockData#connect(DocumentOrigin)} reads every layer from the origin it is handed, so this
- * hands it a checkout, and {@link SkyBlockData#getRepository(Class)} resolves against the session
- * that connect holds - which is what lets the whole {@code stats} package, and the member accessors
- * that join onto the reference data, run unchanged with no request leaving the machine.
+ * {@link SkyBlockData#connect(DocumentSource.ReadOnly.Builder)} reads every layer from the source it
+ * is handed, so this hands it a checkout, and {@link SkyBlockData#getRepository(Class)} resolves
+ * against the session that connect holds - which is what lets the whole {@code stats} package, and
+ * the member accessors that join onto the reference data, run unchanged with no request leaving the
+ * machine.
  * Unauthenticated GitHub requests are capped at sixty an hour and one connect makes thirty-seven of
  * them, so a suite that connects at all has to connect to disk.
  * <p>
@@ -110,7 +111,15 @@ public final class LocalSkyBlockData {
      * @return the corpus session
      */
     public static @NotNull JpaSession connect(@NotNull Path root) {
-        return SkyBlockData.connect(new Checkout(root));
+        return SkyBlockData.connect(DocumentSource.ReadOnly.builder()
+            .withLayers(name -> readManifest(root)
+                .layersOf(name)
+                .stream()
+                .map(ManifestIndex.Layer::path)
+                .collect(Concurrent.toUnmodifiableList())
+            )
+            .withText(path -> read(root.resolve(path), path))
+        );
     }
 
     private static @NotNull ManifestIndex readManifest(@NotNull Path root) {
@@ -124,27 +133,6 @@ public final class LocalSkyBlockData {
         } catch (IOException exception) {
             throw new JpaException(exception, "Unable to read '%s' from the local corpus", reported);
         }
-    }
-
-    /**
-     * A checkout answering the same two questions a published corpus does.
-     */
-    private record Checkout(@NotNull Path root) implements DocumentOrigin {
-
-        @Override
-        public @NotNull ConcurrentList<String> layersOf(@NotNull String name) {
-            return readManifest(this.root())
-                .layersOf(name)
-                .stream()
-                .map(ManifestIndex.Layer::path)
-                .collect(Concurrent.toUnmodifiableList());
-        }
-
-        @Override
-        public @NotNull String read(@NotNull String path) {
-            return LocalSkyBlockData.read(this.root().resolve(path), path);
-        }
-
     }
 
 }
