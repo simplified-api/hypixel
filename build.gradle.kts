@@ -40,7 +40,7 @@ dependencies {
     api("com.github.simplified-dev:reflection") { version { strictly("5186e88") } }
     api("com.github.simplified-dev:gson-extras") { version { strictly("3ac0d4f") } }
     api("com.github.simplified-dev:persistence") { version { strictly("88109d8") } }
-    api("com.github.simplified-dev:client") { version { strictly("1f1a2ae") } }
+    api("com.github.simplified-dev:client") { version { strictly("b810558") } }
     api("com.github.simplified-dev:expression") { version { strictly("8658bc4") } }
 
     // Minecraft-Library (github.com/minecraft-library)
