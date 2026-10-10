@@ -44,8 +44,8 @@ dependencies {
     api("com.github.simplified-dev:expression") { version { strictly("8658bc4") } }
 
     // Minecraft-Library (github.com/minecraft-library)
-    api("com.github.minecraft-library:text") { version { strictly("ab36b42") } }
-    api("com.github.minecraft-library:nbt-factory") { version { strictly("f5814f6") } }
+    api("com.github.minecraft-library:text") { version { strictly("63e3bfd") } }
+    api("com.github.minecraft-library:nbt-factory") { version { strictly("a9ad75d") } }
 
     // Gson - @GsonType-annotated inner classes plus direct Deserializer/TypeAdapter usage
     api(libs.gson)
